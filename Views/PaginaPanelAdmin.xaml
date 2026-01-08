@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Panel.ViewModels"
+             x:Class="Panel.Views.PaginaPanelAdmin"
+             BackgroundColor="{StaticResource Gray50Jazer}"
+             xmlns:converters="clr-namespace:Panel.Converters">
+
+    <Grid RowDefinitions="Auto,Auto,Auto,*" ColumnDefinitions="*">
+        
+        <!-- SECCIÓN 1: HEADER SUPERIOR -->
+        <Border Grid.Row="0" Margin="0" Padding="32,20" BackgroundColor="White" StrokeThickness="0">
+            <Border.Shadow>
+                <Shadow Brush="Black" Offset="0,4" Opacity="0.05" Radius="4"/>
+            </Border.Shadow>
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <!-- Columna 1: Branding -->
+                <HorizontalStackLayout Grid.Column="0" Spacing="16" VerticalOptions="Center">
+                    <Image Source="logojazer.png" HeightRequest="45" WidthRequest="45" Aspect="AspectFit"/>
+                    
+                    <VerticalStackLayout Spacing="2" VerticalOptions="Center">
+                        <Label Text="Panel de Administración" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource Gray900Jazer}"/>
+                        <Label Text="JAZER Global Admin" FontSize="14" TextColor="{StaticResource Gray500Jazer}"/>
+                    </VerticalStackLayout>
+                </HorizontalStackLayout>
+
+                <!-- Columna 2: Estado del Servidor (Centrado) -->
+                <HorizontalStackLayout Grid.Column="1" HorizontalOptions="Center" VerticalOptions="Center" Spacing="12">
+                     <Border BackgroundColor="{Binding IsServerRunning, Converter={StaticResource StatusBackgroundColorConverter}}" 
+                             StrokeThickness="0" StrokeShape="RoundRectangle 16"
+                             Padding="12,6">
+                        <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                            <BoxView Color="{Binding IsServerRunning, Converter={StaticResource StatusTextColorConverter}}" HeightRequest="8" WidthRequest="8" CornerRadius="4" VerticalOptions="Center"/>
+                            <Label Text="{Binding ConnectionStatus}" FontSize="13" TextColor="{Binding IsServerRunning, Converter={StaticResource StatusTextColorConverter}}"/>
+                        </HorizontalStackLayout>
+                     </Border>
+                     
+                     <HorizontalStackLayout Spacing="8" IsVisible="{Binding IsServerRunning}">
+                        <Label Text="IP:" FontSize="13" TextColor="{StaticResource Gray500Jazer}" VerticalOptions="Center"/>
+                        <Label Text="{Binding ServerIP}" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource Green600}" FontFamily="Consolas" VerticalOptions="Center"/>
+                        <Button Text="📋" Command="{Binding CopiarIPCommand}" 
+                                BackgroundColor="Transparent" TextColor="{StaticResource Gray400Jazer}"
+                                HeightRequest="30" WidthRequest="30" Padding="0" FontSize="14"
+                                ToolTipProperties.Text="Copiar IP"/>
+                     </HorizontalStackLayout>
+                </HorizontalStackLayout>
+
+                <!-- Columna 3: Controles de Sesión -->
+                <HorizontalStackLayout Grid.Column="2" Spacing="10">
+                    <Button Text="Iniciar Server" 
+                            Command="{Binding IniciarServidorCommand}"
+                            IsVisible="{Binding IsServerRunning, Converter={StaticResource InverseBoolConverter}}"
+                            BackgroundColor="{StaticResource Green500}" TextColor="White"
+                            HeightRequest="36" FontSize="13" Padding="12,0" CornerRadius="6"/>
+                    <Button Text="Cerrar Sesión" 
+                            Command="{Binding CerrarSesionCommand}"
+                            BackgroundColor="Transparent" TextColor="{StaticResource Gray700Jazer}"
+                            BorderColor="{StaticResource Gray300Jazer}" BorderWidth="1"
+                            HeightRequest="36" FontSize="13" Padding="12,0" CornerRadius="6"/>
+                </HorizontalStackLayout>
+            </Grid>
+        </Border>
+
+        <!-- SECCIÓN 2: BARRA DE ESTADÍSTICAS RÁPIDAS -->
+        <Border Grid.Row="1" Margin="0" Padding="32,12" BackgroundColor="White" StrokeThickness="0">
+            <Grid ColumnDefinitions="*,*,*,*">
+                <!-- Stat 1 -->
+                <HorizontalStackLayout Grid.Column="0" Spacing="12">
+                     <Label Text="👥" FontSize="24" VerticalOptions="Center"/>
+                     <VerticalStackLayout>
+                         <Label Text="{Binding TotalContadores}" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Blue700}"/>
+                         <Label Text="Contadores" FontSize="12" TextColor="{StaticResource Gray500Jazer}"/>
+                     </VerticalStackLayout>
+                     <BoxView WidthRequest="1" Color="{StaticResource Gray100Jazer}" HorizontalOptions="End" Margin="0,4"/>
+                </HorizontalStackLayout>
+                
+                <!-- Stat 2 -->
+                <HorizontalStackLayout Grid.Column="1" Spacing="12" Margin="12,0,0,0">
+                     <Label Text="✅" FontSize="24" VerticalOptions="Center"/>
+                     <VerticalStackLayout>
+                         <Label Text="{Binding TotalCompletadas}" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Green600}"/>
+                         <Label Text="Completadas" FontSize="12" TextColor="{StaticResource Gray500Jazer}"/>
+                     </VerticalStackLayout>
+                     <BoxView WidthRequest="1" Color="{StaticResource Gray100Jazer}" HorizontalOptions="End" Margin="0,4"/>
+                </HorizontalStackLayout>
+
+                <!-- Stat 3 -->
+                <HorizontalStackLayout Grid.Column="2" Spacing="12" Margin="12,0,0,0">
+                     <Label Text="📋" FontSize="24" VerticalOptions="Center"/>
+                     <VerticalStackLayout>
+                         <Label Text="{Binding TotalPendientes}" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Yellow600}"/>
+                         <Label Text="Pendientes" FontSize="12" TextColor="{StaticResource Gray500Jazer}"/>
+                     </VerticalStackLayout>
+                     <BoxView WidthRequest="1" Color="{StaticResource Gray100Jazer}" HorizontalOptions="End" Margin="0,4"/>
+                </HorizontalStackLayout>
+
+                <!-- Stat 4 -->
+                <HorizontalStackLayout Grid.Column="3" Spacing="12" Margin="12,0,0,0">
+                     <Label Text="📈" FontSize="24" VerticalOptions="Center"/>
+                     <VerticalStackLayout>
+                         <Label Text="{Binding Eficiencia}" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Purple600}"/>
+                         <Label Text="Eficiencia" FontSize="12" TextColor="{StaticResource Gray500Jazer}"/>
+                     </VerticalStackLayout>
+                </HorizontalStackLayout>
+            </Grid>
+        </Border>
+
+        <!-- SECCIÓN 3: SISTEMA DE PESTAÑAS -->
+        <Border Grid.Row="2" Margin="0" BackgroundColor="White" StrokeThickness="0" Padding="32,0">
+            <Grid ColumnDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="32">
+                <Grid.Resources>
+                    <Style TargetType="Button" x:Key="TabButton">
+                        <Setter Property="BackgroundColor" Value="Transparent"/>
+                        <Setter Property="TextColor" Value="{StaticResource Gray500Jazer}"/>
+                        <Setter Property="CornerRadius" Value="0"/>
+                        <Setter Property="HeightRequest" Value="48"/>
+                        <Setter Property="FontSize" Value="14"/>
+                        <Setter Property="FontAttributes" Value="None"/>
+                        <Setter Property="Margin" Value="0"/>
+                        <Setter Property="Padding" Value="0"/>
+                    </Style>
+                    <Style TargetType="BoxView" x:Key="ActiveIndicator">
+                        <Setter Property="HeightRequest" Value="3"/>
+                        <Setter Property="Color" Value="{StaticResource Blue700}"/>
+                        <Setter Property="VerticalOptions" Value="End"/>
+                        <Setter Property="IsVisible" Value="False"/>
+                    </Style>
+                </Grid.Resources>
+                
+                <!-- Tab 1: Dashboard -->
+                <Grid Grid.Column="0">
+                    <Button Text="📊 Equipo" Style="{StaticResource TabButton}" 
+                            Command="{Binding SetTabCommand}" CommandParameter="0">
+                        <Button.Triggers>
+                            <DataTrigger TargetType="Button" Binding="{Binding SelectedTabIndex}" Value="0">
+                                <Setter Property="TextColor" Value="{StaticResource Blue700}"/>
+                                <Setter Property="FontAttributes" Value="Bold"/>
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
+                    <BoxView Style="{StaticResource ActiveIndicator}">
+                        <BoxView.Triggers>
+                            <DataTrigger TargetType="BoxView" Binding="{Binding SelectedTabIndex}" Value="0">
+                                <Setter Property="IsVisible" Value="True"/>
+                            </DataTrigger>
+                        </BoxView.Triggers>
+                    </BoxView>
+                </Grid>
+
+                <!-- Tab 2: Gestión -->
+                <Grid Grid.Column="1">
+                    <Button Text="⚙️ Gestión" Style="{StaticResource TabButton}" 
+                            Command="{Binding SetTabCommand}" CommandParameter="1">
+                        <Button.Triggers>
+                            <DataTrigger TargetType="Button" Binding="{Binding SelectedTabIndex}" Value="1">
+                                <Setter Property="TextColor" Value="{StaticResource Blue700}"/>
+                                <Setter Property="FontAttributes" Value="Bold"/>
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
+                    <BoxView Style="{StaticResource ActiveIndicator}">
+                        <BoxView.Triggers>
+                            <DataTrigger TargetType="BoxView" Binding="{Binding SelectedTabIndex}" Value="1">
+                                <Setter Property="IsVisible" Value="True"/>
+                            </DataTrigger>
+                        </BoxView.Triggers>
+                    </BoxView>
+                </Grid>
+
+                <!-- Tab 3: Mensajería -->
+                <Grid Grid.Column="2">
+                    <Button Text="💬 Mensajería" Style="{StaticResource TabButton}" 
+                            Command="{Binding SetTabCommand}" CommandParameter="2">
+                        <Button.Triggers>
+                            <DataTrigger TargetType="Button" Binding="{Binding SelectedTabIndex}" Value="2">
+                                <Setter Property="TextColor" Value="{StaticResource Blue700}"/>
+                                <Setter Property="FontAttributes" Value="Bold"/>
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
+                    <BoxView Style="{StaticResource ActiveIndicator}">
+                        <BoxView.Triggers>
+                            <DataTrigger TargetType="BoxView" Binding="{Binding SelectedTabIndex}" Value="2">
+                                <Setter Property="IsVisible" Value="True"/>
+                            </DataTrigger>
+                        </BoxView.Triggers>
+                    </BoxView>
+                </Grid>
+
+                <!-- Tab 4: Reportes -->
+                <Grid Grid.Column="3">
+                    <Button Text="📉 Reportes" Style="{StaticResource TabButton}" 
+                            Command="{Binding SetTabCommand}" CommandParameter="3">
+                        <Button.Triggers>
+                            <DataTrigger TargetType="Button" Binding="{Binding SelectedTabIndex}" Value="3">
+                                <Setter Property="TextColor" Value="{StaticResource Blue700}"/>
+                                <Setter Property="FontAttributes" Value="Bold"/>
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
+                    <BoxView Style="{StaticResource ActiveIndicator}">
+                        <BoxView.Triggers>
+                            <DataTrigger TargetType="BoxView" Binding="{Binding SelectedTabIndex}" Value="3">
+                                <Setter Property="IsVisible" Value="True"/>
+                            </DataTrigger>
+                        </BoxView.Triggers>
+                    </BoxView>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- SECCIÓN 4: CONTENIDO PRINCIPAL -->
+        <Grid Grid.Row="3" Padding="32,24">
+            <!-- VISTA 0: DASHBOARD / CONTADORES -->
+            <ScrollView VerticalScrollBarVisibility="Always" IsVisible="{Binding SelectedTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=0}">
+                <VerticalStackLayout Spacing="24">
+                    <!-- Lista Contadores -->
+                    <Border BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="24" StrokeShape="RoundRectangle 12" VerticalOptions="Fill">
+                        <VerticalStackLayout Spacing="16">
+                            <Label Text="Equipo de Contadores" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource Gray900Jazer}"/>
+                            
+                            <CollectionView ItemsSource="{Binding Contadores}" HeightRequest="400">
+                                <CollectionView.Header>
+                                    <Grid ColumnDefinitions="40,*,*" Padding="0,0,0,8">
+                                        <Label Text="" Grid.Column="0"/>
+                                        <Label Text="USUARIO" Grid.Column="1" TextColor="{StaticResource Gray400Jazer}" FontSize="11" FontAttributes="Bold"/>
+                                        <Label Text="ESTADO" Grid.Column="2" TextColor="{StaticResource Gray400Jazer}" FontSize="11" FontAttributes="Bold" HorizontalOptions="Center"/>
+                                    </Grid>
+                                </CollectionView.Header>
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnDefinitions="40,*,*" Padding="0,12">
+                                            <Border Grid.Column="0" HeightRequest="32" WidthRequest="32" StrokeShape="RoundRectangle 16" BackgroundColor="{StaticResource Blue50}" StrokeThickness="0" VerticalOptions="Center" HorizontalOptions="Center">
+                                                <Label Text="👤" HorizontalOptions="Center" VerticalOptions="Center" FontSize="14"/>
+                                            </Border>
+                                            <Label Grid.Column="1" Text="{Binding Username}" TextColor="{StaticResource Gray800Jazer}" VerticalOptions="Center" FontAttributes="Bold"/>
+                                            <Border Grid.Column="2" BackgroundColor="{StaticResource Gray100Jazer}" StrokeThickness="0" Padding="8,2" HorizontalOptions="Center" VerticalOptions="Center" StrokeShape="RoundRectangle 4">
+                                                <Label Text="{Binding Estado}" TextColor="{StaticResource Gray600Jazer}" FontSize="11"/>
+                                            </Border>
+                                        </Grid>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+            </ScrollView>
+
+
+            <!-- VISTA 1: GESTIÓN TAREAS -->
+            <ScrollView VerticalScrollBarVisibility="Always" IsVisible="{Binding SelectedTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=1}">
+                <VerticalStackLayout Spacing="24">
+                     <Grid ColumnDefinitions="*,2*"> 
+                         <VerticalStackLayout Spacing="4">
+                             <Label Text="Gestión de Tareas" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource Gray800Jazer}"/>
+                             <Label Text="Asigna y monitorea tareas" TextColor="{StaticResource Gray500Jazer}" FontSize="14"/>
+                         </VerticalStackLayout>
+                     </Grid>
+
+                    <Grid ColumnDefinitions="350,*" ColumnSpacing="24">
+                        <!-- Formulario Crear (Izquierda) -->
+                        <Border Grid.Column="0" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="20" StrokeShape="RoundRectangle 12" VerticalOptions="Start">
+                            <VerticalStackLayout Spacing="16">
+                                <Label Text="Nueva Tarea" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource Blue700}"/>
+                                
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="Título" FontSize="12" TextColor="{StaticResource Gray600Jazer}"/>
+                                    <Entry Text="{Binding NuevaTareaTitulo}" Placeholder="Ej: Declaración Mensual" BackgroundColor="{StaticResource Gray50}" TextColor="{StaticResource Gray900Jazer}"/>
+                                </VerticalStackLayout>
+
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="Descripción" FontSize="12" TextColor="{StaticResource Gray600Jazer}"/>
+                                    <Editor Text="{Binding NuevaTareaDescripcion}" Placeholder="Detalles..." HeightRequest="80" BackgroundColor="{StaticResource Gray50}" TextColor="{StaticResource Gray900Jazer}"/>
+                                </VerticalStackLayout>
+
+                                <Grid ColumnDefinitions="*,*">
+                                    <VerticalStackLayout Spacing="4" Margin="0,0,4,0">
+                                        <Label Text="Vencimiento" FontSize="12" TextColor="{StaticResource Gray600Jazer}"/>
+                                        <DatePicker Date="{Binding NuevaTareaVencimiento}" TextColor="{StaticResource Gray900Jazer}"/>
+                                    </VerticalStackLayout>
+                                    <VerticalStackLayout Grid.Column="1" Spacing="4" Margin="4,0,0,0">
+                                        <Label Text="Horas Est." FontSize="12" TextColor="{StaticResource Gray600Jazer}"/>
+                                        <Entry Text="{Binding NuevaTareaHorasEstimadas}" Keyboard="Numeric" BackgroundColor="{StaticResource Gray50}" TextColor="{StaticResource Gray900Jazer}"/>
+                                    </VerticalStackLayout>
+                                </Grid>
+
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="Asignar a" FontSize="12" TextColor="{StaticResource Gray600Jazer}"/>
+                                    <Picker ItemsSource="{Binding Contadores}" SelectedItem="{Binding NuevaTareaContadorSeleccionado}" ItemDisplayBinding="{Binding Username}" Title="Seleccionar Contador" TextColor="Black" BackgroundColor="{StaticResource Gray50}"/>
+                                </VerticalStackLayout>
+
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="Prioridad" FontSize="12" TextColor="{StaticResource Gray600Jazer}"/>
+                                    <Picker ItemsSource="{Binding Prioridades}" SelectedItem="{Binding NuevaTareaPrioridad}" Title="Seleccionar Prioridad" TextColor="Black" BackgroundColor="{StaticResource Gray50}"/>
+                                </VerticalStackLayout>
+
+                                <Button Text="Crear Asignación" Command="{Binding CrearTareaCommand}" 
+                                        BackgroundColor="{StaticResource Blue600}" TextColor="White" FontAttributes="Bold" 
+                                        CornerRadius="8" HeightRequest="45" Margin="0,10,0,0"/>
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <!-- Lista Tareas (Derecha) -->
+                        <Border Grid.Column="1" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="20" StrokeShape="RoundRectangle 12">
+                            <VerticalStackLayout Spacing="16">
+                                <Label Text="Asignaciones Recientes" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource Gray800Jazer}"/>
+                                <CollectionView ItemsSource="{Binding Tareas}" EmptyView="No hay tareas asignadas aún" VerticalScrollBarVisibility="Always">
+                                    <CollectionView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="0,4" Padding="12" Stroke="{StaticResource Gray200Jazer}" StrokeShape="RoundRectangle 8">
+                                                <Grid ColumnDefinitions="4,*,Auto">
+                                                    <BoxView Grid.Column="0" Color="{Binding Prioridad, Converter={StaticResource PriorityToColorConverter}}" VerticalOptions="Fill"/>
+                                                    
+                                                    <VerticalStackLayout Grid.Column="1" Margin="12,0" Spacing="2">
+                                                        <Label Text="{Binding Titulo}" FontAttributes="Bold" TextColor="{StaticResource Gray900Jazer}"/>
+                                                        <Label Text="{Binding AsignadoAId, StringFormat='Asignado a: #{0}'}" FontSize="11" TextColor="{StaticResource Gray500Jazer}"/>
+                                                        <Label Text="{Binding FechaVencimiento, StringFormat='Vence: {0:d}'}" FontSize="11" TextColor="{StaticResource Red400}"/>
+                                                    </VerticalStackLayout>
+                                                    
+                                                    <Border Grid.Column="2" BackgroundColor="{Binding Estado, Converter={StaticResource StatusBackgroundColorConverter}}" StrokeThickness="0" Padding="8,4" VerticalOptions="Center" StrokeShape="RoundRectangle 4">
+                                                        <Label Text="{Binding Estado}" TextColor="{Binding Estado, Converter={StaticResource StatusTextColorConverter}}" FontSize="11" FontAttributes="Bold"/>
+                                                    </Border>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </CollectionView.ItemTemplate>
+                                </CollectionView>
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
+            </ScrollView>
+
+            <!-- VISTA 2: MENSAJERÍA -->
+            <Grid IsVisible="{Binding SelectedTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=2}" RowDefinitions="Auto,*" RowSpacing="24">
+                <VerticalStackLayout Grid.Row="0" Spacing="4">
+                     <Label Text="Centro de Mensajes" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource Gray800Jazer}"/>
+                     <Label Text="Comunicaciones internas y alertas" TextColor="{StaticResource Gray500Jazer}" FontSize="14"/>
+                </VerticalStackLayout>
+
+                <Grid Grid.Row="1" ColumnDefinitions="300,*" ColumnSpacing="24">
+                    <!-- Controles Envío -->
+                    <VerticalStackLayout Grid.Column="0" Spacing="24">
+                        <!-- Broadcast -->
+                        <Border BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="20" StrokeShape="RoundRectangle 12">
+                            <VerticalStackLayout Spacing="12">
+                                <Label Text="📢 Difusión General" FontAttributes="Bold" TextColor="{StaticResource Gray800Jazer}"/>
+                                <Editor Text="{Binding MensajeBroadcastContent}" Placeholder="Mensaje para todos..." HeightRequest="80" BackgroundColor="{StaticResource Gray50}"/>
+                                <Button Text="Enviar a Todos" Command="{Binding EnviarBroadcastCommand}" BackgroundColor="{StaticResource Purple600}" TextColor="White"/>
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <!-- Mensaje Individual -->
+                        <Border BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="20" StrokeShape="RoundRectangle 12">
+                            <VerticalStackLayout Spacing="12">
+                                <Label Text="💬 Mensaje Directo" FontAttributes="Bold" TextColor="{StaticResource Gray800Jazer}"/>
+                                <Picker Title="Destinatario" ItemsSource="{Binding Contadores}" SelectedItem="{Binding DestinatarioMensaje}" ItemDisplayBinding="{Binding Username}" TextColor="Black" BackgroundColor="{StaticResource Gray50}"/>
+                                <Editor Text="{Binding MensajeIndividualContent}" Placeholder="Mensaje privado..." HeightRequest="80" BackgroundColor="{StaticResource Gray50}"/>
+                                <Button Text="Enviar Mensaje" Command="{Binding EnviarMensajeIndividualCommand}" BackgroundColor="{StaticResource Blue600}" TextColor="White"/>
+                            </VerticalStackLayout>
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <!-- Historial -->
+                    <Border Grid.Column="1" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="24" StrokeShape="RoundRectangle 12">
+                        <VerticalStackLayout Spacing="12">
+                            <Label Text="Historial de Comunicaciones" FontAttributes="Bold" TextColor="{StaticResource Gray700Jazer}"/>
+                            <CollectionView ItemsSource="{Binding Mensajes}" VerticalScrollBarVisibility="Always">
+                                <CollectionView.EmptyView>
+                                    <Label Text="No hay mensajes registrados" TextColor="{StaticResource Gray400Jazer}" HorizontalOptions="Center" Margin="0,20"/>
+                                </CollectionView.EmptyView>
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Padding="0,8" ColumnDefinitions="Auto,*">
+                                            <Label Grid.Column="0" Text="{Binding MarcaTiempo, StringFormat='{0:HH:mm}'}" TextColor="{StaticResource Gray400Jazer}" FontSize="11" VerticalOptions="Start" Margin="0,2,10,0"/>
+                                            <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                                <HorizontalStackLayout Spacing="6">
+                                                    <Label Text="{Binding DeNombre}" FontAttributes="Bold" TextColor="{StaticResource Blue700}" FontSize="12"/>
+                                                    <Label Text="➔" FontSize="10" TextColor="{StaticResource Gray400Jazer}" VerticalOptions="Center"/>
+                                                    <Label Text="{Binding ParaNombre}" FontAttributes="Bold" TextColor="{StaticResource Gray600Jazer}" FontSize="12"/>
+                                                </HorizontalStackLayout>
+                                                <Label Text="{Binding Contenido}" TextColor="{StaticResource Gray800Jazer}" FontSize="13"/>
+                                            </VerticalStackLayout>
+                                        </Grid>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+            </Grid>
+
+            <!-- VISTA 3: REPORTES -->
+            <Grid IsVisible="{Binding SelectedTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=3}">
+                <VerticalStackLayout Spacing="24" VerticalOptions="Center" HorizontalOptions="Center">
+                    <Label Text="📊" FontSize="60" HorizontalOptions="Center"/>
+                    <Label Text="Módulo de Reportes" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Gray800Jazer}"/>
+                    <Label Text="Próximamente: Gráficos de rendimiento y exportación a Excel/PDF" TextColor="{StaticResource Gray500Jazer}" HorizontalOptions="Center"/>
+                    <Button Text="Generar Reporte Demo" BackgroundColor="{StaticResource Blue600}" TextColor="White" WidthRequest="200"/>
+                </VerticalStackLayout>
+            </Grid>
+
+        </Grid>
+    </Grid>
+</ContentPage>

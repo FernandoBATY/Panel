@@ -1,0 +1,31 @@
+﻿<?xml version = "1.0" encoding = "UTF-8" ?>
+<Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:Panel"
+             xmlns:converters="clr-namespace:Panel.Converters"
+             x:Class="Panel.App">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
+                <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <ResourceDictionary>
+                <converters:StatusToBoolConverter x:Key="StatusToBoolConverter" />
+                <converters:IntToBoolConverter x:Key="IntToBoolConverter" />
+                <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
+                <converters:StringNotEmptyConverter x:Key="StringNotEmptyConverter"/>
+                <converters:PriorityToColorConverter x:Key="PriorityToColorConverter"/>
+                <converters:IsPrioritariaConverter x:Key="IsPrioritariaConverter"/>
+                <converters:IsVariableConverter x:Key="IsVariableConverter"/>
+                <converters:StatusToColorConverter x:Key="StatusToColorConverter"/>
+                <converters:StatusBackgroundColorConverter x:Key="StatusBackgroundColorConverter"/>
+                <converters:StatusTextColorConverter x:Key="StatusTextColorConverter"/>
+                <converters:AlertTypeToColorConverter x:Key="AlertTypeToColorConverter"/>
+                <converters:AlertTypeToBgColorConverter x:Key="AlertTypeToBgColorConverter"/>
+                <converters:IsVisibleIfTrueConverter x:Key="IsVisibleIfTrueConverter"/>
+                <converters:EqualConverter x:Key="EqualConverter"/>
+            </ResourceDictionary>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

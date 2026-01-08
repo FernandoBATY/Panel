@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Panel.ViewModels"
+             x:Class="Panel.Views.LoginPage"
+             Title="Login">
+
+    <Grid RowDefinitions="*,Auto,*" ColumnDefinitions="*,Auto,*" BackgroundColor="#F0F0F0">
+        <Frame Grid.Row="1" Grid.Column="1" 
+               Padding="30" 
+               CornerRadius="0" 
+               BackgroundColor="White" 
+               HasShadow="False"
+               WidthRequest="400"
+               VerticalOptions="Center"
+               HorizontalOptions="Center">
+            
+            <VerticalStackLayout Spacing="20" VerticalOptions="Center">
+                
+                <Label Text="Bienvenido" 
+                       FontSize="24" 
+                       FontAttributes="Bold" 
+                       HorizontalOptions="Center" 
+                       TextColor="#111827"/>
+                
+                <Entry Placeholder="Usuario" 
+                       Text="{Binding Username}" 
+                       TextColor="Black"
+                       PlaceholderColor="#666"
+                       ClearButtonVisibility="WhileEditing"/>
+                
+                <Entry Placeholder="Contraseña" 
+                       Text="{Binding Password}" 
+                       TextColor="Black"
+                       PlaceholderColor="#666"
+                       IsPassword="True"/>
+                
+                <Label Text="{Binding ErrorMessage}" 
+                       TextColor="Red" 
+                       FontSize="Small"
+                       HorizontalOptions="Center"/>
+                
+                <Button Text="Iniciar Sesión" 
+                        Command="{Binding LoginCommand}" 
+                        BackgroundColor="#2563EB" 
+                        TextColor="White" 
+                        CornerRadius="8" 
+                        HeightRequest="45"
+                        FontAttributes="Bold"
+                        Margin="0,10,0,0"/>
+            </VerticalStackLayout>
+        </Frame>
+    </Grid>
+
+</ContentPage>
