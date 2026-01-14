@@ -27,6 +27,9 @@ public class Tarea
     [Indexed]
     public string Prioridad { get; set; } = "Variable"; // "Prioritaria", "Variable"
 
+    [Indexed]
+    public string CategoriaKPI { get; set; } = "General"; // "Ingresos", "Egresos", "Declaraciones", "OpinionSAT", "EnvioPrevios"
+
     public decimal TiempoEstimado { get; set; }
     public decimal TiempoReal { get; set; }
 

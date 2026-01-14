@@ -274,3 +274,27 @@ public class IsVisibleIfTrueConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
+
+public class StringToInitialsConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is string name && !string.IsNullOrWhiteSpace(name))
+        {
+            var parts = name.Trim().Split(' ');
+            if (parts.Length > 0)
+            {
+                if (parts.Length > 1)
+                    return $"{parts[0][0]}{parts[1][0]}".ToUpper();
+                else
+                    return $"{name[0]}".ToUpper();
+            }
+        }
+        return "?";
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}

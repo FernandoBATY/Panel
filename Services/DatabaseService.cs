@@ -37,17 +37,23 @@ public class DatabaseService
         // Seed default users
         var users = new List<User>
         {
-            new() { Username = "admin", Password = "password", Role = "Admin", Name = "Administrator", Estado = "desconectado" },
-            new() { Username = "Jazmin", Password = "Jazminjazer1", Role = "Admin", Name = "Jazmin", Estado = "desconectado" },
+            new() { Username = "admin", Password = "password", Role = "Admin", Name = "Administrator", Estado = "desconectado", Area = "Admin" },
+            new() { Username = "Jazmin", Password = "Jazminjazer1", Role = "Admin", Name = "Jazmin", Estado = "desconectado", Area = "Admin" },
             
-            new() { Username = "Perla", Password = "Perlajazer2", Role = "Contador", Name = "Perla", Estado = "desconectado" },
-            new() { Username = "Dulce", Password = "Dulcejazer3", Role = "Contador", Name = "Dulce", Estado = "desconectado" },
-            new() { Username = "Mari", Password = "Marijazer4", Role = "Contador", Name = "Mari", Estado = "desconectado" },
-            new() { Username = "Karla", Password = "Karlajazer5", Role = "Contador", Name = "Karla", Estado = "desconectado" },
-            new() { Username = "Guadalupe", Password = "Guadalupejazer6", Role = "Contador", Name = "Guadalupe", Estado = "desconectado" },
-            new() { Username = "Jenny", Password = "Jennyjazer7", Role = "Contador", Name = "Jenny", Estado = "desconectado" },
-            new() { Username = "Elio", Password = "Eliojazer8", Role = "Contador", Name = "Elio", Estado = "desconectado" },
-            new() { Username = "Daniela", Password = "Danielajazer9", Role = "Contador", Name = "Daniela", Estado = "desconectado" }
+            // Ingresos
+            new() { Username = "Mari", Password = "Marijazer4", Role = "Contador", Name = "Mari", Estado = "desconectado", Area = "Ingresos" },
+            new() { Username = "Karla", Password = "Karlajazer5", Role = "Contador", Name = "Karla", Estado = "desconectado", Area = "Ingresos" },
+            new() { Username = "Guadalupe", Password = "Guadalupejazer6", Role = "Contador", Name = "Guadalupe", Estado = "desconectado", Area = "Ingresos" },
+            new() { Username = "Jenny", Password = "Jennyjazer7", Role = "Contador", Name = "Jenny", Estado = "desconectado", Area = "Ingresos" },
+
+            // Egresos
+            new() { Username = "Perla", Password = "Perlajazer2", Role = "Contador", Name = "Perla", Estado = "desconectado", Area = "Egresos" },
+            new() { Username = "Dulce", Password = "Dulcejazer3", Role = "Contador", Name = "Dulce", Estado = "desconectado", Area = "Egresos" },
+            new() { Username = "Daniela", Password = "Danielajazer9", Role = "Contador", Name = "Daniela", Estado = "desconectado", Area = "Egresos" },
+
+            // Declaraciones
+            new() { Username = "Luis", Password = "Luisjazer10", Role = "Contador", Name = "Luis", Estado = "desconectado", Area = "Declaraciones" },
+            new() { Username = "Elio", Password = "Eliojazer8", Role = "Contador", Name = "Elio", Estado = "desconectado", Area = "Declaraciones" }
         };
 
         foreach (var user in users)
@@ -63,6 +69,9 @@ public class DatabaseService
             {
                 // Update role/info if exists (to migrate existing users to new schema format if needed)
                 existing.Role = user.Role;
+                existing.Area = user.Area; // Update Area
+                existing.Name = user.Name; // Ensure Name is populated
+                existing.Password = user.Password; // Update Password if changed
                 await _database.UpdateAsync(existing);
             }
         }
@@ -251,5 +260,20 @@ public class DatabaseService
         }
         
         return result;
+    }
+    public async Task ResetDatabaseAsync()
+    {
+        await Init();
+        // Drop volatile data tables
+        await _database!.DropTableAsync<Tarea>();
+        await _database!.DropTableAsync<Mensaje>();
+        await _database!.DropTableAsync<Alerta>();
+        await _database!.DropTableAsync<Documento>();
+        
+        // Recreate them empty
+        await _database!.CreateTableAsync<Tarea>();
+        await _database!.CreateTableAsync<Mensaje>();
+        await _database!.CreateTableAsync<Alerta>();
+        await _database!.CreateTableAsync<Documento>();
     }
 }

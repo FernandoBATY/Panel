@@ -4,6 +4,7 @@ using Panel.Models;
 using Panel.Services;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using System.Windows.Input;
 
 namespace Panel.ViewModels;
 
@@ -23,6 +24,12 @@ public partial class PanelAdminVM : ObservableObject
     [ObservableProperty]
     private string _eficiencia = "0%";
 
+    // Report KPIs
+    [ObservableProperty] private string _mejorContadorNombre = "N/A";
+    [ObservableProperty] private string _mejorContadorEficiencia = "0%";
+    [ObservableProperty] private string _promedioEficiencia = "0%";
+    [ObservableProperty] private string _totalHorasEquipo = "0h";
+
     // Navegación
     [ObservableProperty] 
     private int _selectedTabIndex = 0; // 0:Dashboard, 1:Gestión, 2:Mensajes, 3:Reportes
@@ -35,6 +42,16 @@ public partial class PanelAdminVM : ObservableObject
 
     public ObservableCollection<User> Contadores { get; } = new();
     public ObservableCollection<Tarea> Tareas { get; } = new();
+    public ObservableCollection<ContadorReporte> ReportesDetallados { get; } = new();
+    public ObservableCollection<KPIReporte> ReportesKPI { get; } = new();
+
+    [ObservableProperty]
+    private DateTime _fechaReporte = DateTime.Today;
+
+    partial void OnFechaReporteChanged(DateTime value)
+    {
+        Task.Run(CargarDatos);
+    }
 
     // New Task Form Properties
     [ObservableProperty]
@@ -50,7 +67,11 @@ public partial class PanelAdminVM : ObservableObject
     [ObservableProperty]
     private string _nuevaTareaPrioridad = "Variable";
 
+    [ObservableProperty]
+    private string _nuevaTareaCategoriaKPI = "Ingresos"; // Default
+
     public List<string> Prioridades { get; } = new() { "Prioritaria", "Variable" };
+    public List<string> CategoriasKPI { get; } = new() { "Ingresos", "Egresos", "Declaraciones", "OpinionSAT", "EnvioPrevios" };
 
     // Network/Sync properties
     private readonly NetworkService _networkService;
@@ -136,6 +157,15 @@ public partial class PanelAdminVM : ObservableObject
         });
     }
 
+    public ICommand RefreshCommand => new Command(async () => await Refresh());
+
+    public async Task Refresh()
+    {
+        IsBusy = true;
+        await CargarDatos();
+        IsBusy = false;
+    }
+
     public PanelAdminVM(DatabaseService databaseService, NetworkService networkService, SyncService syncService)
     {
         _databaseService = databaseService;
@@ -198,6 +228,73 @@ public partial class PanelAdminVM : ObservableObject
             {
                 Eficiencia = "N/A";
             }
+
+            // Generar Reportes Detallados
+            ReportesDetallados.Clear();
+            foreach (var contador in contadores)
+            {
+                var tareasContador = tareas.Where(t => t.AsignadoAId == contador.Id).ToList();
+                int total = tareasContador.Count;
+                int completadas = tareasContador.Count(t => t.Estado == "completada");
+                int pendientes = total - completadas;
+                // Calculate stats
+                double eficiencia = total > 0 ? (double)completadas / total : 0;
+                decimal horas = tareasContador.Sum(t => t.TiempoReal);
+
+                ReportesDetallados.Add(new ContadorReporte
+                {
+                    Contador = contador,
+                    TotalTareas = total,
+                    Completadas = completadas,
+                    Pendientes = pendientes,
+                    Eficiencia = eficiencia,
+                    TiempoTrabajado = horas
+                });
+            }
+
+            // Calcular KPIs por Categoría del Día Seleccionado (ACUMULATIVO MENSUAL)
+            ReportesKPI.Clear();
+            foreach (var cat in CategoriasKPI)
+            {
+                // 1. Universo: Tareas asignadas en el MES y AÑO de la fecha seleccionada
+                var tareasMes = tareas.Where(t => 
+                    t.CategoriaKPI == cat && 
+                    t.FechaAsignacion.Month == FechaReporte.Month && 
+                    t.FechaAsignacion.Year == FechaReporte.Year).ToList();
+
+                int totalCat = tareasMes.Count;
+
+                // 2. Completadas: Tareas del universo que se completaron en o antes de la fecha seleccionada
+                // Esto crea el efecto acumulativo/progresivo día con día
+                int compCat = tareasMes.Count(t => 
+                    t.Estado == "completada" && 
+                    t.FechaCompletado != null && 
+                    t.FechaCompletado.Value.Date <= FechaReporte.Date);
+
+                double porc = totalCat > 0 ? (double)compCat / totalCat : 0;
+
+                ReportesKPI.Add(new KPIReporte
+                {
+                    Categoria = cat,
+                    TotalTareas = totalCat,
+                    Completadas = compCat,
+                    Porcentaje = porc
+                });
+            }
+
+            // Calcular KPIs Globales
+            if (ReportesDetallados.Any())
+            {
+                var mejor = ReportesDetallados.OrderByDescending(r => r.Eficiencia).ThenByDescending(r => r.Completadas).First();
+                MejorContadorNombre = mejor.Nombre;
+                MejorContadorEficiencia = mejor.EficienciaTexto;
+
+                double promedio = ReportesDetallados.Average(r => r.Eficiencia);
+                PromedioEficiencia = $"{promedio:P0}";
+
+                decimal totalHoras = ReportesDetallados.Sum(r => r.TiempoTrabajado);
+                TotalHorasEquipo = $"{totalHoras:0.0}h";
+            }
         });
 
         await CargarMensajes();
@@ -218,6 +315,7 @@ public partial class PanelAdminVM : ObservableObject
             TiempoEstimado = NuevaTareaHorasEstimadas,
             Estado = "pendiente",
             Prioridad = NuevaTareaPrioridad,
+            CategoriaKPI = NuevaTareaCategoriaKPI,
             AsignadoAId = NuevaTareaContadorSeleccionado.Id
         };
         
@@ -230,7 +328,9 @@ public partial class PanelAdminVM : ObservableObject
         // Reset form
         NuevaTareaTitulo = "";
         NuevaTareaDescripcion = "";
+        NuevaTareaDescripcion = "";
         NuevaTareaPrioridad = "Variable";
+        NuevaTareaCategoriaKPI = "Ingresos";
         
         // Refresh full data to be safe (optional)
         await CargarDatos();
@@ -244,6 +344,18 @@ public partial class PanelAdminVM : ObservableObject
         {
             await Clipboard.Default.SetTextAsync(ServerIP);
         }
+    }
+
+    [RelayCommand]
+    public async Task ResetData()
+    {
+        bool confirm = await Application.Current!.MainPage!.DisplayAlert("Confirmar", "¿Borrar todas las tareas y mensajes? Esto es irreversible.", "Sí, Borrar", "Cancelar");
+        if (!confirm) return;
+
+        IsBusy = true;
+        await _databaseService.ResetDatabaseAsync();
+        await CargarDatos(); // Reload UI (will be empty)
+        IsBusy = false;
     }
 
     [RelayCommand]
@@ -287,4 +399,7 @@ public partial class PanelAdminVM : ObservableObject
         if (entityType == "Mensaje") await CargarMensajes();
         else await CargarDatos();
     }
+
+    [ObservableProperty]
+    private bool _isBusy;
 }

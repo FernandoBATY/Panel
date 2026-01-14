@@ -15,6 +15,7 @@ public class User
     public string Role { get; set; } = "Contador"; // "Admin" or "Contador"
     public string Name { get; set; } = string.Empty;
     public string Estado { get; set; } = "desconectado"; // "conectado", "desconectado"
+    public string Area { get; set; } = "General"; // "Ingresos", "Egresos", "Declaraciones", "Admin"
 
     // Computed properties for UI (ignored in DB)
     [Ignore]

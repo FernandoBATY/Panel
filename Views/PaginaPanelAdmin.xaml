@@ -38,9 +38,9 @@
                      <HorizontalStackLayout Spacing="8" IsVisible="{Binding IsServerRunning}">
                         <Label Text="IP:" FontSize="13" TextColor="{StaticResource Gray500Jazer}" VerticalOptions="Center"/>
                         <Label Text="{Binding ServerIP}" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource Green600}" FontFamily="Consolas" VerticalOptions="Center"/>
-                        <Button Text="📋" Command="{Binding CopiarIPCommand}" 
+                        <Button Text="Copiar" Command="{Binding CopiarIPCommand}" 
                                 BackgroundColor="Transparent" TextColor="{StaticResource Gray400Jazer}"
-                                HeightRequest="30" WidthRequest="30" Padding="0" FontSize="14"
+                                HeightRequest="30" WidthRequest="40" Padding="0" FontSize="12"
                                 ToolTipProperties.Text="Copiar IP"/>
                      </HorizontalStackLayout>
                 </HorizontalStackLayout>
@@ -57,6 +57,11 @@
                             BackgroundColor="Transparent" TextColor="{StaticResource Gray700Jazer}"
                             BorderColor="{StaticResource Gray300Jazer}" BorderWidth="1"
                             HeightRequest="36" FontSize="13" Padding="12,0" CornerRadius="6"/>
+                    <Button Text="🗑️" 
+                            Command="{Binding ResetDataCommand}"
+                            BackgroundColor="{StaticResource Red400}" TextColor="White"
+                            HeightRequest="36" WidthRequest="40" Padding="0" CornerRadius="6"
+                            ToolTipProperties.Text="Reset BD"/>
                 </HorizontalStackLayout>
             </Grid>
         </Border>
@@ -66,7 +71,7 @@
             <Grid ColumnDefinitions="*,*,*,*">
                 <!-- Stat 1 -->
                 <HorizontalStackLayout Grid.Column="0" Spacing="12">
-                     <Label Text="👥" FontSize="24" VerticalOptions="Center"/>
+                     <Label Text="Total" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource Blue700}" VerticalOptions="Center"/>
                      <VerticalStackLayout>
                          <Label Text="{Binding TotalContadores}" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Blue700}"/>
                          <Label Text="Contadores" FontSize="12" TextColor="{StaticResource Gray500Jazer}"/>
@@ -76,7 +81,7 @@
                 
                 <!-- Stat 2 -->
                 <HorizontalStackLayout Grid.Column="1" Spacing="12" Margin="12,0,0,0">
-                     <Label Text="✅" FontSize="24" VerticalOptions="Center"/>
+                     <Label Text="Éxito" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource Green600}" VerticalOptions="Center"/>
                      <VerticalStackLayout>
                          <Label Text="{Binding TotalCompletadas}" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Green600}"/>
                          <Label Text="Completadas" FontSize="12" TextColor="{StaticResource Gray500Jazer}"/>
@@ -86,7 +91,7 @@
 
                 <!-- Stat 3 -->
                 <HorizontalStackLayout Grid.Column="2" Spacing="12" Margin="12,0,0,0">
-                     <Label Text="📋" FontSize="24" VerticalOptions="Center"/>
+                     <Label Text="Pendiente" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource Yellow600}" VerticalOptions="Center"/>
                      <VerticalStackLayout>
                          <Label Text="{Binding TotalPendientes}" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Yellow600}"/>
                          <Label Text="Pendientes" FontSize="12" TextColor="{StaticResource Gray500Jazer}"/>
@@ -96,7 +101,7 @@
 
                 <!-- Stat 4 -->
                 <HorizontalStackLayout Grid.Column="3" Spacing="12" Margin="12,0,0,0">
-                     <Label Text="📈" FontSize="24" VerticalOptions="Center"/>
+                     <Label Text="Eficiencia" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource Purple600}" VerticalOptions="Center"/>
                      <VerticalStackLayout>
                          <Label Text="{Binding Eficiencia}" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Purple600}"/>
                          <Label Text="Eficiencia" FontSize="12" TextColor="{StaticResource Gray500Jazer}"/>
@@ -129,7 +134,7 @@
                 
                 <!-- Tab 1: Dashboard -->
                 <Grid Grid.Column="0">
-                    <Button Text="📊 Equipo" Style="{StaticResource TabButton}" 
+                    <Button Text="Equipo" Style="{StaticResource TabButton}" 
                             Command="{Binding SetTabCommand}" CommandParameter="0">
                         <Button.Triggers>
                             <DataTrigger TargetType="Button" Binding="{Binding SelectedTabIndex}" Value="0">
@@ -149,7 +154,7 @@
 
                 <!-- Tab 2: Gestión -->
                 <Grid Grid.Column="1">
-                    <Button Text="⚙️ Gestión" Style="{StaticResource TabButton}" 
+                    <Button Text="Gestión" Style="{StaticResource TabButton}" 
                             Command="{Binding SetTabCommand}" CommandParameter="1">
                         <Button.Triggers>
                             <DataTrigger TargetType="Button" Binding="{Binding SelectedTabIndex}" Value="1">
@@ -169,7 +174,7 @@
 
                 <!-- Tab 3: Mensajería -->
                 <Grid Grid.Column="2">
-                    <Button Text="💬 Mensajería" Style="{StaticResource TabButton}" 
+                    <Button Text="Mensajería" Style="{StaticResource TabButton}" 
                             Command="{Binding SetTabCommand}" CommandParameter="2">
                         <Button.Triggers>
                             <DataTrigger TargetType="Button" Binding="{Binding SelectedTabIndex}" Value="2">
@@ -189,7 +194,7 @@
 
                 <!-- Tab 4: Reportes -->
                 <Grid Grid.Column="3">
-                    <Button Text="📉 Reportes" Style="{StaticResource TabButton}" 
+                    <Button Text="Reportes" Style="{StaticResource TabButton}" 
                             Command="{Binding SetTabCommand}" CommandParameter="3">
                         <Button.Triggers>
                             <DataTrigger TargetType="Button" Binding="{Binding SelectedTabIndex}" Value="3">
@@ -231,7 +236,7 @@
                                     <DataTemplate>
                                         <Grid ColumnDefinitions="40,*,*" Padding="0,12">
                                             <Border Grid.Column="0" HeightRequest="32" WidthRequest="32" StrokeShape="RoundRectangle 16" BackgroundColor="{StaticResource Blue50}" StrokeThickness="0" VerticalOptions="Center" HorizontalOptions="Center">
-                                                <Label Text="👤" HorizontalOptions="Center" VerticalOptions="Center" FontSize="14"/>
+                                                <Label Text="{Binding Name, Converter={StaticResource StringToInitialsConverter}}" HorizontalOptions="Center" VerticalOptions="Center" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource Blue600}"/>
                                             </Border>
                                             <Label Grid.Column="1" Text="{Binding Username}" TextColor="{StaticResource Gray800Jazer}" VerticalOptions="Center" FontAttributes="Bold"/>
                                             <Border Grid.Column="2" BackgroundColor="{StaticResource Gray100Jazer}" StrokeThickness="0" Padding="8,2" HorizontalOptions="Center" VerticalOptions="Center" StrokeShape="RoundRectangle 4">
@@ -289,11 +294,21 @@
                                     <Picker ItemsSource="{Binding Contadores}" SelectedItem="{Binding NuevaTareaContadorSeleccionado}" ItemDisplayBinding="{Binding Username}" Title="Seleccionar Contador" TextColor="Black" BackgroundColor="{StaticResource Gray50}"/>
                                 </VerticalStackLayout>
 
-                                <VerticalStackLayout Spacing="4">
-                                    <Label Text="Prioridad" FontSize="12" TextColor="{StaticResource Gray600Jazer}"/>
-                                    <Picker ItemsSource="{Binding Prioridades}" SelectedItem="{Binding NuevaTareaPrioridad}" Title="Seleccionar Prioridad" TextColor="Black" BackgroundColor="{StaticResource Gray50}"/>
-                                </VerticalStackLayout>
-
+                                <HorizontalStackLayout Spacing="16">
+                            <VerticalStackLayout Spacing="8">
+                                <Label Text="Prioridad" TextColor="{StaticResource Gray700Jazer}" FontSize="13"/>
+                                <Picker ItemsSource="{Binding Prioridades}" SelectedItem="{Binding NuevaTareaPrioridad}" 
+                                        BackgroundColor="White" TextColor="{StaticResource Gray800Jazer}"
+                                        HeightRequest="40" WidthRequest="150"/>
+                            </VerticalStackLayout>
+                            
+                            <VerticalStackLayout Spacing="8">
+                                <Label Text="Categoría KPI" TextColor="{StaticResource Gray700Jazer}" FontSize="13"/>
+                                <Picker ItemsSource="{Binding CategoriasKPI}" SelectedItem="{Binding NuevaTareaCategoriaKPI}" 
+                                        BackgroundColor="White" TextColor="{StaticResource Gray800Jazer}"
+                                        HeightRequest="40" WidthRequest="180"/>
+                            </VerticalStackLayout>
+                        </HorizontalStackLayout>
                                 <Button Text="Crear Asignación" Command="{Binding CrearTareaCommand}" 
                                         BackgroundColor="{StaticResource Blue600}" TextColor="White" FontAttributes="Bold" 
                                         CornerRadius="8" HeightRequest="45" Margin="0,10,0,0"/>
@@ -392,12 +407,155 @@
 
             <!-- VISTA 3: REPORTES -->
             <Grid IsVisible="{Binding SelectedTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=3}">
-                <VerticalStackLayout Spacing="24" VerticalOptions="Center" HorizontalOptions="Center">
-                    <Label Text="📊" FontSize="60" HorizontalOptions="Center"/>
-                    <Label Text="Módulo de Reportes" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Gray800Jazer}"/>
-                    <Label Text="Próximamente: Gráficos de rendimiento y exportación a Excel/PDF" TextColor="{StaticResource Gray500Jazer}" HorizontalOptions="Center"/>
-                    <Button Text="Generar Reporte Demo" BackgroundColor="{StaticResource Blue600}" TextColor="White" WidthRequest="200"/>
-                </VerticalStackLayout>
+                <ScrollView VerticalScrollBarVisibility="Always">
+                    <VerticalStackLayout Spacing="24">
+                        
+                        <!-- Header Dashboard -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Text="Rendimiento del Equipo" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource Gray900Jazer}"/>
+                            <HorizontalStackLayout Grid.Column="1" Spacing="8">
+                                <Label Text="Fecha Reporte:" VerticalOptions="Center" TextColor="{StaticResource Gray700Jazer}"/>
+                                <DatePicker Date="{Binding FechaReporte}" TextColor="{StaticResource Gray900Jazer}" BackgroundColor="White"/>
+                                <Button Text="🔄" Command="{Binding RefreshCommand}" 
+                                        BackgroundColor="{StaticResource Gray100Jazer}" TextColor="{StaticResource Gray900Jazer}"
+                                        HeightRequest="36" WidthRequest="40" Padding="0" CornerRadius="6"
+                                        ToolTipProperties.Text="Actualizar Datos"/>
+                            </HorizontalStackLayout>
+                        </Grid>
+
+                        <!-- 1. Tabla Desglose KPIs Diario (ACUMULATIVO) - UNIFICADO -->
+                        <Border BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" StrokeShape="RoundRectangle 8" Padding="0">
+                            <VerticalStackLayout>
+                                <Label Text="Cumplimiento Mensual (Acumulado al Día)" FontAttributes="Bold" TextColor="{StaticResource Gray900Jazer}" Margin="20,16,20,8"/>
+                                <Grid RowDefinitions="Auto,*" Margin="0,0,0,16">
+                                    <CollectionView ItemsSource="{Binding ReportesKPI}">
+                                        <CollectionView.Header>
+                                             <Grid ColumnDefinitions="2*,*,*,*" Padding="20,8" BackgroundColor="{StaticResource Gray100}">
+                                                 <Label Grid.Column="0" Text="CATEGORÍA" FontSize="11" FontAttributes="Bold" TextColor="Black"/>
+                                                 <Label Grid.Column="1" Text="TOTAL MES" FontSize="11" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
+                                                 <Label Grid.Column="2" Text="HECHO (ACUM)" FontSize="11" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
+                                                 <Label Grid.Column="3" Text="%" FontSize="11" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
+                                             </Grid>
+                                        </CollectionView.Header>
+                                        <CollectionView.ItemTemplate>
+                                            <DataTemplate>
+                                                <VerticalStackLayout Spacing="0">
+                                                    <Grid ColumnDefinitions="2*,*,*,*" Padding="20,12,20,4">
+                                                        <Label Grid.Column="0" Text="{Binding Categoria}" FontAttributes="Bold" TextColor="Black"/>
+                                                        <Label Grid.Column="1" Text="{Binding TotalTareas}" HorizontalOptions="Center" TextColor="Black"/>
+                                                        <Label Grid.Column="2" Text="{Binding Completadas}" HorizontalOptions="Center" TextColor="Black" FontAttributes="Bold"/>
+                                                        <Border Grid.Column="3" BackgroundColor="{Binding ColorEstado}" Padding="8,2" StrokeThickness="0" StrokeShape="RoundRectangle 4" HorizontalOptions="Center">
+                                                            <Label Text="{Binding PorcentajeTexto}" TextColor="White" FontAttributes="Bold" FontSize="12"/>
+                                                        </Border>
+                                                    </Grid>
+                                                    <ProgressBar Progress="{Binding Porcentaje}" ProgressColor="{Binding ColorEstado}" HeightRequest="4" Margin="20,0,20,12" BackgroundColor="{StaticResource Gray50Jazer}"/>
+                                                    <BoxView HeightRequest="1" Color="{StaticResource Gray100Jazer}"/>
+                                                </VerticalStackLayout>
+                                            </DataTemplate>
+                                        </CollectionView.ItemTemplate>
+                                    </CollectionView>
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <!-- KPI Cards (Resumen Global) -->
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="16">
+                            <!-- Card 1: Empleado del Mes -->
+                            <Border Grid.Column="0" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" StrokeShape="RoundRectangle 8" Padding="16">
+                                <VerticalStackLayout Spacing="8">
+                                    <Label Text="Mejor Rendimiento" FontSize="12" TextColor="{StaticResource Gray500Jazer}"/>
+                                    <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                                        <Label Text="🏆" FontSize="20" VerticalOptions="Center"/>
+                                        <VerticalStackLayout>
+                                            <Label Text="{Binding MejorContadorNombre}" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource Blue600}"/>
+                                            <Label Text="{Binding MejorContadorEficiencia, StringFormat='Eficiencia: {0}'}" FontSize="10" TextColor="{StaticResource Green600}"/>
+                                        </VerticalStackLayout>
+                                    </HorizontalStackLayout>
+                                </VerticalStackLayout>
+                            </Border>
+                            
+                            <!-- Card 2: Eficiencia Global -->
+                            <Border Grid.Column="1" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" StrokeShape="RoundRectangle 8" Padding="16">
+                                <VerticalStackLayout Spacing="8">
+                                    <Label Text="Eficiencia Promedio" FontSize="12" TextColor="{StaticResource Gray500Jazer}"/>
+                                    <Label Text="{Binding PromedioEficiencia}" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Purple600}"/>
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <!-- Card 3: Horas Totales -->
+                            <Border Grid.Column="2" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" StrokeShape="RoundRectangle 8" Padding="16">
+                                <VerticalStackLayout Spacing="8">
+                                    <Label Text="Total Horas Invertidas" FontSize="12" TextColor="{StaticResource Gray500Jazer}"/>
+                                    <Label Text="{Binding TotalHorasEquipo}" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Blue500}"/>
+                                </VerticalStackLayout>
+                            </Border>
+                        </Grid>
+
+                        <!-- Gráfico Comparativo -->
+                        <Border BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" StrokeShape="RoundRectangle 8" Padding="24">
+                            <VerticalStackLayout Spacing="16">
+                                <Label Text="Comparativa de Eficiencia" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource Gray800Jazer}"/>
+                                
+                                <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Default">
+                                    <StackLayout BindableLayout.ItemsSource="{Binding ReportesDetallados}" 
+                                                 Orientation="Horizontal" 
+                                                 Spacing="24"
+                                                 HeightRequest="200"
+                                                 VerticalOptions="End">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate>
+                                                <VerticalStackLayout Spacing="8" VerticalOptions="End">
+                                                    <Label Text="{Binding EficienciaTexto}" FontSize="10" HorizontalOptions="Center" TextColor="Black"/>
+                                                    <BoxView Color="{Binding ColorEstado}" WidthRequest="40" HeightRequest="{Binding BarHeight}" CornerRadius="4,4,0,0" HorizontalOptions="Center"/>
+                                                    <Label Text="{Binding Nombre}" FontSize="10" HorizontalOptions="Center" TextColor="Black" FontAttributes="Bold"/>
+                                                </VerticalStackLayout>
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </StackLayout>
+                                </ScrollView>
+                            </VerticalStackLayout>
+                        </Border>
+                        
+                        <!-- Tabla Detallada -->
+                        <Border BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" StrokeShape="RoundRectangle 8" Padding="0">
+                            <Grid RowDefinitions="Auto,*">
+                                <!-- Header Tabla Reportes -->
+                                <Grid Grid.Row="0" ColumnDefinitions="2*,*,*,*,*" BackgroundColor="{StaticResource Gray100}" Padding="20,12">
+                                    <Label Grid.Column="0" Text="CONTADOR" FontSize="11" FontAttributes="Bold" TextColor="Black"/>
+                                    <Label Grid.Column="1" Text="TOTAL" FontSize="11" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
+                                    <Label Grid.Column="2" Text="HECHO" FontSize="11" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
+                                    <Label Grid.Column="3" Text="PENDIENTE" FontSize="11" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
+                                    <Label Grid.Column="4" Text="HORAS" FontSize="11" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
+                                </Grid>
+                                
+                                <!-- Lista Reportes -->
+                                <CollectionView Grid.Row="1" ItemsSource="{Binding ReportesDetallados}">
+                                    <CollectionView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid ColumnDefinitions="2*,*,*,*,*" Padding="20,16">
+                                                <HorizontalStackLayout Grid.Column="0" Spacing="10">
+                                                    <Border HeightRequest="24" WidthRequest="24" StrokeShape="RoundRectangle 12" BackgroundColor="{StaticResource Blue50}" StrokeThickness="0">
+                                                        <Label Text="{Binding Nombre, Converter={StaticResource StringToInitialsConverter}}" FontSize="9" HorizontalOptions="Center" VerticalOptions="Center" TextColor="{StaticResource Blue600}" FontAttributes="Bold"/>
+                                                    </Border>
+                                                    <Label Text="{Binding Nombre}" VerticalOptions="Center" TextColor="Black" FontAttributes="Bold"/>
+                                                </HorizontalStackLayout>
+                                                
+                                                <Label Grid.Column="1" Text="{Binding TotalTareas}" HorizontalOptions="Center" VerticalOptions="Center" TextColor="Black"/>
+                                                <Label Grid.Column="2" Text="{Binding Completadas}" HorizontalOptions="Center" VerticalOptions="Center" TextColor="{StaticResource Green600}" FontAttributes="Bold"/>
+                                                <Label Grid.Column="3" Text="{Binding Pendientes}" HorizontalOptions="Center" VerticalOptions="Center" TextColor="{StaticResource Yellow600}" FontAttributes="Bold"/>
+                                                
+                                                <HorizontalStackLayout Grid.Column="4" Spacing="4" HorizontalOptions="Center" VerticalOptions="Center">
+                                                    <Label Text="{Binding TiempoTrabajadoTexto}" TextColor="{StaticResource Purple600}" FontSize="12" FontAttributes="Bold"/>
+                                                </HorizontalStackLayout>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </CollectionView.ItemTemplate>
+                                </CollectionView>
+                            </Grid>
+                        </Border>
+
+                    </VerticalStackLayout>
+                </ScrollView>
             </Grid>
 
         </Grid>

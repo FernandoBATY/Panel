@@ -304,7 +304,9 @@
                                              <!-- Col 2: Info Tarea -->
                                              <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
                                                  <HorizontalStackLayout Spacing="8">
-                                                     <Label Text="🔴" IsVisible="{Binding Prioridad, Converter={StaticResource IsPrioritariaConverter}}" FontSize="10" VerticalOptions="Center"/>
+                                                     <Border BackgroundColor="{StaticResource Red100}" StrokeThickness="0" Padding="6,2" StrokeShape="RoundRectangle 4" VerticalOptions="Center" IsVisible="{Binding Prioridad, Converter={StaticResource IsPrioritariaConverter}}">
+                                                         <Label Text="PRIORITARIA" TextColor="{StaticResource Red700}" FontSize="9" FontAttributes="Bold"/>
+                                                     </Border>
                                                      <Label Text="{Binding Titulo}" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource Gray900Jazer}"/>
                                                  </HorizontalStackLayout>
                                                  <Label Text="{Binding Descripcion}" FontSize="13" TextColor="{StaticResource Gray500Jazer}" LineBreakMode="TailTruncation"/>
@@ -349,7 +351,7 @@
                     <VerticalStackLayout Spacing="24">
                         <!-- Alertas Críticas -->
                         <VerticalStackLayout Spacing="12" IsVisible="{Binding AlertasCriticas.Count, Converter={StaticResource IntToBoolConverter}}">
-                            <Label Text="⚠️ Atención Requerida" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource Red600}"/>
+                            <Label Text="Atención Requerida" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource Red600}"/>
                             <CollectionView ItemsSource="{Binding AlertasCriticas}">
                                 <CollectionView.ItemTemplate>
                                     <DataTemplate>
@@ -392,7 +394,9 @@
                                                  </VisualStateGroup>
                                              </VisualStateManager.VisualStateGroups>
                                             <Grid ColumnDefinitions="40,*,Auto">
-                                                <Label Grid.Column="0" Text="ℹ️" FontSize="20" VerticalOptions="Center"/>
+                                                <Border Grid.Column="0" HeightRequest="32" WidthRequest="32" StrokeShape="RoundRectangle 16" BackgroundColor="{StaticResource Blue50}" StrokeThickness="0" VerticalOptions="Center" HorizontalOptions="Center">
+                                                <Label Text="{Binding Titulo, Converter={StaticResource StringToInitialsConverter}}" HorizontalOptions="Center" VerticalOptions="Center" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource Blue600}"/>
+                                            </Border>
                                                 <VerticalStackLayout Grid.Column="1" Spacing="2">
                                                     <Label Text="{Binding Mensaje}" TextColor="{StaticResource Gray800Jazer}" FontSize="14"/>
                                                     <Label Text="{Binding FechaCreacion, StringFormat='{0:g}'}" TextColor="{StaticResource Gray500Jazer}" FontSize="12"/>
@@ -420,7 +424,7 @@
                 <CollectionView Grid.Row="0" ItemsSource="{Binding Mensajes}" ItemsUpdatingScrollMode="KeepLastItemInView" VerticalScrollBarVisibility="Always">
                     <CollectionView.EmptyView>
                          <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="10">
-                             <Label Text="💬" FontSize="40" HorizontalOptions="Center"/>
+                             <Label Text="Sin mensajes" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource Gray400Jazer}" HorizontalOptions="Center"/>
                              <Label Text="No hay mensajes aún" TextColor="{StaticResource Gray400Jazer}"/>
                          </VerticalStackLayout>
                     </CollectionView.EmptyView>
@@ -477,11 +481,11 @@
                         <Entry Text="{Binding NuevoMensajeContenido}" Placeholder="Escribe un mensaje..." 
                                TextColor="{StaticResource Gray900Jazer}" PlaceholderColor="{StaticResource Gray400Jazer}"
                                FontSize="14" VerticalOptions="Center"/>
-                        <Button Grid.Column="1" Text="➤" 
+                        <Button Grid.Column="1" Text="Enviar" 
                                 Command="{Binding EnviarMensajeCommand}"
                                 BackgroundColor="Transparent" TextColor="{StaticResource Blue600}"
-                                FontAttributes="Bold" FontSize="20"
-                                HeightRequest="40" WidthRequest="50"/>
+                                FontAttributes="Bold" FontSize="14"
+                                HeightRequest="40" WidthRequest="60"/>
                     </Grid>
                 </Border>
             </Grid>
@@ -507,7 +511,7 @@
                                       <Grid ColumnDefinitions="40,*,Auto">
                                           <!-- Icono Genérico -->
                                           <Border Grid.Column="0" BackgroundColor="{StaticResource Blue50}" HeightRequest="32" WidthRequest="32" StrokeShape="RoundRectangle 6" StrokeThickness="0" VerticalOptions="Center">
-                                              <Label Text="📄" HorizontalOptions="Center" VerticalOptions="Center"/>
+                                              <Label Text="DOC" HorizontalOptions="Center" VerticalOptions="Center" FontSize="10" FontAttributes="Bold" TextColor="{StaticResource Blue600}"/>
                                           </Border>
                                           
                                           <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center" Margin="12,0">

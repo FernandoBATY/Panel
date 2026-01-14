@@ -189,6 +189,7 @@ public partial class CentroControlContadorVM : ObservableObject
         if (tarea != null)
         {
             tarea.Estado = "completada";
+            tarea.FechaCompletado = DateTime.Now;
             await _databaseService.UpdateTareaAsync(tarea);
             await CargarTodosLosDatos();
         }
