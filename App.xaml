@@ -25,6 +25,9 @@
                 <converters:AlertTypeToBgColorConverter x:Key="AlertTypeToBgColorConverter"/>
                 <converters:IsVisibleIfTrueConverter x:Key="IsVisibleIfTrueConverter"/>
                 <converters:EqualConverter x:Key="EqualConverter"/>
+                <converters:StringToInitialsConverter x:Key="StringToInitialsConverter"/>
+                <converters:BoolToStringConverter x:Key="BoolToStringConverter"/>
+                <converters:FileToImageSourceConverter x:Key="FileToImageSourceConverter"/>
             </ResourceDictionary>
         </ResourceDictionary>
     </Application.Resources>

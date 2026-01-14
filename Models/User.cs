@@ -16,6 +16,7 @@ public class User
     public string Name { get; set; } = string.Empty;
     public string Estado { get; set; } = "desconectado"; // "conectado", "desconectado"
     public string Area { get; set; } = "General"; // "Ingresos", "Egresos", "Declaraciones", "Admin"
+    public string FotoPerfil { get; set; } = string.Empty; // Ruta local a imagen de perfil
 
     // Computed properties for UI (ignored in DB)
     [Ignore]

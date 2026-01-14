@@ -90,6 +90,40 @@ public class DatabaseService
         return await _database!.Table<User>().Where(u => u.Role == "Contador").ToListAsync();
     }
 
+    public async Task<List<User>> GetAllUsersAsync()
+    {
+        await Init();
+        return await _database!.Table<User>().ToListAsync();
+    }
+
+    public async Task<int> SaveUserAsync(User user, bool skipSync = false)
+    {
+        await Init();
+        int result;
+        if (user.Id == 0)
+            result = await _database!.InsertAsync(user);
+        else
+            result = await _database!.UpdateAsync(user);
+
+        if (!skipSync && _syncService != null)
+        {
+            await _syncService.OnLocalChange(user.Id == 0 ? SyncOperation.Insert : SyncOperation.Update, user, "User");
+        }
+        return result;
+    }
+
+    public async Task<int> DeleteUserAsync(User user, bool skipSync = false)
+    {
+        await Init();
+        var result = await _database!.DeleteAsync(user);
+        
+        if (!skipSync && _syncService != null)
+        {
+            await _syncService.OnLocalChange(SyncOperation.Delete, user, "User");
+        }
+        return result;
+    }
+
     public async Task<List<Tarea>> GetTareasAsync()
     {
         await Init();

@@ -13,6 +13,9 @@ public partial class PanelAdminVM : ObservableObject
     private readonly DatabaseService _databaseService;
 
     [ObservableProperty]
+    private User? _usuarioLogueado;
+
+    [ObservableProperty]
     private int _totalContadores;
 
     [ObservableProperty]
@@ -44,6 +47,19 @@ public partial class PanelAdminVM : ObservableObject
     public ObservableCollection<Tarea> Tareas { get; } = new();
     public ObservableCollection<ContadorReporte> ReportesDetallados { get; } = new();
     public ObservableCollection<KPIReporte> ReportesKPI { get; } = new();
+    public ObservableCollection<User> TodosLosUsuarios { get; } = new();
+
+    // User CRUD Form Properties
+    [ObservableProperty] private string _nuevoUsuarioNombre = string.Empty;
+    [ObservableProperty] private string _nuevoUsuarioUsername = string.Empty;
+    [ObservableProperty] private string _nuevoUsuarioPassword = string.Empty;
+    [ObservableProperty] private string _nuevoUsuarioRol = "Contador";
+    [ObservableProperty] private string _nuevoUsuarioArea = "Ingresos";
+    [ObservableProperty] private User? _usuarioEditando;
+    [ObservableProperty] private bool _isEditMode = false;
+
+    public List<string> Roles { get; } = new() { "Admin", "Contador" };
+    public List<string> Areas { get; } = new() { "Admin", "Ingresos", "Egresos", "Declaraciones" };
 
     [ObservableProperty]
     private DateTime _fechaReporte = DateTime.Today;
@@ -180,6 +196,9 @@ public partial class PanelAdminVM : ObservableObject
         _databaseService.SetSyncService(_syncService);
         _syncService.DataChanged += OnSyncDataChanged;
 
+        // Cargar usuario actual desde sesión
+        UsuarioLogueado = SessionService.CurrentUser;
+
         // Init (LoadData)
         Task.Run(CargarDatos);
     }
@@ -205,6 +224,7 @@ public partial class PanelAdminVM : ObservableObject
     {
         var contadores = await _databaseService.GetContadoresAsync();
         var tareas = await _databaseService.GetTareasAsync();
+        var todosUsuarios = await _databaseService.GetAllUsersAsync();
 
         MainThread.BeginInvokeOnMainThread(() => 
         {
@@ -213,6 +233,9 @@ public partial class PanelAdminVM : ObservableObject
 
             Tareas.Clear();
             foreach (var t in tareas) Tareas.Add(t);
+
+            TodosLosUsuarios.Clear();
+            foreach (var u in todosUsuarios) TodosLosUsuarios.Add(u);
 
             // Stats calculation
             TotalContadores = contadores.Count;
@@ -398,6 +421,117 @@ public partial class PanelAdminVM : ObservableObject
     {
         if (entityType == "Mensaje") await CargarMensajes();
         else await CargarDatos();
+    }
+
+    // ===================== USER CRUD COMMANDS =====================
+
+    [RelayCommand]
+    public async Task GuardarUsuario()
+    {
+        if (string.IsNullOrWhiteSpace(NuevoUsuarioNombre) || string.IsNullOrWhiteSpace(NuevoUsuarioUsername))
+            return;
+
+        User user;
+        if (IsEditMode && UsuarioEditando != null)
+        {
+            // Edit existing user
+            user = UsuarioEditando;
+            user.Name = NuevoUsuarioNombre;
+            user.Username = NuevoUsuarioUsername;
+            if (!string.IsNullOrWhiteSpace(NuevoUsuarioPassword))
+                user.Password = NuevoUsuarioPassword;
+            user.Role = NuevoUsuarioRol;
+            user.Area = NuevoUsuarioArea;
+        }
+        else
+        {
+            // Create new user
+            user = new User
+            {
+                Name = NuevoUsuarioNombre,
+                Username = NuevoUsuarioUsername,
+                Password = NuevoUsuarioPassword,
+                Role = NuevoUsuarioRol,
+                Area = NuevoUsuarioArea,
+                Estado = "desconectado"
+            };
+        }
+
+        await _databaseService.SaveUserAsync(user);
+        LimpiarFormularioUsuario();
+        await CargarDatos();
+    }
+
+    [RelayCommand]
+    public void IniciarEdicion(User user)
+    {
+        UsuarioEditando = user;
+        NuevoUsuarioNombre = user.Name;
+        NuevoUsuarioUsername = user.Username;
+        NuevoUsuarioPassword = ""; // Don't show password
+        NuevoUsuarioRol = user.Role;
+        NuevoUsuarioArea = user.Area;
+        IsEditMode = true;
+    }
+
+    [RelayCommand]
+    public void CancelarEdicion()
+    {
+        LimpiarFormularioUsuario();
+    }
+
+    [RelayCommand]
+    public async Task EliminarUsuario(User user)
+    {
+        if (user == null) return;
+        await _databaseService.DeleteUserAsync(user);
+        await CargarDatos();
+    }
+
+    [RelayCommand]
+    public async Task SeleccionarFoto(User user)
+    {
+        if (user == null) return;
+
+        try
+        {
+            var result = await MediaPicker.PickPhotoAsync(new MediaPickerOptions
+            {
+                Title = "Seleccionar foto de perfil"
+            });
+
+            if (result == null) return;
+
+            // Create photos folder
+            var destFolder = Path.Combine(FileSystem.AppDataDirectory, "fotos");
+            Directory.CreateDirectory(destFolder);
+
+            // Copy file
+            var destPath = Path.Combine(destFolder, $"{user.Id}.jpg");
+            using var source = await result.OpenReadAsync();
+            using var dest = File.Create(destPath);
+            await source.CopyToAsync(dest);
+
+            // Update user
+            user.FotoPerfil = destPath;
+            await _databaseService.SaveUserAsync(user);
+            await CargarDatos();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error selecting photo: {ex.Message}");
+        }
+    }
+
+    private void LimpiarFormularioUsuario()
+    {
+        NuevoUsuarioNombre = string.Empty;
+        NuevoUsuarioUsername = string.Empty;
+        NuevoUsuarioPassword = string.Empty;
+        NuevoUsuarioRol = "Contador";
+        NuevoUsuarioArea = "Ingresos";
+        UsuarioEditando = null;
+        IsEditMode = false;
     }
 
     [ObservableProperty]

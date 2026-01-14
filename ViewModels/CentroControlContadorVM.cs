@@ -12,6 +12,8 @@ public partial class CentroControlContadorVM : ObservableObject
     private readonly DatabaseService _databaseService;
     private readonly NetworkService _networkService;
     private readonly SyncService _syncService;
+    
+    [ObservableProperty]
     private User? _currentUser;
 
     // Header Info
@@ -72,7 +74,7 @@ public partial class CentroControlContadorVM : ObservableObject
 
     public void Init(User user)
     {
-        _currentUser = user;
+        CurrentUser = user;
         NombreContador = $"{user.Name}";
         Initials = user.Name.Length >= 2 ? user.Name.Substring(0, 2).ToUpper() : "CO";
         Conectado = user.Estado == "conectado";

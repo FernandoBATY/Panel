@@ -6,7 +6,64 @@
              BackgroundColor="{StaticResource Gray50Jazer}"
              xmlns:converters="clr-namespace:Panel.Converters">
 
-    <Grid RowDefinitions="Auto,Auto,Auto,*" ColumnDefinitions="*">
+    <Grid RowDefinitions="Auto,Auto,Auto,*" ColumnDefinitions="*" x:Name="MainGrid">
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup x:Name="AdaptiveStates">
+                <!-- Estado Estrecho (Ventanas pequeñas o verticales) -->
+                <VisualState x:Name="NarrowStatus">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="0"/>
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter TargetName="StatsGrid" Property="ColumnDefinitions" Value="*,*"/>
+                        <Setter TargetName="StatsGrid" Property="RowDefinitions" Value="Auto,Auto"/>
+                        <Setter TargetName="BrandingStack" Property="IsVisible" Value="False"/>
+                        <Setter TargetName="ServerStatusColumn" Property="HorizontalOptions" Value="Start"/>
+                        
+                        <!-- Adaptación de Tareas -->
+                        <Setter TargetName="TasksGrid" Property="ColumnDefinitions" Value="*"/>
+                        <Setter TargetName="TasksGrid" Property="RowDefinitions" Value="Auto,Auto"/>
+                        <Setter TargetName="FormTaskBorder" Property="Grid.Row" Value="0"/>
+                        <Setter TargetName="FormTaskBorder" Property="Grid.Column" Value="0"/>
+                        <Setter TargetName="ListTaskBorder" Property="Grid.Row" Value="1"/>
+                        <Setter TargetName="ListTaskBorder" Property="Grid.Column" Value="0"/>
+                        
+                        <!-- Adaptación de Usuarios -->
+                        <Setter TargetName="UsersGrid" Property="ColumnDefinitions" Value="*"/>
+                        <Setter TargetName="UsersGrid" Property="RowDefinitions" Value="Auto,Auto"/>
+                        <Setter TargetName="FormUserBorder" Property="Grid.Row" Value="0"/>
+                        <Setter TargetName="FormUserBorder" Property="Grid.Column" Value="0"/>
+                        <Setter TargetName="ListUserBorder" Property="Grid.Row" Value="1"/>
+                        <Setter TargetName="ListUserBorder" Property="Grid.Column" Value="0"/>
+                    </VisualState.Setters>
+                </VisualState>
+                
+                <!-- Estado Ancho (Escritorio Estándar) -->
+                <VisualState x:Name="WideStatus">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="900"/>
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter TargetName="StatsGrid" Property="ColumnDefinitions" Value="*,*,*,*"/>
+                        <Setter TargetName="StatsGrid" Property="RowDefinitions" Value="Auto"/>
+                        
+                        <Setter TargetName="TasksGrid" Property="ColumnDefinitions" Value="350,*"/>
+                        <Setter TargetName="TasksGrid" Property="RowDefinitions" Value="Auto"/>
+                        <Setter TargetName="FormTaskBorder" Property="Grid.Row" Value="0"/>
+                        <Setter TargetName="FormTaskBorder" Property="Grid.Column" Value="0"/>
+                        <Setter TargetName="ListTaskBorder" Property="Grid.Row" Value="0"/>
+                        <Setter TargetName="ListTaskBorder" Property="Grid.Column" Value="1"/>
+
+                        <Setter TargetName="UsersGrid" Property="ColumnDefinitions" Value="350,*"/>
+                        <Setter TargetName="UsersGrid" Property="RowDefinitions" Value="Auto"/>
+                        <Setter TargetName="FormUserBorder" Property="Grid.Row" Value="0"/>
+                        <Setter TargetName="FormUserBorder" Property="Grid.Column" Value="0"/>
+                        <Setter TargetName="ListUserBorder" Property="Grid.Row" Value="0"/>
+                        <Setter TargetName="ListUserBorder" Property="Grid.Column" Value="1"/>
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
         
         <!-- SECCIÓN 1: HEADER SUPERIOR -->
         <Border Grid.Row="0" Margin="0" Padding="32,20" BackgroundColor="White" StrokeThickness="0">
@@ -15,17 +72,30 @@
             </Border.Shadow>
             <Grid ColumnDefinitions="Auto,*,Auto">
                 <!-- Columna 1: Branding -->
-                <HorizontalStackLayout Grid.Column="0" Spacing="16" VerticalOptions="Center">
+                <HorizontalStackLayout x:Name="BrandingStack" Grid.Column="0" Spacing="16" VerticalOptions="Center">
                     <Image Source="logojazer.png" HeightRequest="45" WidthRequest="45" Aspect="AspectFit"/>
                     
+                    <!-- Perfil Admin -->
+                    <Border HeightRequest="40" WidthRequest="40" StrokeShape="RoundRectangle 20" 
+                            BackgroundColor="{StaticResource Blue50}" StrokeThickness="0">
+                        <Grid>
+                            <Label Text="{Binding UsuarioLogueado.Name, Converter={StaticResource StringToInitialsConverter}}" 
+                                   FontSize="14" FontAttributes="Bold" TextColor="{StaticResource Blue600}"
+                                   HorizontalOptions="Center" VerticalOptions="Center"/>
+                            <Image Source="{Binding UsuarioLogueado.FotoPerfil, Converter={StaticResource FileToImageSourceConverter}}" 
+                                   Aspect="AspectFill"
+                                   IsVisible="{Binding UsuarioLogueado.FotoPerfil, Converter={StaticResource StringNotEmptyConverter}}"/>
+                        </Grid>
+                    </Border>
+
                     <VerticalStackLayout Spacing="2" VerticalOptions="Center">
                         <Label Text="Panel de Administración" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource Gray900Jazer}"/>
-                        <Label Text="JAZER Global Admin" FontSize="14" TextColor="{StaticResource Gray500Jazer}"/>
+                        <Label Text="{Binding UsuarioLogueado.Name}" FontSize="14" TextColor="{StaticResource Gray500Jazer}"/>
                     </VerticalStackLayout>
                 </HorizontalStackLayout>
 
                 <!-- Columna 2: Estado del Servidor (Centrado) -->
-                <HorizontalStackLayout Grid.Column="1" HorizontalOptions="Center" VerticalOptions="Center" Spacing="12">
+                <HorizontalStackLayout x:Name="ServerStatusColumn" Grid.Column="1" HorizontalOptions="Center" VerticalOptions="Center" Spacing="12">
                      <Border BackgroundColor="{Binding IsServerRunning, Converter={StaticResource StatusBackgroundColorConverter}}" 
                              StrokeThickness="0" StrokeShape="RoundRectangle 16"
                              Padding="12,6">
@@ -46,7 +116,7 @@
                 </HorizontalStackLayout>
 
                 <!-- Columna 3: Controles de Sesión -->
-                <HorizontalStackLayout Grid.Column="2" Spacing="10">
+                <HorizontalStackLayout Grid.Column="2" Spacing="10" VerticalOptions="Center">
                     <Button Text="Iniciar Server" 
                             Command="{Binding IniciarServidorCommand}"
                             IsVisible="{Binding IsServerRunning, Converter={StaticResource InverseBoolConverter}}"
@@ -68,7 +138,7 @@
 
         <!-- SECCIÓN 2: BARRA DE ESTADÍSTICAS RÁPIDAS -->
         <Border Grid.Row="1" Margin="0" Padding="32,12" BackgroundColor="White" StrokeThickness="0">
-            <Grid ColumnDefinitions="*,*,*,*">
+            <Grid x:Name="StatsGrid" ColumnDefinitions="*,*,*,*">
                 <!-- Stat 1 -->
                 <HorizontalStackLayout Grid.Column="0" Spacing="12">
                      <Label Text="Total" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource Blue700}" VerticalOptions="Center"/>
@@ -112,7 +182,7 @@
 
         <!-- SECCIÓN 3: SISTEMA DE PESTAÑAS -->
         <Border Grid.Row="2" Margin="0" BackgroundColor="White" StrokeThickness="0" Padding="32,0">
-            <Grid ColumnDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="32">
+            <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnSpacing="32">
                 <Grid.Resources>
                     <Style TargetType="Button" x:Key="TabButton">
                         <Setter Property="BackgroundColor" Value="Transparent"/>
@@ -211,6 +281,26 @@
                         </BoxView.Triggers>
                     </BoxView>
                 </Grid>
+
+                <!-- Tab 5: Usuarios -->
+                <Grid Grid.Column="4">
+                    <Button Text="Usuarios" Style="{StaticResource TabButton}" 
+                            Command="{Binding SetTabCommand}" CommandParameter="4">
+                        <Button.Triggers>
+                            <DataTrigger TargetType="Button" Binding="{Binding SelectedTabIndex}" Value="4">
+                                <Setter Property="TextColor" Value="{StaticResource Blue700}"/>
+                                <Setter Property="FontAttributes" Value="Bold"/>
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
+                    <BoxView Style="{StaticResource ActiveIndicator}">
+                        <BoxView.Triggers>
+                            <DataTrigger TargetType="BoxView" Binding="{Binding SelectedTabIndex}" Value="4">
+                                <Setter Property="IsVisible" Value="True"/>
+                            </DataTrigger>
+                        </BoxView.Triggers>
+                    </BoxView>
+                </Grid>
             </Grid>
         </Border>
 
@@ -236,7 +326,12 @@
                                     <DataTemplate>
                                         <Grid ColumnDefinitions="40,*,*" Padding="0,12">
                                             <Border Grid.Column="0" HeightRequest="32" WidthRequest="32" StrokeShape="RoundRectangle 16" BackgroundColor="{StaticResource Blue50}" StrokeThickness="0" VerticalOptions="Center" HorizontalOptions="Center">
-                                                <Label Text="{Binding Name, Converter={StaticResource StringToInitialsConverter}}" HorizontalOptions="Center" VerticalOptions="Center" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource Blue600}"/>
+                                                <Grid>
+                                                    <Label Text="{Binding Name, Converter={StaticResource StringToInitialsConverter}}" HorizontalOptions="Center" VerticalOptions="Center" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource Blue600}"/>
+                                                    <Image Source="{Binding FotoPerfil, Converter={StaticResource FileToImageSourceConverter}}" 
+                                                           Aspect="AspectFill"
+                                                           IsVisible="{Binding FotoPerfil, Converter={StaticResource StringNotEmptyConverter}}"/>
+                                                </Grid>
                                             </Border>
                                             <Label Grid.Column="1" Text="{Binding Username}" TextColor="{StaticResource Gray800Jazer}" VerticalOptions="Center" FontAttributes="Bold"/>
                                             <Border Grid.Column="2" BackgroundColor="{StaticResource Gray100Jazer}" StrokeThickness="0" Padding="8,2" HorizontalOptions="Center" VerticalOptions="Center" StrokeShape="RoundRectangle 4">
@@ -262,9 +357,9 @@
                          </VerticalStackLayout>
                      </Grid>
 
-                    <Grid ColumnDefinitions="350,*" ColumnSpacing="24">
+                    <Grid x:Name="TasksGrid" ColumnDefinitions="350,*" ColumnSpacing="24">
                         <!-- Formulario Crear (Izquierda) -->
-                        <Border Grid.Column="0" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="20" StrokeShape="RoundRectangle 12" VerticalOptions="Start">
+                        <Border x:Name="FormTaskBorder" Grid.Column="0" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="20" StrokeShape="RoundRectangle 12" VerticalOptions="Start">
                             <VerticalStackLayout Spacing="16">
                                 <Label Text="Nueva Tarea" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource Blue700}"/>
                                 
@@ -316,7 +411,7 @@
                         </Border>
 
                         <!-- Lista Tareas (Derecha) -->
-                        <Border Grid.Column="1" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="20" StrokeShape="RoundRectangle 12">
+                        <Border x:Name="ListTaskBorder" Grid.Column="1" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="20" StrokeShape="RoundRectangle 12">
                             <VerticalStackLayout Spacing="16">
                                 <Label Text="Asignaciones Recientes" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource Gray800Jazer}"/>
                                 <CollectionView ItemsSource="{Binding Tareas}" EmptyView="No hay tareas asignadas aún" VerticalScrollBarVisibility="Always">
@@ -535,7 +630,12 @@
                                             <Grid ColumnDefinitions="2*,*,*,*,*" Padding="20,16">
                                                 <HorizontalStackLayout Grid.Column="0" Spacing="10">
                                                     <Border HeightRequest="24" WidthRequest="24" StrokeShape="RoundRectangle 12" BackgroundColor="{StaticResource Blue50}" StrokeThickness="0">
-                                                        <Label Text="{Binding Nombre, Converter={StaticResource StringToInitialsConverter}}" FontSize="9" HorizontalOptions="Center" VerticalOptions="Center" TextColor="{StaticResource Blue600}" FontAttributes="Bold"/>
+                                                        <Grid>
+                                                            <Label Text="{Binding Nombre, Converter={StaticResource StringToInitialsConverter}}" FontSize="9" HorizontalOptions="Center" VerticalOptions="Center" TextColor="{StaticResource Blue600}" FontAttributes="Bold"/>
+                                                            <Image Source="{Binding Contador.FotoPerfil, Converter={StaticResource FileToImageSourceConverter}}" 
+                                                                   Aspect="AspectFill"
+                                                                   IsVisible="{Binding Contador.FotoPerfil, Converter={StaticResource StringNotEmptyConverter}}"/>
+                                                        </Grid>
                                                     </Border>
                                                     <Label Text="{Binding Nombre}" VerticalOptions="Center" TextColor="Black" FontAttributes="Bold"/>
                                                 </HorizontalStackLayout>
@@ -556,6 +656,130 @@
 
                     </VerticalStackLayout>
                 </ScrollView>
+            </Grid>
+
+            <!-- VISTA 4: GESTIÓN DE USUARIOS -->
+            <Grid IsVisible="{Binding SelectedTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=4}" RowDefinitions="Auto,*" RowSpacing="24">
+                <VerticalStackLayout Grid.Row="0" Spacing="4">
+                     <Label Text="Gestión de Usuarios" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource Gray800Jazer}"/>
+                     <Label Text="Crear, editar y eliminar usuarios del sistema" TextColor="{StaticResource Gray500Jazer}" FontSize="14"/>
+                </VerticalStackLayout>
+
+                <Grid x:Name="UsersGrid" Grid.Row="1" ColumnDefinitions="350,*" ColumnSpacing="24">
+                    <!-- Formulario Crear/Editar Usuario (Izquierda) -->
+                    <Border x:Name="FormUserBorder" Grid.Column="0" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="20" StrokeShape="RoundRectangle 12" VerticalOptions="Start">
+                        <VerticalStackLayout Spacing="16">
+                            <HorizontalStackLayout Spacing="12">
+                                <Label Text="{Binding IsEditMode, Converter={StaticResource BoolToStringConverter}, ConverterParameter='Editar Usuario|Nuevo Usuario'}" 
+                                       FontSize="16" FontAttributes="Bold" TextColor="{StaticResource Blue700}"/>
+                                <Button Text="Cancelar" Command="{Binding CancelarEdicionCommand}" 
+                                        IsVisible="{Binding IsEditMode}"
+                                        BackgroundColor="Transparent" TextColor="{StaticResource Red400}"
+                                        HeightRequest="30" Padding="8,0"/>
+                            </HorizontalStackLayout>
+                            
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="Nombre Completo" FontSize="12" TextColor="{StaticResource Gray600Jazer}"/>
+                                <Entry Text="{Binding NuevoUsuarioNombre}" Placeholder="Ej: María García" BackgroundColor="{StaticResource Gray50}" TextColor="Black"/>
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="Usuario (Login)" FontSize="12" TextColor="{StaticResource Gray600Jazer}"/>
+                                <Entry Text="{Binding NuevoUsuarioUsername}" Placeholder="Ej: maria" BackgroundColor="{StaticResource Gray50}" TextColor="Black"/>
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="Contraseña" FontSize="12" TextColor="{StaticResource Gray600Jazer}"/>
+                                <Entry Text="{Binding NuevoUsuarioPassword}" Placeholder="Nueva contraseña" IsPassword="True" BackgroundColor="{StaticResource Gray50}" TextColor="Black"/>
+                            </VerticalStackLayout>
+
+                            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="Rol" FontSize="12" TextColor="{StaticResource Gray600Jazer}"/>
+                                    <Picker ItemsSource="{Binding Roles}" SelectedItem="{Binding NuevoUsuarioRol}" 
+                                            BackgroundColor="{StaticResource Gray50}" TextColor="Black"/>
+                                </VerticalStackLayout>
+                                <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                    <Label Text="Área" FontSize="12" TextColor="{StaticResource Gray600Jazer}"/>
+                                    <Picker ItemsSource="{Binding Areas}" SelectedItem="{Binding NuevoUsuarioArea}" 
+                                            BackgroundColor="{StaticResource Gray50}" TextColor="Black"/>
+                                </VerticalStackLayout>
+                            </Grid>
+
+                            <Button Text="{Binding IsEditMode, Converter={StaticResource BoolToStringConverter}, ConverterParameter='Guardar Cambios|Crear Usuario'}" 
+                                    Command="{Binding GuardarUsuarioCommand}" 
+                                    BackgroundColor="{StaticResource Blue600}" TextColor="White" FontAttributes="Bold" 
+                                    CornerRadius="8" HeightRequest="45" Margin="0,10,0,0"/>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Lista de Usuarios (Derecha) -->
+                    <Border x:Name="ListUserBorder" Grid.Column="1" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="0" StrokeShape="RoundRectangle 12">
+                        <Grid RowDefinitions="Auto,*">
+                            <!-- Header Tabla -->
+                            <Grid Grid.Row="0" ColumnDefinitions="60,2*,*,*,*,120" BackgroundColor="{StaticResource Gray100}" Padding="20,12">
+                                <Label Grid.Column="0" Text="FOTO" FontSize="11" FontAttributes="Bold" TextColor="Black"/>
+                                <Label Grid.Column="1" Text="NOMBRE" FontSize="11" FontAttributes="Bold" TextColor="Black"/>
+                                <Label Grid.Column="2" Text="USUARIO" FontSize="11" FontAttributes="Bold" TextColor="Black"/>
+                                <Label Grid.Column="3" Text="ROL" FontSize="11" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
+                                <Label Grid.Column="4" Text="ÁREA" FontSize="11" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
+                                <Label Grid.Column="5" Text="ACCIONES" FontSize="11" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
+                            </Grid>
+                            
+                            <!-- Lista Usuarios -->
+                            <CollectionView Grid.Row="1" ItemsSource="{Binding TodosLosUsuarios}" VerticalScrollBarVisibility="Always">
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnDefinitions="60,2*,*,*,*,120" Padding="20,12">
+                                            <!-- Foto Perfil (Imagen o Iniciales) -->
+                                            <Border Grid.Column="0" HeightRequest="40" WidthRequest="40" StrokeShape="RoundRectangle 20" 
+                                                    BackgroundColor="{StaticResource Blue50}" StrokeThickness="0">
+                                                <Grid>
+                                                    <Label Text="{Binding Name, Converter={StaticResource StringToInitialsConverter}}" 
+                                                           FontSize="14" FontAttributes="Bold" TextColor="{StaticResource Blue600}"
+                                                           HorizontalOptions="Center" VerticalOptions="Center"/>
+                                                    
+                                                    <Image Source="{Binding FotoPerfil, Converter={StaticResource FileToImageSourceConverter}}" 
+                                                           Aspect="AspectFill"
+                                                           IsVisible="{Binding FotoPerfil, Converter={StaticResource StringNotEmptyConverter}}"/>
+                                                </Grid>
+                                            </Border>
+                                            
+                                            <Label Grid.Column="1" Text="{Binding Name}" VerticalOptions="Center" TextColor="Black" FontAttributes="Bold"/>
+                                            <Label Grid.Column="2" Text="{Binding Username}" VerticalOptions="Center" TextColor="{StaticResource Gray600Jazer}"/>
+                                            
+                                            <Border Grid.Column="3" BackgroundColor="{StaticResource Blue50}" StrokeThickness="0" Padding="8,4" 
+                                                    HorizontalOptions="Center" VerticalOptions="Center" StrokeShape="RoundRectangle 4">
+                                                <Label Text="{Binding Role}" TextColor="{StaticResource Blue600}" FontSize="11" FontAttributes="Bold"/>
+                                            </Border>
+                                            
+                                            <Label Grid.Column="4" Text="{Binding Area}" VerticalOptions="Center" TextColor="{StaticResource Gray600Jazer}" HorizontalOptions="Center"/>
+                                            
+                                            <!-- Botones Acciones -->
+                                            <HorizontalStackLayout Grid.Column="5" Spacing="8" HorizontalOptions="Center" VerticalOptions="Center">
+                                                <Button Text="📷" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SeleccionarFotoCommand}" 
+                                                        CommandParameter="{Binding .}"
+                                                        BackgroundColor="{StaticResource Gray100Jazer}" TextColor="Black"
+                                                        HeightRequest="32" WidthRequest="32" Padding="0" CornerRadius="6"
+                                                        ToolTipProperties.Text="Cambiar Foto"/>
+                                                <Button Text="✏️" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.IniciarEdicionCommand}" 
+                                                        CommandParameter="{Binding .}"
+                                                        BackgroundColor="{StaticResource Blue50}" TextColor="{StaticResource Blue600}"
+                                                        HeightRequest="32" WidthRequest="32" Padding="0" CornerRadius="6"
+                                                        ToolTipProperties.Text="Editar"/>
+                                                <Button Text="🗑️" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EliminarUsuarioCommand}" 
+                                                        CommandParameter="{Binding .}"
+                                                        BackgroundColor="{StaticResource Red50}" TextColor="{StaticResource Red400}"
+                                                        HeightRequest="32" WidthRequest="32" Padding="0" CornerRadius="6"
+                                                        ToolTipProperties.Text="Eliminar"/>
+                                            </HorizontalStackLayout>
+                                        </Grid>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </Grid>
+                    </Border>
+                </Grid>
             </Grid>
 
         </Grid>

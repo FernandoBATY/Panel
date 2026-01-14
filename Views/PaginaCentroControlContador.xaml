@@ -7,7 +7,34 @@
              Title="Centro de Control"
              BackgroundColor="{StaticResource Gray50}">
 
-    <Grid RowDefinitions="Auto,Auto,Auto,*" ColumnDefinitions="*">
+    <Grid RowDefinitions="Auto,Auto,Auto,*" ColumnDefinitions="*" x:Name="MainGrid">
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup x:Name="AdaptiveStates">
+                <!-- Estado Estrecho -->
+                <VisualState x:Name="NarrowStatus">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="0"/>
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter TargetName="StatsGrid" Property="ColumnDefinitions" Value="*,*"/>
+                        <Setter TargetName="StatsGrid" Property="RowDefinitions" Value="Auto,Auto"/>
+                        <Setter TargetName="BrandingStack" Property="IsVisible" Value="False"/>
+                        <Setter TargetName="ConnectionStatusColumn" Property="HorizontalOptions" Value="Start"/>
+                    </VisualState.Setters>
+                </VisualState>
+                
+                <!-- Estado Ancho -->
+                <VisualState x:Name="WideStatus">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="900"/>
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter TargetName="StatsGrid" Property="ColumnDefinitions" Value="*,*,*,*"/>
+                        <Setter TargetName="StatsGrid" Property="RowDefinitions" Value="Auto"/>
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
 
         <!-- SECCIÓN 1: HEADER SUPERIOR -->
         <Border Grid.Row="0" Margin="0" Padding="32,20" BackgroundColor="{StaticResource White}" StrokeThickness="0">
@@ -16,9 +43,23 @@
             </Border.Shadow>
             <Grid ColumnDefinitions="Auto,*,Auto">
                 <!-- Columna 1: Branding -->
-                <HorizontalStackLayout Grid.Column="0" Spacing="16" VerticalOptions="Center">
+                <HorizontalStackLayout x:Name="BrandingStack" Grid.Column="0" Spacing="16" VerticalOptions="Center">
                     <Image Source="logojazer.png" HeightRequest="45" WidthRequest="45" Aspect="AspectFit"/>
                     
+                    <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                        <Border HeightRequest="36" WidthRequest="36" StrokeShape="RoundRectangle 18" 
+                                BackgroundColor="{StaticResource Blue50}" StrokeThickness="0">
+                            <Grid>
+                                <Label Text="{Binding CurrentUser.Name, Converter={StaticResource StringToInitialsConverter}}" 
+                                       FontSize="12" FontAttributes="Bold" TextColor="{StaticResource Blue600}"
+                                       HorizontalOptions="Center" VerticalOptions="Center"/>
+                                <Image Source="{Binding CurrentUser.FotoPerfil, Converter={StaticResource FileToImageSourceConverter}}" 
+                                       Aspect="AspectFill"
+                                       IsVisible="{Binding CurrentUser.FotoPerfil, Converter={StaticResource StringNotEmptyConverter}}"/>
+                            </Grid>
+                        </Border>
+                    </HorizontalStackLayout>
+
                     <VerticalStackLayout Spacing="2" VerticalOptions="Center">
                         <Label Text="Centro de Control" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource Gray900Jazer}"/>
                         <Label Text="{Binding NombreContador}" FontSize="14" TextColor="{StaticResource Gray500Jazer}"/>
@@ -26,8 +67,7 @@
                 </HorizontalStackLayout>
 
                 <!-- Columna 2: Estado de Conexión (Centrado) -->
-                <!-- Columna 2: Estado de Conexión (Centrado) -->
-                <HorizontalStackLayout Grid.Column="1" HorizontalOptions="Center" VerticalOptions="Center" Spacing="12">
+                <HorizontalStackLayout x:Name="ConnectionStatusColumn" Grid.Column="1" HorizontalOptions="Center" VerticalOptions="Center" Spacing="12">
                      <!-- Estado CONECTADO -->
                      <Border IsVisible="{Binding Conectado}"
                             BackgroundColor="{StaticResource Green100}" StrokeThickness="0" StrokeShape="RoundRectangle 16"
@@ -81,7 +121,7 @@
 
         <!-- SECCIÓN 2: BARRA DE ESTADÍSTICAS RÁPIDAS -->
         <Border Grid.Row="1" Margin="0" Padding="32,12" BackgroundColor="{StaticResource White}" StrokeThickness="0">
-            <Grid ColumnDefinitions="*,*,*,*">
+            <Grid x:Name="StatsGrid" ColumnDefinitions="*,*,*,*">
                 <!-- Stat 1 -->
                 <HorizontalStackLayout Grid.Column="0" Spacing="12">
                      <VerticalStackLayout>
