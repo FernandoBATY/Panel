@@ -26,6 +26,12 @@ public class SessionService
         };
     }
 
+    public static void SetIdentity(NodeIdentity identity)
+    {
+        _currentIdentity = identity;
+        _currentUser = null; // Ensure no user is logged in
+    }
+
     public static void ClearSession()
     {
         _currentUser = null;

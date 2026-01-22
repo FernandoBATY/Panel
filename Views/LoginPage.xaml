@@ -6,7 +6,8 @@
              Title="Login">
 
     <Grid BackgroundColor="#F0F0F0">
-        <Frame VerticalOptions="Center" 
+        <ScrollView VerticalScrollBarVisibility="Always">
+            <Frame VerticalOptions="Center" 
                HorizontalOptions="Center"
                WidthRequest="450"
                Padding="40" 
@@ -60,8 +61,49 @@
                         HeightRequest="50"
                         FontAttributes="Bold"
                         Margin="0,10,0,0"/>
+
+                <!-- Toggle para Sincronización -->
+                <Label Text="¿Primera vez? Sincronizar Datos" 
+                       FontSize="12" 
+                       TextColor="#4B5563" 
+                       HorizontalOptions="Center" 
+                       FontAttributes="Bold"
+                       TextDecorations="Underline"
+                       Margin="0,20,0,0">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ToggleSyncCommand}"/>
+                    </Label.GestureRecognizers>
+                </Label>
+
+                <!-- Sección Sincronización Inicial (Oculta por defecto) -->
+                <Border Stroke="#D1D5DB" 
+                        StrokeShape="RoundRectangle 8" 
+                        BackgroundColor="#F9FAFB" 
+                        Padding="15" 
+                        Margin="0,10,0,0"
+                        IsVisible="{Binding IsSyncVisible}">
+                    <VerticalStackLayout Spacing="10">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                            <Entry Grid.Column="0" Placeholder="IP Servidor (ej. 192.168.1.5)" Text="{Binding SyncIp}" FontSize="12" BackgroundColor="White" TextColor="Black" VerticalOptions="Center"/>
+                            <Button Grid.Column="1" Text="Sync" Command="{Binding SincronizarInicialCommand}" FontSize="12" Padding="15,0" HeightRequest="38" BackgroundColor="#2563EB" TextColor="White" VerticalOptions="Center"/>
+                        </Grid>
+                        
+                        <ActivityIndicator IsRunning="{Binding IsSyncing}" IsVisible="{Binding IsSyncing}" Color="#2563EB" HeightRequest="20"/>
+                        <Label Text="{Binding SyncStatus}" FontSize="11" TextColor="#2563EB" HorizontalOptions="Center">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding SyncStatus}" Value="">
+                                    <Setter Property="IsVisible" Value="False"/>
+                                </DataTrigger>
+                                <DataTrigger TargetType="Label" Binding="{Binding SyncStatus}" Value="{x:Null}">
+                                    <Setter Property="IsVisible" Value="False"/>
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                    </VerticalStackLayout>
+                </Border>
             </VerticalStackLayout>
         </Frame>
+        </ScrollView>
     </Grid>
 
 </ContentPage>

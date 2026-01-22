@@ -17,6 +17,57 @@ public class SyncService
 
         // Suscribirse a mensajes de red
         _networkService.MessageReceived += OnMessageReceived;
+        _networkService.ClientConnected += OnClientConnected;
+    }
+
+    private async void OnClientConnected(object? sender, NodeIdentity clientIdentity)
+    {
+        if (!SessionService.IsAdmin()) return; // Only Admin sends Sync
+
+        Console.WriteLine($"[SYNC] Enviando FullSync a {clientIdentity.Username}...");
+
+        try
+        {
+            // 1. Users
+            var users = await _databaseService.GetAllUsersAsync();
+            foreach(var u in users) await SendDirectSync(u, "User", clientIdentity.NodeId);
+
+            // 2. Tareas
+            var tareas = await _databaseService.GetTareasAsync();
+            foreach(var t in tareas) await SendDirectSync(t, "Tarea", clientIdentity.NodeId);
+
+            // 3. Alertas/Mensajes (Opcional, maybe only recent?)
+            // For now send all to be safe for "Restoring DB"
+            var msgs = await _databaseService.GetMensajesAsync();
+            foreach(var m in msgs) await SendDirectSync(m, "Mensaje", clientIdentity.NodeId);
+            
+            // 4. Send "Done" marker
+            var doneMsg = new SyncMessage
+            {
+                Sender = SessionService.CurrentIdentity,
+                Operation = SyncOperation.FullSync,
+                EntityType = "Done",
+                Timestamp = DateTime.UtcNow
+            };
+            await _networkService.SendDirectlyToNodeAsync(clientIdentity.NodeId, doneMsg);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[SYNC] Error sending FullSync: {ex.Message}");
+        }
+    }
+
+    private async Task SendDirectSync(object entity, string type, string targetNodeId)
+    {
+         var msg = new SyncMessage
+        {
+            Sender = SessionService.CurrentIdentity,
+            Operation = SyncOperation.Insert, // Use Insert to populate
+            EntityType = type,
+            EntityJson = JsonSerializer.Serialize(entity),
+            Timestamp = DateTime.UtcNow
+        };
+        await _networkService.SendDirectlyToNodeAsync(targetNodeId, msg);
     }
 
     #region Local Changes (Outgoing)
@@ -90,6 +141,19 @@ public class SyncService
     {
         switch (message.EntityType)
         {
+            case "User":
+                var user = JsonSerializer.Deserialize<User>(message.EntityJson);
+                if (user != null)
+                {
+                     var existing = await _databaseService.GetAllUsersAsync();
+                     if (!existing.Any(u => u.Id == user.Id))
+                     {
+                         await _databaseService.SaveUserAsync(user, skipSync: true);
+                         Console.WriteLine($"[SYNC] Usuario recibido: {user.Username}");
+                     }
+                }
+                break;
+
             case "Tarea":
                 var tarea = JsonSerializer.Deserialize<Tarea>(message.EntityJson);
                 if (tarea != null)

@@ -25,4 +25,6 @@ public class User
     public int TareasCompletadas { get; set; }
     [Ignore]
     public int TareasPendientes { get; set; }
+    [Ignore]
+    public string SessionDuration { get; set; } = "00:00:00";
 }

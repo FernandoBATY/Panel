@@ -4,6 +4,7 @@ using Panel.Models;
 using Panel.Services;
 using System.Collections.ObjectModel;
 using Panel.Views;
+using Microsoft.Maui.Dispatching;
 
 namespace Panel.ViewModels;
 
@@ -37,7 +38,13 @@ public partial class CentroControlContadorVM : ObservableObject
     [ObservableProperty] private int _totalTareas;
     [ObservableProperty] private int _tareasCompletadas;
     [ObservableProperty] private int _tareasEnProgreso;
-    [ObservableProperty] private double _horasRegistradas;
+    [ObservableProperty] private double _horasRegistradas; // Legacy
+    [ObservableProperty] private string _tiempoSesion = "00:00:00"; // For UI Display
+    
+    // Timer
+    private IDispatcherTimer? _timer;
+    private DateTime _startTime;
+    private int _tickCount = 0;
 
     // Badges
     [ObservableProperty] private int _alertasCount;
@@ -88,6 +95,75 @@ public partial class CentroControlContadorVM : ObservableObject
 
         _databaseService.SetSyncService(_syncService);
         _syncService.DataChanged += OnSyncDataChanged;
+        _networkService.MessageReceived += OnNetworkMessageReceived;
+    }
+
+    private void OnNetworkMessageReceived(object? sender, SyncMessage message)
+    {
+        if (message.Sender?.UserId == _currentUser?.Id) return; // Ignore self
+
+        MainThread.BeginInvokeOnMainThread(async () => 
+        {
+            if (message.EntityType == "Tarea" && message.Operation == SyncOperation.Insert)
+            {
+                 // Check if for me? The message broadcast might be to all, but only relevant if assigned to me.
+                 // Ideally payload has details, but SyncMessage is generic.
+                 // We will fetch latest and check? Or just show generic "Nueva Tarea"?
+                 // For now, let's assume if we get a Tarea create, check if we have a new one?
+                 // Simpler: Just Reload and then check?
+                 // Let's just show "Nueva actividad" or trigger reload.
+                 // Actually, SyncService calls DataChanged which calls CargarTodos.
+                 // We can hook into that.
+                 // BUT user wants specific Toast.
+                 // Let's trust the sync loop will load it, but we show toast immediately? 
+                 // We don't know if it's for us without the object.
+                 // However, DatabaseService Sync likely inserts it.
+                 // Let's Query DB for last task?
+                 
+                 // Optimization: Just show "Se han actualizado las tareas" or wait for Cargar to finish and compare count?
+                 
+                 // BETTER: The message sender is Admin. 
+                 MostrarNotificacionWindows("Nueva Actividad", "Se han actualizado las tareas/alertas.");
+            }
+            else if (message.EntityType == "Mensaje" && message.Operation == SyncOperation.Insert)
+            {
+                 // Check if for me
+                 await CargarMensajes(); // Reload to be sure
+                 // We rely on CargarMensajes updating counts
+                 if (Mensajes.Any(m => !m.Leido && m.Para == _currentUser?.Id.ToString() && (DateTime.Now - m.MarcaTiempo).TotalSeconds < 10))
+                 {
+                     var msg = Mensajes.First(m => !m.Leido && m.Para == _currentUser?.Id.ToString());
+                     MostrarNotificacionWindows($"Mensaje de {msg.DeNombre}", msg.Contenido);
+                     
+                     // Also refresh alerts to include this message
+                     await CargarAlertas();
+                 }
+            }
+        });
+    }
+
+    private void MostrarNotificacionWindows(string titulo, string contenido)
+    {
+#if WINDOWS
+        try {
+            var xml = $@"<toast>
+                <visual>
+                    <binding template='ToastGeneric'>
+                        <text>{titulo}</text>
+                        <text>{contenido}</text>
+                    </binding>
+                </visual>
+            </toast>";
+            
+            var doc = new Windows.Data.Xml.Dom.XmlDocument();
+            doc.LoadXml(xml);
+            
+            var toast = new Windows.UI.Notifications.ToastNotification(doc);
+            Windows.UI.Notifications.ToastNotificationManager.CreateToastNotifier().Show(toast);
+        } catch (Exception ex) {
+            System.Diagnostics.Debug.WriteLine($"Error toast: {ex.Message}");
+        }
+#endif
     }
 
     public void Init(User user)
@@ -100,6 +176,13 @@ public partial class CentroControlContadorVM : ObservableObject
         Task.Run(CargarTodosLosDatos);
 
         ServerInfo = "Ingresa la IP del servidor para conectar";
+        
+        // Start Session Timer
+        _startTime = DateTime.Now;
+        if (Application.Current?.Dispatcher != null)
+        {
+            StartTimer();
+        }
     }
 
     [RelayCommand]
@@ -153,7 +236,25 @@ public partial class CentroControlContadorVM : ObservableObject
             else Notificaciones.Add(a);
         }
 
-        AlertasCount = AlertasCriticas.Count(a => !a.Vista);
+        // Merge Direct Messages into Notifications
+        var mensajes = await _databaseService.GetMensajesPorUsuarioAsync(_currentUser!.Id);
+        foreach(var m in mensajes.Where(x => !x.Leido && x.Para == _currentUser.Id.ToString()))
+        {
+            Notificaciones.Add(new Alerta { 
+                Titulo = $"Mensaje de {m.De}", // We need name but fetching it is complex here without map. 
+                Mensaje = m.Contenido, 
+                Tipo = "MENSAJE", 
+                FechaCreacion = m.MarcaTiempo,
+                Vista = false
+            });
+        }
+        
+        // Sort by Date
+        var sorted = new ObservableCollection<Alerta>(Notificaciones.OrderByDescending(n => n.FechaCreacion));
+        Notificaciones.Clear();
+        foreach(var n in sorted) Notificaciones.Add(n);
+
+        AlertasCount = AlertasCriticas.Count(a => !a.Vista) + Notificaciones.Count(n => !n.Vista);
         HasAlertas = AlertasCount > 0;
     }
 
@@ -348,6 +449,58 @@ public partial class CentroControlContadorVM : ObservableObject
     {
         if (entityType == "Mensaje") await CargarMensajes();
         else await CargarTodosLosDatos();
+    }
+
+    private void StartTimer()
+    {
+        if (_timer != null) return;
+        
+        _timer = Application.Current!.Dispatcher.CreateTimer();
+        _timer.Interval = TimeSpan.FromSeconds(1);
+        _timer.Tick += async (s, e) => await OnTimerTick();
+        _timer.Start();
+    }
+    
+    private async Task OnTimerTick()
+    {
+        var duration = DateTime.Now - _startTime;
+        TiempoSesion = duration.ToString(@"hh\:mm\:ss");
+        
+        _tickCount++;
+        
+        // Send Heartbeat every 10 seconds if connected
+        if (_tickCount % 10 == 0 && IsConnected)
+        {
+             await EnviarHeartbeat();
+        }
+    }
+    
+    private async Task EnviarHeartbeat()
+    {
+        if (_currentUser == null) return;
+        
+        try
+        {
+            var identity = SessionService.CurrentIdentity;
+            if (identity != null)
+            {
+                identity.SessionDuration = TiempoSesion;
+                
+                var msg = new SyncMessage
+                {
+                     Operation = SyncOperation.Heartbeat,
+                     Sender = identity,
+                     EntityType = "Heartbeat",
+                     Timestamp = DateTime.UtcNow
+                };
+                
+                await _networkService.SendMessageAsync(msg);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error sending heartbeat: {ex.Message}");
+        }
     }
 
     [ObservableProperty]

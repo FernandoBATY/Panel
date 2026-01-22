@@ -11,6 +11,7 @@ public class ContadorReporte
     public string Nombre => Contador.Name;
     public decimal TiempoTrabajado { get; set; }
     public string TiempoTrabajadoTexto => $"{TiempoTrabajado:0.0}h";
+    public string TiempoSesion { get; set; } = "00:00:00";
     public string Username => Contador.Username;
     
     // UI Helpers for Charts

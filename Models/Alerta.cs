@@ -12,6 +12,9 @@ public class Alerta
     [Indexed]
     public string Prioridad { get; set; } = "MEDIA"; // "ALTA", "MEDIA", "BAJA"
 
+    [MaxLength(50)]
+    public string Titulo { get; set; } = string.Empty;
+
     [MaxLength(2000)]
     public string Mensaje { get; set; } = string.Empty;
 

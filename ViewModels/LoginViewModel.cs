@@ -11,6 +11,8 @@ namespace Panel.ViewModels;
 public class LoginViewModel : INotifyPropertyChanged
 {
     private readonly DatabaseService _databaseService;
+    private readonly NetworkService _networkService;
+    private readonly SyncService _syncService;
     private readonly IServiceProvider _serviceProvider;
     private string _username = "";
     private string _password = "";
@@ -18,11 +20,15 @@ public class LoginViewModel : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public LoginViewModel(DatabaseService databaseService, IServiceProvider serviceProvider)
+    public LoginViewModel(DatabaseService databaseService, NetworkService networkService, SyncService syncService, IServiceProvider serviceProvider)
     {
         _databaseService = databaseService;
+        _networkService = networkService;
+        _syncService = syncService;
         _serviceProvider = serviceProvider;
         LoginCommand = new Command(async () => await LoginAsync());
+        SincronizarInicialCommand = new Command(async () => await SincronizarInicial());
+        ToggleSyncCommand = new Command(() => IsSyncVisible = !IsSyncVisible);
     }
 
     public string Username
@@ -61,6 +67,135 @@ public class LoginViewModel : INotifyPropertyChanged
                 _errorMessage = value;
                 OnPropertyChanged();
             }
+        }
+    }
+
+    public ICommand SincronizarInicialCommand { get; }
+    public ICommand ToggleSyncCommand { get; }
+
+    private bool _isSyncVisible;
+    public bool IsSyncVisible
+    {
+        get => _isSyncVisible;
+        set
+        {
+            if (_isSyncVisible != value)
+            {
+                _isSyncVisible = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    private string _syncIp = "";
+    public string SyncIp
+    {
+        get => _syncIp;
+        set
+        {
+            if (_syncIp != value)
+            {
+                _syncIp = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    private string _syncStatus = "";
+    public string SyncStatus
+    {
+        get => _syncStatus;
+        set
+        {
+            if (_syncStatus != value)
+            {
+                _syncStatus = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    private bool _isSyncing;
+    public bool IsSyncing
+    {
+        get => _isSyncing;
+        set
+        {
+            if (_isSyncing != value)
+            {
+                _isSyncing = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    private async Task SincronizarInicial()
+    {
+        if (string.IsNullOrWhiteSpace(SyncIp))
+        {
+            await Application.Current!.MainPage!.DisplayAlert("Error", "Ingresa la IP del servidor", "OK");
+            return;
+        }
+
+        IsSyncing = true;
+        SyncStatus = "Conectando al servidor...";
+
+        try
+        {
+            // 1. Crear identidad temporal
+            var tempIdentity = new Panel.Models.NodeIdentity 
+            { 
+                NodeId = Guid.NewGuid().ToString(),
+                Username = "Guest_Sync",
+                Role = "Guest",
+                MachineName = Environment.MachineName
+            };
+            SessionService.SetIdentity(tempIdentity);
+
+            // 2. Conectar
+            var connected = await _networkService.ConnectToServerAsync(SyncIp.Trim());
+            if (!connected)
+            {
+                SyncStatus = "Error de conexión";
+                await Application.Current!.MainPage!.DisplayAlert("Error", "No se pudo conectar al servidor", "OK");
+                IsSyncing = false;
+                return;
+            }
+
+            SyncStatus = "Recibiendo datos...";
+            
+            bool syncComplete = false;
+            
+            void OnDataChanged(object? s, string type)
+            {
+                if (type == "Done") syncComplete = true;
+            }
+            
+            _syncService.DataChanged += OnDataChanged;
+
+            // Wait loop (10s timeout)
+            int ticks = 0;
+            while (!syncComplete && ticks < 20) 
+            {
+                await Task.Delay(500);
+                ticks++;
+            }
+            
+            _syncService.DataChanged -= OnDataChanged;
+
+            SyncStatus = "¡Sincronización Completada!";
+            await Application.Current!.MainPage!.DisplayAlert("Éxito", "Base de datos actualizada correctamente. Ahora puedes iniciar sesión.", "OK");
+            
+            _networkService.Disconnect();
+            IsSyncVisible = false; // Hide after success
+        }
+        catch (Exception ex)
+        {
+            SyncStatus = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            IsSyncing = false;
         }
     }
 

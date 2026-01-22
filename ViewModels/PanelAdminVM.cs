@@ -191,6 +191,7 @@ public partial class PanelAdminVM : ObservableObject
         // Configurar eventos de red
         _networkService.ClientConnected += OnClientConnected;
         _networkService.ClientDisconnected += OnClientDisconnected;
+        _networkService.MessageReceived += OnNetworkMessageReceived;
 
         // Vincular SyncService con DatabaseService
         _databaseService.SetSyncService(_syncService);
@@ -211,12 +212,27 @@ public partial class PanelAdminVM : ObservableObject
 
     private void OnClientDisconnected(object? sender, string nodeId)
     {
-        var node = ConnectedNodes.FirstOrDefault(n => n.NodeId == nodeId);
-        if (node != null)
+        MainThread.BeginInvokeOnMainThread(() => 
         {
-            ConnectedNodes.Remove(node);
-            ConnectionStatus = $"Servidor activo - {ConnectedNodes.Count} conectados";
-        }
+            var node = ConnectedNodes.FirstOrDefault(n => n.NodeId == nodeId);
+            if (node != null)
+            {
+                // Update Contadores List (UI)
+                var user = Contadores.FirstOrDefault(c => c.Id == node.UserId);
+                if (user != null)
+                {
+                    user.Estado = "desconectado";
+                    user.SessionDuration = "00:00:00";
+                    
+                    // Refresh UI
+                    int idx = Contadores.IndexOf(user);
+                    if (idx != -1) Contadores[idx] = user;
+                }
+
+                ConnectedNodes.Remove(node);
+                ConnectionStatus = $"Servidor activo - {ConnectedNodes.Count} conectados";
+            }
+        });
     }
 
     [RelayCommand]
@@ -533,6 +549,50 @@ public partial class PanelAdminVM : ObservableObject
         NuevoUsuarioArea = "Ingresos";
         UsuarioEditando = null;
         IsEditMode = false;
+    }
+
+    private void OnNetworkMessageReceived(object? sender, SyncMessage message)
+    {
+        if (message.Operation == SyncOperation.Heartbeat && message.Sender != null)
+        {
+            MainThread.BeginInvokeOnMainThread(() => 
+            {
+                // Update ConnectedNodes
+                var node = ConnectedNodes.FirstOrDefault(n => n.NodeId == message.Sender.NodeId);
+                if (node != null)
+                {
+                    node.SessionDuration = message.Sender.SessionDuration;
+                }
+
+                // Update Contadores List
+                var user = Contadores.FirstOrDefault(c => c.Id == message.Sender.UserId);
+                if (user != null)
+                {
+                     user.Estado = "conectado";
+                     user.SessionDuration = message.Sender.SessionDuration;
+                     
+                     // Force UI Refresh (Replace item to trigger binding update since User is POCO)
+                     int idx = Contadores.IndexOf(user);
+                     if (idx != -1)
+                     {
+                         Contadores[idx] = user; // Triggers CollectionChanged
+                     }
+                }
+
+                // Update Reportes List
+                var reporte = ReportesDetallados.FirstOrDefault(r => r.Contador.Id == message.Sender.UserId);
+                if (reporte != null)
+                {
+                    reporte.TiempoSesion = message.Sender.SessionDuration;
+                    
+                    int idx = ReportesDetallados.IndexOf(reporte);
+                    if (idx != -1)
+                    {
+                        ReportesDetallados[idx] = reporte;
+                    }
+                }
+            });
+        }
     }
 
     [ObservableProperty]

@@ -152,8 +152,8 @@
                 <!-- Stat 4 -->
                 <HorizontalStackLayout Grid.Column="3" Spacing="12" Margin="12,0,0,0">
                      <VerticalStackLayout>
-                         <Label Text="{Binding HorasRegistradas, StringFormat='{0}h'}" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Purple500}"/>
-                         <Label Text="Horas Trabajadas" FontSize="12" TextColor="{StaticResource Gray500Jazer}"/>
+                         <Label Text="{Binding TiempoSesion}" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Purple500}" FontFamily="Consolas"/>
+                         <Label Text="Tiempo Sesión" FontSize="12" TextColor="{StaticResource Gray500Jazer}"/>
                      </VerticalStackLayout>
                 </HorizontalStackLayout>
             </Grid>
@@ -161,7 +161,7 @@
 
         <!-- SECCIÓN 3: SISTEMA DE PESTAÑAS -->
         <Border Grid.Row="2" Margin="0" BackgroundColor="{StaticResource White}" StrokeThickness="0" Padding="32,0">
-            <Grid ColumnDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="32">
+            <Grid ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="32">
                 <Grid.Resources>
                     <Style TargetType="Button" x:Key="TabButton">
                         <Setter Property="BackgroundColor" Value="Transparent"/>
@@ -252,25 +252,7 @@
                     </BoxView>
                 </Grid>
 
-                <!-- Tab 4: Documentos -->
-                <Grid Grid.Column="3">
-                    <Button Text="Documentos" Style="{StaticResource TabButton}" 
-                            Command="{Binding SetTabCommand}" CommandParameter="3">
-                        <Button.Triggers>
-                            <DataTrigger TargetType="Button" Binding="{Binding SelectedTabIndex}" Value="3">
-                                <Setter Property="TextColor" Value="{StaticResource Blue500}"/>
-                                <Setter Property="FontAttributes" Value="Bold"/>
-                            </DataTrigger>
-                        </Button.Triggers>
-                    </Button>
-                    <BoxView Style="{StaticResource ActiveIndicator}">
-                        <BoxView.Triggers>
-                            <DataTrigger TargetType="BoxView" Binding="{Binding SelectedTabIndex}" Value="3">
-                                <Setter Property="IsVisible" Value="True"/>
-                            </DataTrigger>
-                        </BoxView.Triggers>
-                    </BoxView>
-                </Grid>
+                <!-- Columnds reduced to 3 -->
             </Grid>
         </Border>
 
@@ -631,48 +613,6 @@
                 </Border>
             </Grid>
 
-            <!-- VISTA DOCUMENTOS -->
-            <ScrollView IsVisible="False" VerticalScrollBarVisibility="Always">
-                <ScrollView.Triggers>
-                     <DataTrigger TargetType="ScrollView" Binding="{Binding SelectedTabIndex}" Value="3">
-                         <Setter Property="IsVisible" Value="True"/>
-                     </DataTrigger>
-                </ScrollView.Triggers>
-                
-                <VerticalStackLayout Spacing="16" Padding="0,0,0,20">
-                     <Label Text="Documentos Compartidos" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource Gray800Jazer}"/>
-                     
-                     <CollectionView ItemsSource="{Binding Documentos}" VerticalScrollBarVisibility="Always" HeightRequest="500">
-                          <CollectionView.EmptyView>
-                               <Label Text="No hay documentos disponibles" TextColor="{StaticResource Gray400Jazer}" HorizontalOptions="Center" Margin="0,20"/>
-                          </CollectionView.EmptyView>
-                          <CollectionView.ItemTemplate>
-                              <DataTemplate>
-                                  <Border Margin="0,4" Padding="12" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" StrokeShape="RoundRectangle 8">
-                                      <Grid ColumnDefinitions="40,*,Auto">
-                                          <!-- Icono Genérico -->
-                                          <Border Grid.Column="0" BackgroundColor="{StaticResource Blue50}" HeightRequest="32" WidthRequest="32" StrokeShape="RoundRectangle 6" StrokeThickness="0" VerticalOptions="Center">
-                                              <Label Text="DOC" HorizontalOptions="Center" VerticalOptions="Center" FontSize="10" FontAttributes="Bold" TextColor="{StaticResource Blue600}"/>
-                                          </Border>
-                                          
-                                          <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center" Margin="12,0">
-                                              <Label Text="{Binding Nombre}" TextColor="{StaticResource Gray900Jazer}" FontSize="14" FontAttributes="Bold" LineBreakMode="TailTruncation"/>
-                                              <HorizontalStackLayout Spacing="8">
-                                                  <Label Text="{Binding Tipo}" TextColor="{StaticResource Gray500Jazer}" FontSize="12"/>
-                                                  <Label Text="{Binding FechaSubida, StringFormat='{0:d}'}" TextColor="{StaticResource Gray400Jazer}" FontSize="12"/>
-                                              </HorizontalStackLayout>
-                                          </VerticalStackLayout>
-                                          
-                                          <Button Grid.Column="2" Text="⬇" 
-                                                  BackgroundColor="{StaticResource Gray100Jazer}" TextColor="{StaticResource Gray600Jazer}"
-                                                  HeightRequest="32" WidthRequest="32" Padding="0" CornerRadius="6" VerticalOptions="Center"/>
-                                      </Grid>
-                                  </Border>
-                              </DataTemplate>
-                          </CollectionView.ItemTemplate>
-                     </CollectionView>
-                </VerticalStackLayout>
-            </ScrollView>
 
         </Grid>
 

@@ -95,11 +95,16 @@ public class NetworkService
                     
                     Console.WriteLine($"[SERVER] Cliente conectado: {message.Sender!.Username} ({message.Sender.Role})");
                     
-                    // Enviar FullSync al nuevo cliente
-                    await SendFullSyncToClient(connectedClient);
+                    Console.WriteLine($"[SERVER] Cliente conectado: {message.Sender!.Username} ({message.Sender.Role})");
                 }
                 else
                 {
+                    // Update Identity on Heartbeat
+                    if (message.Operation == SyncOperation.Heartbeat && connectedClient != null && message.Sender != null)
+                    {
+                        connectedClient.Identity = message.Sender;
+                    }
+
                     // Reenviar mensaje a todos los demás clientes
                     await BroadcastMessageAsync(message, connectedClient?.Identity.NodeId);
                     
@@ -123,19 +128,13 @@ public class NetworkService
         }
     }
 
-    private async Task SendFullSyncToClient(ConnectedClient client)
+    public async Task SendDirectlyToNodeAsync(string nodeId, SyncMessage message)
     {
-        // TODO: Obtener snapshot completo de la DB y enviarlo
-        // Por ahora solo confirmamos la conexión
-        var welcomeMsg = new SyncMessage
+        var client = _connectedClients.FirstOrDefault(c => c.Identity.NodeId == nodeId);
+        if (client != null)
         {
-            Operation = SyncOperation.FullSync,
-            Sender = SessionService.CurrentIdentity,
-            EntityType = "Welcome",
-            EntityJson = JsonSerializer.Serialize(ConnectedNodes)
-        };
-
-        await SendToClientAsync(client, welcomeMsg);
+            await SendToClientAsync(client, message);
+        }
     }
 
     public async Task BroadcastMessageAsync(SyncMessage message, string? excludeNodeId = null)

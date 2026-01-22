@@ -9,4 +9,5 @@ public class NodeIdentity
     public string MachineName { get; set; } = string.Empty;
     public DateTime ConnectedAt { get; set; } = DateTime.Now;
     public string IpAddress { get; set; } = string.Empty;
+    public string SessionDuration { get; set; } = "00:00:00";
 }

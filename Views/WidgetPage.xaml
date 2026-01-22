@@ -47,7 +47,7 @@
             <!-- Lista de Tareas (Simplificada) -->
             <CollectionView Grid.Row="1" ItemsSource="{Binding TareasPendientes}" HeightRequest="250">
                 <CollectionView.EmptyView>
-                    <Label Text="No hay tareas pendientes" FontSize="11" TextColor="Gray" HorizontalOptions="Center" VerticalOptions="Center"/>
+                    <Label Text="No hay tareas pendientes" FontSize="11" TextColor="Gray" HorizontalOptions="Center" VerticalOptions="End" Margin="0,0,0,30"/>
                 </CollectionView.EmptyView>
                 <CollectionView.ItemTemplate>
                     <DataTemplate>

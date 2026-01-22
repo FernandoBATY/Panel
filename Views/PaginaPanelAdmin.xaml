@@ -323,15 +323,16 @@
                             
                             <CollectionView ItemsSource="{Binding Contadores}" VerticalScrollBarVisibility="Always" HeightRequest="450">
                                 <CollectionView.Header>
-                                    <Grid ColumnDefinitions="40,*,*" Padding="0,0,0,8">
+                                    <Grid ColumnDefinitions="40,2*,*,*" Padding="0,0,0,8">
                                         <Label Text="" Grid.Column="0"/>
                                         <Label Text="USUARIO" Grid.Column="1" TextColor="{StaticResource Gray400Jazer}" FontSize="11" FontAttributes="Bold"/>
-                                        <Label Text="ESTADO" Grid.Column="2" TextColor="{StaticResource Gray400Jazer}" FontSize="11" FontAttributes="Bold" HorizontalOptions="Center"/>
+                                        <Label Text="TIEMPO SESIÓN" Grid.Column="2" TextColor="{StaticResource Gray400Jazer}" FontSize="11" FontAttributes="Bold" HorizontalOptions="Center"/>
+                                        <Label Text="ESTADO" Grid.Column="3" TextColor="{StaticResource Gray400Jazer}" FontSize="11" FontAttributes="Bold" HorizontalOptions="Center"/>
                                     </Grid>
                                 </CollectionView.Header>
                                 <CollectionView.ItemTemplate>
                                     <DataTemplate>
-                                        <Grid ColumnDefinitions="40,*,*" Padding="0,12">
+                                        <Grid ColumnDefinitions="40,2*,*,*" Padding="0,12">
                                             <Border Grid.Column="0" HeightRequest="32" WidthRequest="32" StrokeShape="RoundRectangle 16" BackgroundColor="{StaticResource Blue50}" StrokeThickness="0" VerticalOptions="Center" HorizontalOptions="Center">
                                                 <Grid>
                                                     <Label Text="{Binding Name, Converter={StaticResource StringToInitialsConverter}}" HorizontalOptions="Center" VerticalOptions="Center" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource Blue600}"/>
@@ -341,8 +342,9 @@
                                                 </Grid>
                                             </Border>
                                             <Label Grid.Column="1" Text="{Binding Username}" TextColor="{StaticResource Gray800Jazer}" VerticalOptions="Center" FontAttributes="Bold"/>
-                                            <Border Grid.Column="2" BackgroundColor="{StaticResource Gray100Jazer}" StrokeThickness="0" Padding="8,2" HorizontalOptions="Center" VerticalOptions="Center" StrokeShape="RoundRectangle 4">
-                                                <Label Text="{Binding Estado}" TextColor="{StaticResource Gray600Jazer}" FontSize="11"/>
+                                            <Label Grid.Column="2" Text="{Binding SessionDuration}" TextColor="{StaticResource Blue600}" VerticalOptions="Center" HorizontalOptions="Center" FontAttributes="Bold" FontFamily="Consolas"/>
+                                            <Border Grid.Column="3" BackgroundColor="{Binding Estado, Converter={StaticResource StatusBackgroundColorConverter}}" StrokeThickness="0" Padding="8,2" HorizontalOptions="Center" VerticalOptions="Center" StrokeShape="RoundRectangle 4">
+                                                <Label Text="{Binding Estado}" TextColor="{Binding Estado, Converter={StaticResource StatusTextColorConverter}}" FontSize="11"/>
                                             </Border>
                                         </Grid>
                                     </DataTemplate>
@@ -629,7 +631,7 @@
                                     <Label Grid.Column="1" Text="TOTAL" FontSize="11" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
                                     <Label Grid.Column="2" Text="HECHO" FontSize="11" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
                                     <Label Grid.Column="3" Text="PENDIENTE" FontSize="11" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
-                                    <Label Grid.Column="4" Text="HORAS" FontSize="11" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
+                                    <Label Grid.Column="4" Text="TIEMPO SESIÓN" FontSize="11" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
                                 </Grid>
                                 
                                 <!-- Lista Reportes -->
@@ -654,7 +656,7 @@
                                                 <Label Grid.Column="3" Text="{Binding Pendientes}" HorizontalOptions="Center" VerticalOptions="Center" TextColor="{StaticResource Yellow600}" FontAttributes="Bold"/>
                                                 
                                                 <HorizontalStackLayout Grid.Column="4" Spacing="4" HorizontalOptions="Center" VerticalOptions="Center">
-                                                    <Label Text="{Binding TiempoTrabajadoTexto}" TextColor="{StaticResource Purple600}" FontSize="12" FontAttributes="Bold"/>
+                                                    <Label Text="{Binding TiempoSesion}" TextColor="{StaticResource Purple600}" FontSize="12" FontAttributes="Bold" FontFamily="Consolas"/>
                                                 </HorizontalStackLayout>
                                             </Grid>
                                         </DataTemplate>
