@@ -6,6 +6,7 @@ public partial class LoginPage : ContentPage
 {
 	public LoginPage(LoginViewModel viewModel)
 	{
+		// Inicializa la vista con el ViewModel de login
 		InitializeComponent();
 		BindingContext = viewModel;
 	}
@@ -17,6 +18,7 @@ public partial class LoginPage : ContentPage
         var window = this.Window;
         if (window != null)
         {
+            // Tamaño fijo de ventana para login en Windows
             window.Width = 400;
             window.Height = 550;
         }

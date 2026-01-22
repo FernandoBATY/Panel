@@ -7,6 +7,7 @@ namespace Panel.Services;
 
 public class DatabaseService
 {
+    // Configuración de la base de datos
     private SQLiteAsyncConnection? _database;
     private const string DatabaseName = "Panel.db3";
     private SyncService? _syncService;
@@ -20,6 +21,7 @@ public class DatabaseService
         _syncService = syncService;
     }
 
+    // Inicialización de la base de datos
     private async Task Init()
     {
         if (_database is not null)
@@ -34,7 +36,6 @@ public class DatabaseService
         await _database.CreateTableAsync<Mensaje>();
         await _database.CreateTableAsync<Alerta>();
         
-        // Seed ONLY Admin if not exists
         var admin = await _database.Table<User>()
                             .Where(u => u.Username == "admin")
                             .FirstOrDefaultAsync();
@@ -48,13 +49,13 @@ public class DatabaseService
                 Role = "Admin", 
                 Estado = "desconectado", 
                 Area = "Admin",
-                // Hash password on creation
                 Password = BCrypt.Net.BCrypt.HashPassword("password") 
             };
             await _database.InsertAsync(newAdmin);
         }
     }
 
+    // Autenticación de usuarios
     public async Task<Panel.Models.User?> LoginAsync(string username, string password)
     {
         await Init();
@@ -64,7 +65,6 @@ public class DatabaseService
 
         if (user != null)
         {
-            // Verify hash
             bool verified = false;
             try 
             {
@@ -72,11 +72,9 @@ public class DatabaseService
             }
             catch 
             {
-                // Fallback for legacy plain text passwords (optional: auto-hash them?)
                 if (user.Password == password) 
                 {
                     verified = true;
-                    // Auto-upgrade security
                     user.Password = BCrypt.Net.BCrypt.HashPassword(password);
                     await _database.UpdateAsync(user);
                 }
@@ -88,6 +86,7 @@ public class DatabaseService
         return null;
     }
 
+    // Gestión de usuarios
     public async Task<List<User>> GetContadoresAsync()
     {
         await Init();
@@ -104,8 +103,6 @@ public class DatabaseService
     {
         await Init();
         
-        // Hash password if it's new or changed (and not already hashed)
-        // Simple check: BCrypt hashes start with $2a$, $2b$ etc and are 60 chars
         if (!string.IsNullOrEmpty(user.Password) && !user.Password.StartsWith("$2"))
         {
              user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
@@ -115,7 +112,6 @@ public class DatabaseService
         if (user.Id == 0)
             result = await _database!.InsertAsync(user);
         else
-            // Use InsertOrReplace for synced users that have an ID but might not exist locally
             result = await _database!.InsertOrReplaceAsync(user);
 
         if (!skipSync && _syncService != null)
@@ -137,6 +133,7 @@ public class DatabaseService
         return result;
     }
 
+    // Gestión de tareas
     public async Task<List<Tarea>> GetTareasAsync()
     {
         await Init();
@@ -153,11 +150,8 @@ public class DatabaseService
     {
         await Init();
         
-        // Tarea.Id is a string GUID, so always use InsertOrReplace
-        // This handles both new tasks and synced tasks correctly
         var result = await _database!.InsertOrReplaceAsync(tarea);
         
-        // Notificar sincronización (solo si no viene de red)
         if (!skipSync && _syncService != null)
         {
             await _syncService.OnLocalChange(SyncOperation.Update, tarea, "Tarea");
@@ -171,7 +165,6 @@ public class DatabaseService
         await Init();
         var result = await _database!.UpdateAsync(tarea);
         
-        // Notificar sincronización (solo si no viene de red)
         if (!skipSync && _syncService != null)
         {
             await _syncService.OnLocalChange(SyncOperation.Update, tarea, "Tarea");
@@ -180,7 +173,7 @@ public class DatabaseService
         return result;
     }
 
-    // Métodos para Alertas
+    // Gestión de alertas
     public async Task<List<Alerta>> GetAlertasPorUsuarioAsync(int userId)
     {
         await Init();
@@ -216,7 +209,7 @@ public class DatabaseService
         return result;
     }
 
-    // Métodos para Mensajes
+    // Gestión de mensajes
     public async Task<List<Mensaje>> GetMensajesAsync()
     {
         await Init();
@@ -261,7 +254,7 @@ public class DatabaseService
         return result;
     }
 
-    // Métodos para Documentos
+    // Gestión de documentos
     public async Task<List<Documento>> GetDocumentosAsync()
     {
         await Init();
@@ -311,24 +304,23 @@ public class DatabaseService
         
         return result;
     }
+
+    // Utilidades de base de datos
     public async Task ResetDatabaseAsync()
     {
         await Init();
-        // Drop volatile data tables
-        await _database!.DropTableAsync<User>(); // Reset users too to clear legacy plain text
+        await _database!.DropTableAsync<User>(); 
         await _database!.DropTableAsync<Tarea>();
         await _database!.DropTableAsync<Mensaje>();
         await _database!.DropTableAsync<Alerta>();
         await _database!.DropTableAsync<Documento>();
         
-        // Recreate them empty
         await _database!.CreateTableAsync<User>();
         await _database!.CreateTableAsync<Tarea>();
         await _database!.CreateTableAsync<Mensaje>();
         await _database!.CreateTableAsync<Alerta>();
         await _database!.CreateTableAsync<Documento>();
 
-        // Resaltar Admin por defecto (Hash seguro)
         var newAdmin = new User 
         { 
             Username = "admin", 

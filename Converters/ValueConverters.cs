@@ -2,6 +2,7 @@ using System.Globalization;
 
 namespace Panel.Converters;
 
+// Conversor de estado a booleano
 public class StatusToBoolConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -23,6 +24,7 @@ public class StatusToBoolConverter : IValueConverter
     }
 }
 
+// Conversor de entero a booleano
 public class IntToBoolConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -44,13 +46,13 @@ public class IntToBoolConverter : IValueConverter
     }
 }
 
+// Comparación de igualdad genérica
 public class EqualConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value == null || parameter == null) return false;
         
-        // Handle int comparison specifically
         if (value is int intValue && parameter is string paramString && int.TryParse(paramString, out int targetValue))
         {
             return intValue == targetValue;
@@ -65,6 +67,7 @@ public class EqualConverter : IValueConverter
     }
 }
 
+// Inversión de valores booleanos
 public class InverseBoolConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -86,6 +89,7 @@ public class InverseBoolConverter : IValueConverter
     }
 }
 
+// Validación de texto no vacío
 public class StringNotEmptyConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -99,6 +103,7 @@ public class StringNotEmptyConverter : IValueConverter
     }
 }
 
+// Conversión de prioridad a color
 public class PriorityToColorConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -107,7 +112,7 @@ public class PriorityToColorConverter : IValueConverter
         {
             return prioridad == "Prioritaria" ? Color.FromArgb("#DC2626") : Color.FromArgb("#F59E0B");
         }
-        return Color.FromArgb("#F59E0B"); // Default to Variable color
+        return Color.FromArgb("#F59E0B"); 
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -116,6 +121,7 @@ public class PriorityToColorConverter : IValueConverter
     }
 }
 
+// Indicadores de prioridad
 public class IsPrioritariaConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -142,6 +148,7 @@ public class IsVariableConverter : IValueConverter
     }
 }
 
+// Colores de estado de tarea
 public class StatusToColorConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -166,6 +173,7 @@ public class StatusToColorConverter : IValueConverter
     }
 }
 
+// Fondos según estado de tarea
 public class StatusBackgroundColorConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -174,10 +182,10 @@ public class StatusBackgroundColorConverter : IValueConverter
         {
             return estado switch
             {
-                "completada" => Color.FromArgb("#DCFCE7"), // Green100
-                "en-progreso" => Color.FromArgb("#DBEAFE"), // Blue100
-                "pendiente" => Color.FromArgb("#F3F4F6"), // Gray100
-                "retrasada" => Color.FromArgb("#FEE2E2"), // Red100
+                "completada" => Color.FromArgb("#DCFCE7"), 
+                "en-progreso" => Color.FromArgb("#DBEAFE"), 
+                "pendiente" => Color.FromArgb("#F3F4F6"), 
+                "retrasada" => Color.FromArgb("#FEE2E2"), 
                 _ => Color.FromArgb("#F3F4F6")
             };
         }
@@ -190,6 +198,7 @@ public class StatusBackgroundColorConverter : IValueConverter
     }
 }
 
+// Colores de texto por estado
 public class StatusTextColorConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -198,10 +207,10 @@ public class StatusTextColorConverter : IValueConverter
         {
             return estado switch
             {
-                "completada" => Color.FromArgb("#065F46"), // Green800
-                "en-progreso" => Color.FromArgb("#1E3A8A"), // Blue900
-                "pendiente" => Color.FromArgb("#374151"), // Gray700
-                "retrasada" => Color.FromArgb("#991B1B"), // Red800
+                "completada" => Color.FromArgb("#065F46"), 
+                "en-progreso" => Color.FromArgb("#1E3A8A"), 
+                "pendiente" => Color.FromArgb("#374151"), 
+                "retrasada" => Color.FromArgb("#991B1B"), 
                 _ => Color.FromArgb("#374151")
             };
         }
@@ -214,6 +223,7 @@ public class StatusTextColorConverter : IValueConverter
     }
 }
 
+// Colores para tipos de alerta
 public class AlertTypeToColorConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -222,9 +232,9 @@ public class AlertTypeToColorConverter : IValueConverter
         {
             return tipo.ToUpper() switch
             {
-                "ALERTA" => Color.FromArgb("#EF4444"), // Red500
-                "NOTIFICACION" => Color.FromArgb("#3B82F6"), // Blue500
-                "MENSAJE" => Color.FromArgb("#6B7280"), // Gray500
+                "ALERTA" => Color.FromArgb("#EF4444"), 
+                "NOTIFICACION" => Color.FromArgb("#3B82F6"), 
+                "MENSAJE" => Color.FromArgb("#6B7280"), 
                 _ => Color.FromArgb("#6B7280")
             };
         }
@@ -237,6 +247,7 @@ public class AlertTypeToColorConverter : IValueConverter
     }
 }
 
+// Fondos para tipos de alerta
 public class AlertTypeToBgColorConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -245,9 +256,9 @@ public class AlertTypeToBgColorConverter : IValueConverter
         {
             return tipo.ToUpper() switch
             {
-                "ALERTA" => Color.FromArgb("#FEE2E2"), // Red100
-                "NOTIFICACION" => Color.FromArgb("#DBEAFE"), // Blue100
-                "MENSAJE" => Color.FromArgb("#F3F4F6"), // Gray100
+                "ALERTA" => Color.FromArgb("#FEE2E2"), 
+                "NOTIFICACION" => Color.FromArgb("#DBEAFE"),
+                "MENSAJE" => Color.FromArgb("#F3F4F6"), 
                 _ => Color.FromArgb("#F3F4F6")
             };
         }
@@ -260,6 +271,7 @@ public class AlertTypeToBgColorConverter : IValueConverter
     }
 }
 
+// Control de visibilidad por booleano
 public class IsVisibleIfTrueConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -275,6 +287,7 @@ public class IsVisibleIfTrueConverter : IValueConverter
     }
 }
 
+// Obtención de iniciales a partir de nombre
 public class StringToInitialsConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -299,9 +312,8 @@ public class StringToInitialsConverter : IValueConverter
     }
 }
 
-/// <summary>
-/// Converts bool to one of two strings. Parameter format: "TrueText|FalseText"
-/// </summary>
+
+// Selección de texto según booleano
 public class BoolToStringConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -323,6 +335,7 @@ public class BoolToStringConverter : IValueConverter
     }
 }
 
+// Conversión de ruta de archivo a ImageSource
 public class FileToImageSourceConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)

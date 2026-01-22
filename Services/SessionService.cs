@@ -4,17 +4,19 @@ namespace Panel.Services;
 
 public class SessionService
 {
+    // Estado de la sesión actual
     private static NodeIdentity? _currentIdentity;
     private static User? _currentUser;
 
+    // Propiedades de acceso público
     public static NodeIdentity? CurrentIdentity => _currentIdentity;
     public static User? CurrentUser => _currentUser;
 
+    // Gestión de la sesión de usuario
     public static void SetCurrentUser(User user)
     {
         _currentUser = user;
         
-        // Crear identidad de nodo
         _currentIdentity = new NodeIdentity
         {
             NodeId = $"{DeviceInfo.Current.Name}_{Guid.NewGuid().ToString()[..8]}",
@@ -29,7 +31,7 @@ public class SessionService
     public static void SetIdentity(NodeIdentity identity)
     {
         _currentIdentity = identity;
-        _currentUser = null; // Ensure no user is logged in
+        _currentUser = null; 
     }
 
     public static void ClearSession()
@@ -38,6 +40,7 @@ public class SessionService
         _currentIdentity = null;
     }
 
+    // Validación de roles
     public static bool IsAdmin()
     {
         return _currentUser?.Role == "Admin";
@@ -53,6 +56,7 @@ public class SessionService
         return _currentUser != null;
     }
 
+    // Gestión de identificador único de máquina
     public static string GetOrCreateMachineNodeId()
     {
         var stored = Preferences.Get("MachineNodeId", string.Empty);

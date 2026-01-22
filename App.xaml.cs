@@ -9,7 +9,6 @@ namespace Panel
         private Window? _widgetWindow;
         private readonly Views.LoginPage _loginPage;
         
-        // Propiedad estática para acceso global
         public static new App? Current => Application.Current as App;
 
         public App(Views.LoginPage loginPage)
@@ -20,18 +19,15 @@ namespace Panel
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
-            // Evitar recrear si ya existe
             if (_mainWindow != null) return _mainWindow;
 
             _mainWindow = new Window(_loginPage) { Title = "JAZER Panel" };
             
             _mainWindow.Created += (s, e) => MaximizarVentana(_mainWindow);
             
-            // Eventos de ciclo de vida para el Widget
             _mainWindow.Deactivated += OnMainWindowDeactivated;
             _mainWindow.Activated += OnMainWindowActivated;
 
-            // Suscribirse a cambios de página
             this.PropertyChanged += (s, e) =>
             {
                 if (e.PropertyName == nameof(MainPage))
@@ -45,7 +41,6 @@ namespace Panel
 
         private void OnMainWindowDeactivated(object? sender, EventArgs e)
         {
-            // Mostrar widget si es contador y minimiza
             if (Panel.Services.SessionService.IsContador())
             {
                 MostrarWidget();
@@ -63,8 +58,7 @@ namespace Panel
             {
                 var widgetPage = new Views.WidgetPage();
                 
-                // Intentar inyectar VM
-                if (Application.Current?.MainPage is NavigationPage nav && 
+                if (Application.Current?.Windows[0].Page is NavigationPage nav && 
                     nav.CurrentPage is Views.PaginaCentroControlContador centroPage &&
                     centroPage.BindingContext is ViewModels.CentroControlContadorVM vm)
                 {
@@ -79,7 +73,7 @@ namespace Panel
                 };
                 
                 Application.Current?.OpenWindow(_widgetWindow);
-                MaximizarVentana(_widgetWindow); // Aplicar estilos widget
+                MaximizarVentana(_widgetWindow); 
             }
         }
 
@@ -98,12 +92,12 @@ namespace Panel
             
             if (_mainWindow != null)
             {
-                 // Traer al frente y maximizar
+              
 #if WINDOWS
                  var platformWindow = _mainWindow.Handler?.PlatformView as Microsoft.UI.Xaml.Window;
                  if (platformWindow != null)
                  {
-                     platformWindow.Activate(); // Traer al frente
+                     platformWindow.Activate(); 
                  }
 #endif
                  MaximizarVentana(_mainWindow);
@@ -123,30 +117,25 @@ namespace Panel
                 {
                     if (window == _widgetWindow)
                     {
-                        // Estilo Widget: Siempre visible, sin bordes
                         presenter.IsMaximizable = false;
                         presenter.IsMinimizable = false;
                         presenter.IsResizable = false;
                         presenter.SetBorderAndTitleBar(false, false);
-                        presenter.IsAlwaysOnTop = false; // Fix: No sobreponerse a otras ventanas
+                        presenter.IsAlwaysOnTop = false; 
                         
-                        // Posicionar arriba derecha
                         var displayArea = Microsoft.UI.Windowing.DisplayArea.Primary;
                         var screenWidth = displayArea.WorkArea.Width;
-                        var x = screenWidth - 370; // 350 width + 20 margin
+                        var x = screenWidth - 370;
                         appWindow.MoveAndResize(new Windows.Graphics.RectInt32(x, 20, 350, 400));
                     }
                     else
                     {
-                        // Estilo Normal (Restaurar)
                         presenter.IsResizable = true;
                         presenter.IsMinimizable = true;
-                        presenter.IsMaximizable = true; // Set this TRUE before restoring
+                        presenter.IsMaximizable = true; 
                         presenter.IsAlwaysOnTop = false;
                         presenter.SetBorderAndTitleBar(true, true);
                         
-                        // Force Maximize in a layout cycle safe way
-                        // Sometimes changing border style resets state to 'Restored', so we Maximize AFTER
                         presenter.Maximize();
                     }
                 }

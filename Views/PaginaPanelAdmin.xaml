@@ -7,9 +7,9 @@
              xmlns:converters="clr-namespace:Panel.Converters">
 
     <Grid RowDefinitions="Auto,Auto,Auto,*" ColumnDefinitions="*" x:Name="MainGrid">
+        <!-- Estados adaptativos para escritorio/móvil -->
         <VisualStateManager.VisualStateGroups>
             <VisualStateGroup x:Name="AdaptiveStates">
-                <!-- Estado Estrecho (Ventanas pequeñas o verticales) -->
                 <VisualState x:Name="NarrowStatus">
                     <VisualState.StateTriggers>
                         <AdaptiveTrigger MinWindowWidth="0"/>
@@ -20,7 +20,6 @@
                         <Setter TargetName="BrandingStack" Property="IsVisible" Value="False"/>
                         <Setter TargetName="ServerStatusColumn" Property="HorizontalOptions" Value="Start"/>
                         
-                        <!-- Adaptación de Tareas -->
                         <Setter TargetName="TasksGrid" Property="ColumnDefinitions" Value="*"/>
                         <Setter TargetName="TasksGrid" Property="RowDefinitions" Value="Auto,Auto"/>
                         <Setter TargetName="FormTaskBorder" Property="Grid.Row" Value="0"/>
@@ -28,7 +27,6 @@
                         <Setter TargetName="ListTaskBorder" Property="Grid.Row" Value="1"/>
                         <Setter TargetName="ListTaskBorder" Property="Grid.Column" Value="0"/>
                         
-                        <!-- Adaptación de Usuarios -->
                         <Setter TargetName="UsersGrid" Property="ColumnDefinitions" Value="*"/>
                         <Setter TargetName="UsersGrid" Property="RowDefinitions" Value="Auto,Auto"/>
                         <Setter TargetName="FormUserBorder" Property="Grid.Row" Value="0"/>
@@ -38,7 +36,6 @@
                     </VisualState.Setters>
                 </VisualState>
                 
-                <!-- Estado Ancho (Escritorio Estándar) -->
                 <VisualState x:Name="WideStatus">
                     <VisualState.StateTriggers>
                         <AdaptiveTrigger MinWindowWidth="900"/>
@@ -65,17 +62,15 @@
             </VisualStateGroup>
         </VisualStateManager.VisualStateGroups>
         
-        <!-- SECCIÓN 1: HEADER SUPERIOR -->
+        <!-- Barra superior: branding y estado del servidor -->
         <Border Grid.Row="0" Margin="0" Padding="32,20" BackgroundColor="White" StrokeThickness="0">
             <Border.Shadow>
                 <Shadow Brush="Black" Offset="0,4" Opacity="0.05" Radius="4"/>
             </Border.Shadow>
             <Grid ColumnDefinitions="Auto,*,Auto">
-                <!-- Columna 1: Branding -->
                 <HorizontalStackLayout x:Name="BrandingStack" Grid.Column="0" Spacing="16" VerticalOptions="Center">
                     <Image Source="logoconsultoria.jpg" HeightRequest="65" WidthRequest="65" Aspect="AspectFit"/>
                     
-                    <!-- Perfil Admin -->
                     <Border HeightRequest="40" WidthRequest="40" StrokeShape="RoundRectangle 20" 
                             BackgroundColor="{StaticResource Blue50}" StrokeThickness="0">
                         <Grid>
@@ -94,7 +89,6 @@
                     </VerticalStackLayout>
                 </HorizontalStackLayout>
 
-                <!-- Columna 2: Estado del Servidor (Centrado) -->
                 <HorizontalStackLayout x:Name="ServerStatusColumn" Grid.Column="1" HorizontalOptions="Center" VerticalOptions="Center" Spacing="16">
                      <Border BackgroundColor="{Binding IsServerRunning, Converter={StaticResource StatusBackgroundColorConverter}}" 
                              StrokeThickness="0" StrokeShape="RoundRectangle 16"
@@ -105,7 +99,6 @@
                         </HorizontalStackLayout>
                      </Border>
                      
-                     <!-- IP Section -->
                      <Border BackgroundColor="{StaticResource Gray50}" IsVisible="{Binding IsServerRunning}" Stroke="{StaticResource Gray200Jazer}" StrokeShape="RoundRectangle 8" Padding="12,4">
                          <HorizontalStackLayout Spacing="10">
                             <Label Text="IP:" FontSize="13" TextColor="{StaticResource Gray500Jazer}" VerticalOptions="Center"/>
@@ -122,7 +115,6 @@
                      </Border>
                 </HorizontalStackLayout>
 
-                <!-- Columna 3: Controles de Sesión -->
                 <HorizontalStackLayout Grid.Column="2" Spacing="10" VerticalOptions="Center">
                     <Button Text="Iniciar Server" 
                             Command="{Binding IniciarServidorCommand}"
@@ -148,10 +140,9 @@
             </Grid>
         </Border>
 
-        <!-- SECCIÓN 2: BARRA DE ESTADÍSTICAS RÁPIDAS -->
+        <!-- Métricas rápidas del equipo -->
         <Border Grid.Row="1" Margin="0" Padding="32,12" BackgroundColor="White" StrokeThickness="0">
             <Grid x:Name="StatsGrid" ColumnDefinitions="*,*,*,*">
-                <!-- Stat 1 -->
                 <HorizontalStackLayout Grid.Column="0" Spacing="12">
                      <Label Text="Total" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource Blue700}" VerticalOptions="Center"/>
                      <VerticalStackLayout>
@@ -161,7 +152,6 @@
                      <BoxView WidthRequest="1" Color="{StaticResource Gray100Jazer}" HorizontalOptions="End" Margin="0,4"/>
                 </HorizontalStackLayout>
                 
-                <!-- Stat 2 -->
                 <HorizontalStackLayout Grid.Column="1" Spacing="12" Margin="12,0,0,0">
                      <Label Text="Éxito" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource Green600}" VerticalOptions="Center"/>
                      <VerticalStackLayout>
@@ -171,7 +161,6 @@
                      <BoxView WidthRequest="1" Color="{StaticResource Gray100Jazer}" HorizontalOptions="End" Margin="0,4"/>
                 </HorizontalStackLayout>
 
-                <!-- Stat 3 -->
                 <HorizontalStackLayout Grid.Column="2" Spacing="12" Margin="12,0,0,0">
                      <Label Text="Pendiente" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource Yellow600}" VerticalOptions="Center"/>
                      <VerticalStackLayout>
@@ -181,7 +170,6 @@
                      <BoxView WidthRequest="1" Color="{StaticResource Gray100Jazer}" HorizontalOptions="End" Margin="0,4"/>
                 </HorizontalStackLayout>
 
-                <!-- Stat 4 -->
                 <HorizontalStackLayout Grid.Column="3" Spacing="12" Margin="12,0,0,0">
                      <Label Text="Eficiencia" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource Purple600}" VerticalOptions="Center"/>
                      <VerticalStackLayout>
@@ -192,7 +180,7 @@
             </Grid>
         </Border>
 
-        <!-- SECCIÓN 3: SISTEMA DE PESTAÑAS -->
+        <!-- Navegación por pestañas principales -->
         <Border Grid.Row="2" Margin="0" BackgroundColor="White" StrokeThickness="0" Padding="32,0">
             <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnSpacing="32">
                 <Grid.Resources>
@@ -214,7 +202,6 @@
                     </Style>
                 </Grid.Resources>
                 
-                <!-- Tab 1: Dashboard -->
                 <Grid Grid.Column="0">
                     <Button Text="Equipo" Style="{StaticResource TabButton}" 
                             Command="{Binding SetTabCommand}" CommandParameter="0">
@@ -234,7 +221,6 @@
                     </BoxView>
                 </Grid>
 
-                <!-- Tab 2: Gestión -->
                 <Grid Grid.Column="1">
                     <Button Text="Gestión" Style="{StaticResource TabButton}" 
                             Command="{Binding SetTabCommand}" CommandParameter="1">
@@ -254,7 +240,6 @@
                     </BoxView>
                 </Grid>
 
-                <!-- Tab 3: Mensajería -->
                 <Grid Grid.Column="2">
                     <Button Text="Mensajería" Style="{StaticResource TabButton}" 
                             Command="{Binding SetTabCommand}" CommandParameter="2">
@@ -274,7 +259,6 @@
                     </BoxView>
                 </Grid>
 
-                <!-- Tab 4: Reportes -->
                 <Grid Grid.Column="3">
                     <Button Text="Reportes" Style="{StaticResource TabButton}" 
                             Command="{Binding SetTabCommand}" CommandParameter="3">
@@ -294,7 +278,6 @@
                     </BoxView>
                 </Grid>
 
-                <!-- Tab 5: Usuarios -->
                 <Grid Grid.Column="4">
                     <Button Text="Usuarios" Style="{StaticResource TabButton}" 
                             Command="{Binding SetTabCommand}" CommandParameter="4">
@@ -316,12 +299,11 @@
             </Grid>
         </Border>
 
-        <!-- SECCIÓN 4: CONTENIDO PRINCIPAL -->
+        <!-- Contenido por pestaña: equipo, gestión, mensajería, reportes, usuarios -->
         <Grid Grid.Row="3" Padding="32,24">
-            <!-- VISTA 0: DASHBOARD / CONTADORES -->
             <ScrollView VerticalScrollBarVisibility="Always" IsVisible="{Binding SelectedTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=0}">
                 <VerticalStackLayout Spacing="24">
-                    <!-- Lista Contadores -->
+                   
                     <Border BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="24" StrokeShape="RoundRectangle 12" VerticalOptions="Fill">
                         <VerticalStackLayout Spacing="16">
                             <Label Text="Equipo de Contadores" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource Gray900Jazer}"/>
@@ -361,7 +343,6 @@
             </ScrollView>
 
 
-            <!-- VISTA 1: GESTIÓN TAREAS -->
             <ScrollView VerticalScrollBarVisibility="Always" IsVisible="{Binding SelectedTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=1}">
                 <VerticalStackLayout Spacing="24">
                      <Grid ColumnDefinitions="*,2*"> 
@@ -372,7 +353,7 @@
                      </Grid>
 
                     <Grid x:Name="TasksGrid" ColumnDefinitions="350,*" ColumnSpacing="24">
-                        <!-- Formulario Crear (Izquierda) -->
+            
                         <Border x:Name="FormTaskBorder" Grid.Column="0" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="20" StrokeShape="RoundRectangle 12" VerticalOptions="Start">
                             <VerticalStackLayout Spacing="16">
                                 <Label Text="Nueva Tarea" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource Blue700}"/>
@@ -424,7 +405,6 @@
                             </VerticalStackLayout>
                         </Border>
 
-                        <!-- Lista Tareas (Derecha) -->
                         <Border x:Name="ListTaskBorder" Grid.Column="1" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="20" StrokeShape="RoundRectangle 12">
                             <VerticalStackLayout Spacing="16">
                                 <Label Text="Asignaciones Recientes" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource Gray800Jazer}"/>
@@ -455,7 +435,6 @@
                 </VerticalStackLayout>
             </ScrollView>
 
-            <!-- VISTA 2: MENSAJERÍA -->
             <ScrollView IsVisible="{Binding SelectedTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=2}" VerticalScrollBarVisibility="Always">
                 <Grid RowDefinitions="Auto,*" RowSpacing="24">
                     <VerticalStackLayout Grid.Row="0" Spacing="4">
@@ -464,9 +443,9 @@
                     </VerticalStackLayout>
     
                     <Grid Grid.Row="1" ColumnDefinitions="300,*" ColumnSpacing="24">
-                        <!-- Controles Envío -->
+                     
                         <VerticalStackLayout Grid.Column="0" Spacing="24">
-                            <!-- Broadcast -->
+                            
                             <Border BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="20" StrokeShape="RoundRectangle 12">
                                 <VerticalStackLayout Spacing="12">
                                     <Label Text="📢 Difusión General" FontAttributes="Bold" TextColor="{StaticResource Gray800Jazer}"/>
@@ -475,7 +454,6 @@
                                 </VerticalStackLayout>
                             </Border>
     
-                            <!-- Mensaje Individual -->
                             <Border BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="20" StrokeShape="RoundRectangle 12">
                                 <VerticalStackLayout Spacing="12">
                                     <Label Text="💬 Mensaje Directo" FontAttributes="Bold" TextColor="{StaticResource Gray800Jazer}"/>
@@ -486,7 +464,6 @@
                             </Border>
                         </VerticalStackLayout>
     
-                        <!-- Historial -->
                         <Border Grid.Column="1" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="24" StrokeShape="RoundRectangle 12">
                             <Grid RowDefinitions="Auto,*">
                                 <Label Grid.Row="0" Text="Historial de Comunicaciones" FontAttributes="Bold" TextColor="{StaticResource Gray700Jazer}" Margin="0,0,0,12"/>
@@ -516,12 +493,10 @@
                 </Grid>
             </ScrollView>
 
-            <!-- VISTA 3: REPORTES -->
             <Grid IsVisible="{Binding SelectedTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=3}">
                 <ScrollView VerticalScrollBarVisibility="Always">
                     <VerticalStackLayout Spacing="24">
                         
-                        <!-- Header Dashboard -->
                         <Grid ColumnDefinitions="*,Auto">
                             <Label Text="Rendimiento del Equipo" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource Gray900Jazer}"/>
                             <HorizontalStackLayout Grid.Column="1" Spacing="8">
@@ -534,7 +509,6 @@
                             </HorizontalStackLayout>
                         </Grid>
 
-                        <!-- 1. Tabla Desglose KPIs Diario (ACUMULATIVO) - UNIFICADO -->
                         <Border BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" StrokeShape="RoundRectangle 8" Padding="0">
                             <VerticalStackLayout>
                                 <Label Text="Cumplimiento Mensual (Acumulado al Día)" FontAttributes="Bold" TextColor="{StaticResource Gray900Jazer}" Margin="20,16,20,8"/>
@@ -569,9 +543,8 @@
                             </VerticalStackLayout>
                         </Border>
 
-                        <!-- KPI Cards (Resumen Global) -->
                         <Grid ColumnDefinitions="*,*,*" ColumnSpacing="16">
-                            <!-- Card 1: Empleado del Mes -->
+                
                             <Border Grid.Column="0" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" StrokeShape="RoundRectangle 8" Padding="16">
                                 <VerticalStackLayout Spacing="8">
                                     <Label Text="Mejor Rendimiento" FontSize="12" TextColor="{StaticResource Gray500Jazer}"/>
@@ -585,7 +558,6 @@
                                 </VerticalStackLayout>
                             </Border>
                             
-                            <!-- Card 2: Eficiencia Global -->
                             <Border Grid.Column="1" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" StrokeShape="RoundRectangle 8" Padding="16">
                                 <VerticalStackLayout Spacing="8">
                                     <Label Text="Eficiencia Promedio" FontSize="12" TextColor="{StaticResource Gray500Jazer}"/>
@@ -593,7 +565,6 @@
                                 </VerticalStackLayout>
                             </Border>
 
-                            <!-- Card 3: Horas Totales -->
                             <Border Grid.Column="2" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" StrokeShape="RoundRectangle 8" Padding="16">
                                 <VerticalStackLayout Spacing="8">
                                     <Label Text="Total Horas Invertidas" FontSize="12" TextColor="{StaticResource Gray500Jazer}"/>
@@ -602,7 +573,6 @@
                             </Border>
                         </Grid>
 
-                        <!-- Gráfico Comparativo -->
                         <Border BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" StrokeShape="RoundRectangle 8" Padding="24">
                             <VerticalStackLayout Spacing="16">
                                 <Label Text="Comparativa de Eficiencia" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource Gray800Jazer}"/>
@@ -627,10 +597,9 @@
                             </VerticalStackLayout>
                         </Border>
                         
-                        <!-- Tabla Detallada -->
                         <Border BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" StrokeShape="RoundRectangle 8" Padding="0">
                             <Grid RowDefinitions="Auto,*">
-                                <!-- Header Tabla Reportes -->
+             
                                 <Grid Grid.Row="0" ColumnDefinitions="2*,*,*,*,*" BackgroundColor="{StaticResource Gray100}" Padding="20,12">
                                     <Label Grid.Column="0" Text="CONTADOR" FontSize="11" FontAttributes="Bold" TextColor="Black"/>
                                     <Label Grid.Column="1" Text="TOTAL" FontSize="11" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
@@ -639,7 +608,6 @@
                                     <Label Grid.Column="4" Text="TIEMPO SESIÓN" FontSize="11" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
                                 </Grid>
                                 
-                                <!-- Lista Reportes -->
                                 <CollectionView Grid.Row="1" ItemsSource="{Binding ReportesDetallados}" VerticalScrollBarVisibility="Always" HeightRequest="400">
                                     <CollectionView.ItemTemplate>
                                         <DataTemplate>
@@ -674,7 +642,6 @@
                 </ScrollView>
             </Grid>
 
-            <!-- VISTA 4: GESTIÓN DE USUARIOS -->
             <ScrollView IsVisible="{Binding SelectedTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=4}" VerticalScrollBarVisibility="Always">
                 <Grid RowDefinitions="Auto,*" RowSpacing="24">
                     <VerticalStackLayout Grid.Row="0" Spacing="4">
@@ -683,7 +650,7 @@
                     </VerticalStackLayout>
     
                     <Grid x:Name="UsersGrid" Grid.Row="1" ColumnDefinitions="350,*" ColumnSpacing="24">
-                        <!-- Formulario Crear/Editar Usuario (Izquierda) -->
+               
                         <Border x:Name="FormUserBorder" Grid.Column="0" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="20" StrokeShape="RoundRectangle 12" VerticalOptions="Start">
                             <VerticalStackLayout Spacing="16">
                                 <HorizontalStackLayout Spacing="12">
@@ -730,12 +697,11 @@
                             </VerticalStackLayout>
                         </Border>
     
-                        <!-- Lista de Usuarios (Derecha) -->
                         <Border x:Name="ListUserBorder" Grid.Column="1" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="0" StrokeShape="RoundRectangle 12">
-                                <!-- Contenedor con Scroll Horizontal -->
+                              
                                 <ScrollView Grid.Row="1" Orientation="Horizontal" HorizontalScrollBarVisibility="Always">
                                     <Grid RowDefinitions="Auto,*" WidthRequest="800">
-                                        <!-- Header Tabla (Ancho Fijo) -->
+                                       
                                         <Grid Grid.Row="0" ColumnDefinitions="60,200,120,100,120,150" BackgroundColor="{StaticResource Gray100}" Padding="20,12">
                                             <Label Grid.Column="0" Text="FOTO" FontSize="11" FontAttributes="Bold" TextColor="Black"/>
                                             <Label Grid.Column="1" Text="NOMBRE" FontSize="11" FontAttributes="Bold" TextColor="Black"/>
@@ -745,12 +711,12 @@
                                             <Label Grid.Column="5" Text="ACCIONES" FontSize="11" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
                                         </Grid>
                                         
-                                        <!-- Lista Usuarios (Ancho Fijo) -->
+                                     
                                         <CollectionView Grid.Row="1" ItemsSource="{Binding TodosLosUsuarios}" VerticalScrollBarVisibility="Always" HeightRequest="600">
                                             <CollectionView.ItemTemplate>
                                                 <DataTemplate>
                                                     <Grid ColumnDefinitions="60,200,120,100,120,150" Padding="20,12">
-                                                        <!-- Foto Perfil (Imagen o Iniciales) -->
+                                                      
                                                         <Border Grid.Column="0" HeightRequest="40" WidthRequest="40" StrokeShape="RoundRectangle 20" 
                                                                 BackgroundColor="{StaticResource Blue50}" StrokeThickness="0">
                                                             <Grid>
@@ -774,7 +740,6 @@
                                                         
                                                         <Label Grid.Column="4" Text="{Binding Area}" VerticalOptions="Center" TextColor="{StaticResource Gray600Jazer}" HorizontalOptions="Center"/>
                                                         
-                                                        <!-- Botones Acciones -->
                                                         <HorizontalStackLayout Grid.Column="5" Spacing="8" HorizontalOptions="Center" VerticalOptions="Center">
                                                             <Button Text="📷" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SeleccionarFotoCommand}" 
                                                                     CommandParameter="{Binding .}"

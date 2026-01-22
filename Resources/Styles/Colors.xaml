@@ -4,7 +4,6 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
-    <!-- Note: For Android please see also Platforms\Android\Resources\values\colors.xml -->
 
     <Color x:Key="Primary">#512BD4</Color>
     <Color x:Key="PrimaryDark">#ac99ea</Color>
@@ -45,9 +44,7 @@
     <SolidColorBrush x:Key="Gray900Brush" Color="{StaticResource Gray900}"/>
     <SolidColorBrush x:Key="Gray950Brush" Color="{StaticResource Gray950}"/>
 
-    <!-- JAZER Design System Colors -->
-    
-    <!-- Grays -->
+   
     <Color x:Key="Gray50">#F9FAFB</Color>
     <Color x:Key="Gray100Jazer">#F3F4F6</Color>
     <Color x:Key="Gray200Jazer">#E5E7EB</Color>
@@ -59,7 +56,6 @@
     <Color x:Key="Gray800Jazer">#1F2937</Color>
     <Color x:Key="Gray900Jazer">#111827</Color>
 
-    <!-- Blues -->
     <Color x:Key="Blue50">#EFF6FF</Color>
     <Color x:Key="Blue100">#DBEAFE</Color>
     <Color x:Key="Blue200">#BFDBFE</Color>
@@ -71,7 +67,6 @@
     <Color x:Key="Blue800">#1E40AF</Color>
     <Color x:Key="Blue900">#1E3A8A</Color>
 
-    <!-- Greens -->
     <Color x:Key="Green50">#F0FDF4</Color>
     <Color x:Key="Green100">#DCFCE7</Color>
     <Color x:Key="Green200">#BBF7D0</Color>
@@ -82,7 +77,6 @@
     <Color x:Key="Green700">#047857</Color>
     <Color x:Key="Green800">#065F46</Color>
 
-    <!-- Reds -->
     <Color x:Key="Red50">#FEF2F2</Color>
     <Color x:Key="Red100">#FEE2E2</Color>
     <Color x:Key="Red200">#FECACA</Color>
@@ -93,7 +87,6 @@
     <Color x:Key="Red700">#B91C1C</Color>
     <Color x:Key="Red800">#991B1B</Color>
 
-    <!-- Yellows/Oranges -->
     <Color x:Key="Yellow50">#FFFBEB</Color>
     <Color x:Key="Yellow100">#FEF3C7</Color>
     <Color x:Key="Yellow200">#FDE68A</Color>
@@ -103,7 +96,6 @@
     <Color x:Key="Orange600">#D97706</Color>
     <Color x:Key="Yellow600">#CA8A04</Color>
 
-    <!-- Purples -->
     <Color x:Key="Purple50">#F3E8FF</Color>
     <Color x:Key="Purple100">#E9D5FF</Color>
     <Color x:Key="Purple400">#A78BFA</Color>
@@ -111,7 +103,6 @@
     <Color x:Key="Purple600">#7C3AED</Color>
     <Color x:Key="Purple700">#6B21A8</Color>
 
-    <!-- Brushes for JAZER colors -->
     <SolidColorBrush x:Key="Gray50Brush" Color="{StaticResource Gray50}"/>
     <SolidColorBrush x:Key="Blue500Brush" Color="{StaticResource Blue500}"/>
     <SolidColorBrush x:Key="Blue600Brush" Color="{StaticResource Blue600}"/>

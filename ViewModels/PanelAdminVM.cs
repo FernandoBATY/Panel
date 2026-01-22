@@ -12,6 +12,7 @@ public partial class PanelAdminVM : ObservableObject
 {
     private readonly DatabaseService _databaseService;
 
+    // Usuario logueado y métricas generales
     [ObservableProperty]
     private User? _usuarioLogueado;
 
@@ -27,15 +28,14 @@ public partial class PanelAdminVM : ObservableObject
     [ObservableProperty]
     private string _eficiencia = "0%";
 
-    // Report KPIs
     [ObservableProperty] private string _mejorContadorNombre = "N/A";
     [ObservableProperty] private string _mejorContadorEficiencia = "0%";
     [ObservableProperty] private string _promedioEficiencia = "0%";
     [ObservableProperty] private string _totalHorasEquipo = "0h";
 
-    // Navegación
+    // Navegación por pestañas
     [ObservableProperty] 
-    private int _selectedTabIndex = 0; // 0:Dashboard, 1:Gestión, 2:Mensajes, 3:Reportes
+    private int _selectedTabIndex = 0; 
 
     [RelayCommand]
     private void SetTab(string indexStr)
@@ -43,13 +43,13 @@ public partial class PanelAdminVM : ObservableObject
         if (int.TryParse(indexStr, out int index)) SelectedTabIndex = index;
     }
 
+    // Colecciones para UI
     public ObservableCollection<User> Contadores { get; } = new();
     public ObservableCollection<Tarea> Tareas { get; } = new();
     public ObservableCollection<ContadorReporte> ReportesDetallados { get; } = new();
     public ObservableCollection<KPIReporte> ReportesKPI { get; } = new();
     public ObservableCollection<User> TodosLosUsuarios { get; } = new();
 
-    // User CRUD Form Properties
     [ObservableProperty] private string _nuevoUsuarioNombre = string.Empty;
     [ObservableProperty] private string _nuevoUsuarioUsername = string.Empty;
     [ObservableProperty] private string _nuevoUsuarioPassword = string.Empty;
@@ -61,6 +61,7 @@ public partial class PanelAdminVM : ObservableObject
     public List<string> Roles { get; } = new() { "Admin", "Contador" };
     public List<string> Areas { get; } = new() { "Admin", "Ingresos", "Egresos", "Declaraciones" };
 
+    // Filtros y parámetros de reportes
     [ObservableProperty]
     private DateTime _fechaReporte = DateTime.Today;
 
@@ -69,7 +70,7 @@ public partial class PanelAdminVM : ObservableObject
         Task.Run(CargarDatos);
     }
 
-    // New Task Form Properties
+    // Creación de tareas
     [ObservableProperty]
     private string _nuevaTareaTitulo = string.Empty;
     [ObservableProperty]
@@ -84,15 +85,16 @@ public partial class PanelAdminVM : ObservableObject
     private string _nuevaTareaPrioridad = "Variable";
 
     [ObservableProperty]
-    private string _nuevaTareaCategoriaKPI = "Ingresos"; // Default
+    private string _nuevaTareaCategoriaKPI = "Ingresos"; 
 
     public List<string> Prioridades { get; } = new() { "Prioritaria", "Variable" };
     public List<string> CategoriasKPI { get; } = new() { "Ingresos", "Egresos", "Declaraciones", "OpinionSAT", "EnvioPrevios" };
 
-    // Network/Sync properties
+    // Servicios de red y sincronización
     private readonly NetworkService _networkService;
     private readonly SyncService _syncService;
 
+    // Estado del servidor y red
     [ObservableProperty]
     private bool _isServerRunning;
 
@@ -104,7 +106,7 @@ public partial class PanelAdminVM : ObservableObject
 
     public ObservableCollection<NodeIdentity> ConnectedNodes { get; } = new();
 
-    // Mensajería Admin
+    // Mensajería
     public ObservableCollection<Mensaje> Mensajes { get; } = new();
     [ObservableProperty] private string _mensajeBroadcastContent = "";
     [ObservableProperty] private string _mensajeIndividualContent = "";
@@ -152,12 +154,10 @@ public partial class PanelAdminVM : ObservableObject
         var msgsAll = await _databaseService.GetMensajesAsync();
         var contadores = await _databaseService.GetContadoresAsync();
         
-        // Crear un mapa para búsqueda rápida
         var userMap = contadores.ToDictionary(u => u.Id.ToString(), u => u.Username);
         userMap["admin"] = "Administrador";
         userMap["todos"] = "Todos";
 
-        // Filtrar duplicados por ID y resolver nombres
         var msgs = msgsAll.GroupBy(m => m.Id).Select(g => g.First()).ToList();
         
         foreach (var m in msgs)
@@ -188,19 +188,15 @@ public partial class PanelAdminVM : ObservableObject
         _networkService = networkService;
         _syncService = syncService;
 
-        // Configurar eventos de red
         _networkService.ClientConnected += OnClientConnected;
         _networkService.ClientDisconnected += OnClientDisconnected;
         _networkService.MessageReceived += OnNetworkMessageReceived;
 
-        // Vincular SyncService con DatabaseService
         _databaseService.SetSyncService(_syncService);
         _syncService.DataChanged += OnSyncDataChanged;
 
-        // Cargar usuario actual desde sesión
         UsuarioLogueado = SessionService.CurrentUser;
 
-        // Init (LoadData)
         Task.Run(CargarDatos);
     }
 
@@ -211,13 +207,12 @@ public partial class PanelAdminVM : ObservableObject
             ConnectedNodes.Add(identity);
             ConnectionStatus = $"Servidor activo - {ConnectedNodes.Count} conectados";
             
-            // Immediately mark as connected in the UI
             var user = Contadores.FirstOrDefault(c => c.Id == identity.UserId);
             if (user != null)
             {
                 user.Estado = "conectado";
                 int idx = Contadores.IndexOf(user);
-                if (idx != -1) Contadores[idx] = user; // Refresh UI
+                if (idx != -1) Contadores[idx] = user; 
             }
         });
     }
@@ -229,14 +224,12 @@ public partial class PanelAdminVM : ObservableObject
             var node = ConnectedNodes.FirstOrDefault(n => n.NodeId == nodeId);
             if (node != null)
             {
-                // Update Contadores List (UI)
                 var user = Contadores.FirstOrDefault(c => c.Id == node.UserId);
                 if (user != null)
                 {
                     user.Estado = "desconectado";
                     user.SessionDuration = "00:00:00";
                     
-                    // Refresh UI
                     int idx = Contadores.IndexOf(user);
                     if (idx != -1) Contadores[idx] = user;
                 }
@@ -265,7 +258,6 @@ public partial class PanelAdminVM : ObservableObject
             TodosLosUsuarios.Clear();
             foreach (var u in todosUsuarios) TodosLosUsuarios.Add(u);
 
-            // Stats calculation
             TotalContadores = contadores.Count;
             TotalCompletadas = tareas.Count(t => t.Estado == "completada");
             TotalPendientes = tareas.Count(t => t.Estado == "pendiente");
@@ -280,7 +272,6 @@ public partial class PanelAdminVM : ObservableObject
                 Eficiencia = "N/A";
             }
 
-            // Generar Reportes Detallados
             ReportesDetallados.Clear();
             foreach (var contador in contadores)
             {
@@ -288,7 +279,7 @@ public partial class PanelAdminVM : ObservableObject
                 int total = tareasContador.Count;
                 int completadas = tareasContador.Count(t => t.Estado == "completada");
                 int pendientes = total - completadas;
-                // Calculate stats
+            
                 double eficiencia = total > 0 ? (double)completadas / total : 0;
                 decimal horas = tareasContador.Sum(t => t.TiempoReal);
 
@@ -303,11 +294,9 @@ public partial class PanelAdminVM : ObservableObject
                 });
             }
 
-            // Calcular KPIs por Categoría del Día Seleccionado (ACUMULATIVO MENSUAL)
             ReportesKPI.Clear();
             foreach (var cat in CategoriasKPI)
             {
-                // 1. Universo: Tareas asignadas en el MES y AÑO de la fecha seleccionada
                 var tareasMes = tareas.Where(t => 
                     t.CategoriaKPI == cat && 
                     t.FechaAsignacion.Month == FechaReporte.Month && 
@@ -315,8 +304,6 @@ public partial class PanelAdminVM : ObservableObject
 
                 int totalCat = tareasMes.Count;
 
-                // 2. Completadas: Tareas del universo que se completaron en o antes de la fecha seleccionada
-                // Esto crea el efecto acumulativo/progresivo día con día
                 int compCat = tareasMes.Count(t => 
                     t.Estado == "completada" && 
                     t.FechaCompletado != null && 
@@ -333,7 +320,6 @@ public partial class PanelAdminVM : ObservableObject
                 });
             }
 
-            // Calcular KPIs Globales
             if (ReportesDetallados.Any())
             {
                 var mejor = ReportesDetallados.OrderByDescending(r => r.Eficiencia).ThenByDescending(r => r.Completadas).First();
@@ -370,22 +356,19 @@ public partial class PanelAdminVM : ObservableObject
             AsignadoAId = NuevaTareaContadorSeleccionado.Id
         };
         
-        // Save to DB
         await _databaseService.SaveTareaAsync(nueva);
-        // Add to local list and update stats
+
         Tareas.Add(nueva);
         TotalPendientes++; 
         
-        // Reset form
         NuevaTareaTitulo = "";
         NuevaTareaDescripcion = "";
         NuevaTareaDescripcion = "";
         NuevaTareaPrioridad = "Variable";
         NuevaTareaCategoriaKPI = "Ingresos";
         
-        // Refresh full data to be safe (optional)
         await CargarDatos();
-        await CargarMensajes(); // Refresh messages too because creating task might trigger logs if implemented
+        await CargarMensajes();
     }
 
     [RelayCommand]
@@ -394,19 +377,19 @@ public partial class PanelAdminVM : ObservableObject
         if (!string.IsNullOrWhiteSpace(ServerIP) && ServerIP != "No detectada")
         {
             await Clipboard.Default.SetTextAsync(ServerIP);
-            await Application.Current!.MainPage!.DisplayAlert("Copiado", "La IP ya se copió al portapapeles", "OK");
+            await Application.Current!.Windows[0].Page!.DisplayAlert("Copiado", "La IP ya se copió al portapapeles", "OK");
         }
     }
 
     [RelayCommand]
     public async Task ResetData()
     {
-        bool confirm = await Application.Current!.MainPage!.DisplayAlert("Confirmar", "¿Borrar todas las tareas y mensajes? Esto es irreversible.", "Sí, Borrar", "Cancelar");
+        bool confirm = await Application.Current!.Windows[0].Page!.DisplayAlert("Confirmar", "¿Borrar todas las tareas y mensajes? Esto es irreversible.", "Sí, Borrar", "Cancelar");
         if (!confirm) return;
 
         IsBusy = true;
         await _databaseService.ResetDatabaseAsync();
-        await CargarDatos(); // Reload UI (will be empty)
+        await CargarDatos(); 
         IsBusy = false;
     }
 
@@ -420,7 +403,6 @@ public partial class PanelAdminVM : ObservableObject
             await _networkService.StartServerAsync();
             IsServerRunning = true;
             
-            // Detectar IP de Tailscale
             var tailscaleIp = _networkService.GetTailscaleIP();
             ServerIP = tailscaleIp ?? "No detectada";
             
@@ -443,7 +425,6 @@ public partial class PanelAdminVM : ObservableObject
             savePicker.FileTypeChoices.Add("SQLite Database", new List<string>() { ".db3" });
             savePicker.SuggestedFileName = $"Jazer_Backup_{DateTime.Now:yyyyMMdd_HHmmss}";
 
-            // Retrieve the window handle (HWND) of the current WinUI 3 window.
             var window = Application.Current?.Windows.FirstOrDefault()?.Handler?.PlatformView as Microsoft.UI.Xaml.Window;
             if (window == null)
             {
@@ -458,27 +439,16 @@ public partial class PanelAdminVM : ObservableObject
             if (file != null)
             {
                 IsBusy = true;
-                // Delete if exists (PickSaveFileAsync usually asks to overwrite, but we ensure clean write)
-                // Actually VACUUM INTO fails if file exists.
-                // FileSavePicker returns a StorageFile, implying the file "exists" or is reserved.
-                // We need the PATH.
+               
                 string path = file.Path;
 
-                // If VACUUM INTO requires the file to NOT exist, we should delete it first?
-                // Yes, VACUUM INTO raises error if file exists.
-                // But FileSavePicker creates the file (zero bytes)?
-                // Let's check. Yes, usually it creates it.
-                // So we should delete it before passing to VACUUM INTO.
-                // BUT, if we delete it, we lose the 'reservation' or handle?
-                // Windows might hold a lock?
-                // Alternative: Use DatabaseService's Fallback (File.Copy) which allows overwrite.
-                // Or better: Delete it here using System.IO (if not locked).
+              
                 
                 try 
                 {
                     if (File.Exists(path)) File.Delete(path);
                 } 
-                catch { /* Ignore if fails, DB service will handle error or try logic */ }
+                catch {  }
 
                 await _databaseService.BackupDatabaseAsync(path);
                 
@@ -489,25 +459,22 @@ public partial class PanelAdminVM : ObservableObject
         catch (Exception ex)
         {
             IsBusy = false;
-            await Application.Current!.MainPage!.DisplayAlert("Error", $"Fallo al crear backup: {ex.Message}", "OK");
+            await Application.Current!.Windows[0].Page!.DisplayAlert("Error", $"Fallo al crear backup: {ex.Message}", "OK");
         }
 #else
-        await Application.Current!.MainPage!.DisplayAlert("Info", "Esta función solo está disponible en Windows por el momento.", "OK");
+        await Application.Current!.Windows[0].Page!.DisplayAlert("Info", "Esta función solo está disponible en Windows por el momento.", "OK");
 #endif
     }
 
     [RelayCommand]
     public async Task CerrarSesion()
     {
-        // Detener servidor/cliente
         _networkService.Disconnect();
         IsServerRunning = false;
 
-        // Limpiar sesión
         SessionService.ClearSession();
 
-        // Navegar a login
-        Application.Current!.MainPage = Application.Current.Handler!.MauiContext!.Services.GetRequiredService<Views.LoginPage>();
+        Application.Current!.Windows[0].Page = Application.Current.Handler!.MauiContext!.Services.GetRequiredService<Views.LoginPage>();
     }
 
     private async void OnSyncDataChanged(object? sender, string entityType)
@@ -516,7 +483,6 @@ public partial class PanelAdminVM : ObservableObject
         else await CargarDatos();
     }
 
-    // ===================== USER CRUD COMMANDS =====================
 
     [RelayCommand]
     public async Task GuardarUsuario()
@@ -527,7 +493,6 @@ public partial class PanelAdminVM : ObservableObject
         User user;
         if (IsEditMode && UsuarioEditando != null)
         {
-            // Edit existing user
             user = UsuarioEditando;
             user.Name = NuevoUsuarioNombre;
             user.Username = NuevoUsuarioUsername;
@@ -538,7 +503,6 @@ public partial class PanelAdminVM : ObservableObject
         }
         else
         {
-            // Create new user
             user = new User
             {
                 Name = NuevoUsuarioNombre,
@@ -561,7 +525,7 @@ public partial class PanelAdminVM : ObservableObject
         UsuarioEditando = user;
         NuevoUsuarioNombre = user.Name;
         NuevoUsuarioUsername = user.Username;
-        NuevoUsuarioPassword = ""; // Don't show password
+        NuevoUsuarioPassword = ""; 
         NuevoUsuarioRol = user.Role;
         NuevoUsuarioArea = user.Area;
         IsEditMode = true;
@@ -595,17 +559,14 @@ public partial class PanelAdminVM : ObservableObject
 
             if (result == null) return;
 
-            // Create photos folder
             var destFolder = Path.Combine(FileSystem.AppDataDirectory, "fotos");
             Directory.CreateDirectory(destFolder);
 
-            // Copy file
             var destPath = Path.Combine(destFolder, $"{user.Id}.jpg");
             using var source = await result.OpenReadAsync();
             using var dest = File.Create(destPath);
             await source.CopyToAsync(dest);
 
-            // Update user
             user.FotoPerfil = destPath;
             await _databaseService.SaveUserAsync(user);
             await CargarDatos();
@@ -633,29 +594,25 @@ public partial class PanelAdminVM : ObservableObject
         {
             MainThread.BeginInvokeOnMainThread(() => 
             {
-                // Update ConnectedNodes
                 var node = ConnectedNodes.FirstOrDefault(n => n.NodeId == message.Sender.NodeId);
                 if (node != null)
                 {
                     node.SessionDuration = message.Sender.SessionDuration;
                 }
 
-                // Update Contadores List
                 var user = Contadores.FirstOrDefault(c => c.Id == message.Sender.UserId);
                 if (user != null)
                 {
                      user.Estado = "conectado";
                      user.SessionDuration = message.Sender.SessionDuration;
                      
-                     // Force UI Refresh (Replace item to trigger binding update since User is POCO)
                      int idx = Contadores.IndexOf(user);
                      if (idx != -1)
                      {
-                         Contadores[idx] = user; // Triggers CollectionChanged
+                         Contadores[idx] = user; 
                      }
                 }
 
-                // Update Reportes List
                 var reporte = ReportesDetallados.FirstOrDefault(r => r.Contador.Id == message.Sender.UserId);
                 if (reporte != null)
                 {

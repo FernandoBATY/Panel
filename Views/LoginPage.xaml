@@ -6,17 +6,19 @@
              Title="Login">
 
     <Grid BackgroundColor="#F0F0F0">
+        <!-- Contenedor principal centrado -->
         <ScrollView VerticalScrollBarVisibility="Always">
-            <Frame VerticalOptions="Center" 
+            <Border VerticalOptions="Center" 
                HorizontalOptions="Center"
                WidthRequest="450"
                Padding="40" 
-               CornerRadius="12" 
+               StrokeThickness="1"
+               Stroke="#E5E7EB"
                BackgroundColor="White" 
-               HasShadow="True"
-               BorderColor="#E5E7EB">
+               StrokeShape="RoundRectangle 12">
             
             <VerticalStackLayout Spacing="25">
+                <!-- Encabezado de bienvenida -->
                 
                 <Image Source="logoconsultoria.jpg" 
                        HeightRequest="280" 
@@ -31,6 +33,7 @@
                        HorizontalOptions="Center" 
                        TextColor="#111827"/>
                 
+                <!-- Campos de credenciales -->
                 <VerticalStackLayout Spacing="15">
                     <Entry Placeholder="Usuario" 
                            Text="{Binding Username}" 
@@ -62,8 +65,8 @@
                         FontAttributes="Bold"
                         Margin="0,10,0,0"/>
 
-                <!-- Toggle para Sincronización -->
-                <Label Text="¿Primera vez? Sincronizar Datos" 
+                  <!-- Panel de sincronización inicial -->
+                  <Label Text="¿Primera vez? Sincronizar Datos" 
                        FontSize="12" 
                        TextColor="#4B5563" 
                        HorizontalOptions="Center" 
@@ -75,7 +78,6 @@
                     </Label.GestureRecognizers>
                 </Label>
 
-                <!-- Sección Sincronización Inicial (Oculta por defecto) -->
                 <Border Stroke="#D1D5DB" 
                         StrokeShape="RoundRectangle 8" 
                         BackgroundColor="#F9FAFB" 
@@ -102,7 +104,7 @@
                     </VerticalStackLayout>
                 </Border>
             </VerticalStackLayout>
-        </Frame>
+        </Border>
         </ScrollView>
     </Grid>
 

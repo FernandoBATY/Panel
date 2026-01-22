@@ -8,9 +8,10 @@
              BackgroundColor="{StaticResource Gray50}">
 
     <Grid RowDefinitions="Auto,Auto,Auto,*" ColumnDefinitions="*" x:Name="MainGrid">
+        <!-- Estados adaptativos para ancho de ventana -->
         <VisualStateManager.VisualStateGroups>
             <VisualStateGroup x:Name="AdaptiveStates">
-                <!-- Estado Estrecho -->
+         
                 <VisualState x:Name="NarrowStatus">
                     <VisualState.StateTriggers>
                         <AdaptiveTrigger MinWindowWidth="0"/>
@@ -23,7 +24,6 @@
                     </VisualState.Setters>
                 </VisualState>
                 
-                <!-- Estado Ancho -->
                 <VisualState x:Name="WideStatus">
                     <VisualState.StateTriggers>
                         <AdaptiveTrigger MinWindowWidth="900"/>
@@ -36,13 +36,12 @@
             </VisualStateGroup>
         </VisualStateManager.VisualStateGroups>
 
-        <!-- SECCIÓN 1: HEADER SUPERIOR -->
+        <!-- Barra superior: identidad y estado de conexión -->
         <Border Grid.Row="0" Margin="0" Padding="32,20" BackgroundColor="{StaticResource White}" StrokeThickness="0">
             <Border.Shadow>
                 <Shadow Brush="Black" Offset="0,4" Opacity="0.05" Radius="4"/>
             </Border.Shadow>
             <Grid ColumnDefinitions="Auto,*,Auto">
-                <!-- Columna 1: Branding -->
                 <HorizontalStackLayout x:Name="BrandingStack" Grid.Column="0" Spacing="16" VerticalOptions="Center">
                     <Image Source="logoconsultoria.jpg" HeightRequest="65" WidthRequest="65" Aspect="AspectFit"/>
                     
@@ -66,9 +65,8 @@
                     </VerticalStackLayout>
                 </HorizontalStackLayout>
 
-                <!-- Columna 2: Estado de Conexión (Centrado) -->
                 <HorizontalStackLayout x:Name="ConnectionStatusColumn" Grid.Column="1" HorizontalOptions="Center" VerticalOptions="Center" Spacing="12">
-                     <!-- Estado CONECTADO -->
+      
                      <Border IsVisible="{Binding Conectado}"
                             BackgroundColor="{StaticResource Green100}" StrokeThickness="0" StrokeShape="RoundRectangle 16"
                             Padding="12,6">
@@ -78,7 +76,6 @@
                         </HorizontalStackLayout>
                      </Border>
 
-                     <!-- Estado DESCONECTADO (Input IP) -->
                      <HorizontalStackLayout IsVisible="{Binding Conectado, Converter={StaticResource InverseBoolConverter}}" Spacing="6">
                          <Entry Placeholder="IP Servidor (Ej: 192.168.1.5)" 
                                 Text="{Binding ServerIpManual}"
@@ -104,7 +101,6 @@
                      </HorizontalStackLayout>
                 </HorizontalStackLayout>
 
-                <!-- Columna 3: Cerrar Sesión -->
                 <Button Grid.Column="2" 
                         Text="Cerrar Sesión" 
                         Command="{Binding CerrarSesionCommand}"
@@ -119,10 +115,10 @@
             </Grid>
         </Border>
 
-        <!-- SECCIÓN 2: BARRA DE ESTADÍSTICAS RÁPIDAS -->
+        <!-- Tarjetas de estadísticas rápidas -->
         <Border Grid.Row="1" Margin="0" Padding="32,12" BackgroundColor="{StaticResource White}" StrokeThickness="0">
             <Grid x:Name="StatsGrid" ColumnDefinitions="*,*,*,*">
-                <!-- Stat 1 -->
+               
                 <HorizontalStackLayout Grid.Column="0" Spacing="12">
                      <VerticalStackLayout>
                          <Label Text="{Binding TotalTareas}" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Gray800Jazer}"/>
@@ -131,7 +127,6 @@
                      <BoxView WidthRequest="1" Color="{StaticResource Gray100Jazer}" HorizontalOptions="End" Margin="0,4"/>
                 </HorizontalStackLayout>
                 
-                <!-- Stat 2 -->
                 <HorizontalStackLayout Grid.Column="1" Spacing="12" Margin="12,0,0,0">
                      <VerticalStackLayout>
                          <Label Text="{Binding TareasCompletadas}" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Green500}"/>
@@ -140,7 +135,6 @@
                      <BoxView WidthRequest="1" Color="{StaticResource Gray100Jazer}" HorizontalOptions="End" Margin="0,4"/>
                 </HorizontalStackLayout>
 
-                <!-- Stat 3 -->
                 <HorizontalStackLayout Grid.Column="2" Spacing="12" Margin="12,0,0,0">
                      <VerticalStackLayout>
                          <Label Text="{Binding TareasPendientesCount}" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Yellow600}"/>
@@ -149,7 +143,6 @@
                      <BoxView WidthRequest="1" Color="{StaticResource Gray100Jazer}" HorizontalOptions="End" Margin="0,4"/>
                 </HorizontalStackLayout>
 
-                <!-- Stat 4 -->
                 <HorizontalStackLayout Grid.Column="3" Spacing="12" Margin="12,0,0,0">
                      <VerticalStackLayout>
                          <Label Text="{Binding TiempoSesion}" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Purple500}" FontFamily="Consolas"/>
@@ -159,7 +152,7 @@
             </Grid>
         </Border>
 
-        <!-- SECCIÓN 3: SISTEMA DE PESTAÑAS -->
+        <!-- Pestañas principales -->
         <Border Grid.Row="2" Margin="0" BackgroundColor="{StaticResource White}" StrokeThickness="0" Padding="32,0">
             <Grid ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="32">
                 <Grid.Resources>
@@ -181,7 +174,6 @@
                     </Style>
                 </Grid.Resources>
                 
-                <!-- Tab 1: Tareas -->
                 <Grid Grid.Column="0">
                     <Button Text="Tareas" Style="{StaticResource TabButton}" 
                             Command="{Binding SetTabCommand}" CommandParameter="0">
@@ -201,7 +193,6 @@
                     </BoxView>
                 </Grid>
 
-                <!-- Tab 2: Alertas -->
                 <Grid Grid.Column="1">
                     <Button Text="Alertas" Style="{StaticResource TabButton}" 
                             Command="{Binding SetTabCommand}" CommandParameter="1">
@@ -212,7 +203,6 @@
                             </DataTrigger>
                         </Button.Triggers>
                     </Button>
-                    <!-- Badge -->
                     <Border BackgroundColor="{StaticResource Red500}" StrokeShape="RoundRectangle 9" 
                             HeightRequest="18" WidthRequest="18" HorizontalOptions="End" VerticalOptions="Start" Margin="0,8,-6,0"
                             IsVisible="{Binding HasAlertas}">
@@ -227,7 +217,6 @@
                     </BoxView>
                 </Grid>
 
-                <!-- Tab 3: Mensajes -->
                 <Grid Grid.Column="2">
                     <Button Text="Mensajes" Style="{StaticResource TabButton}" 
                             Command="{Binding SetTabCommand}" CommandParameter="2">
@@ -252,14 +241,12 @@
                     </BoxView>
                 </Grid>
 
-                <!-- Columnds reduced to 3 -->
             </Grid>
         </Border>
 
-        <!-- SECCIÓN 4: CONTENIDO PRINCIPAL -->
+        <!-- Contenido de pestañas: Tareas / Alertas / Mensajes -->
         <Grid Grid.Row="3" BackgroundColor="{StaticResource Gray50}" Padding="32,24">
             
-            <!-- VISTA TAREAS -->
             <ScrollView IsVisible="False" VerticalScrollBarVisibility="Always">
                 <ScrollView.Triggers>
                     <DataTrigger TargetType="ScrollView" Binding="{Binding SelectedTabIndex}" Value="0">
@@ -268,10 +255,10 @@
                 </ScrollView.Triggers>
                      
                 <VerticalStackLayout Spacing="24" Padding="0,0,0,20">
-                     <!-- Toolbar / Filtros -->
+                     
                      <Grid ColumnDefinitions="*,Auto">
                          <HorizontalStackLayout Grid.Column="0" Spacing="10">
-                             <!-- Todas -->
+                             
                              <Button Text="Todas" 
                                      Command="{Binding AplicarFiltroCommand}" CommandParameter="Todas"
                                      HeightRequest="36" Padding="16,0" FontSize="13" CornerRadius="6" BorderWidth="1">
@@ -294,7 +281,6 @@
                                  </Button.Triggers>
                              </Button>
 
-                             <!-- Pendientes -->
                              <Button Text="Pendientes" 
                                      Command="{Binding AplicarFiltroCommand}" CommandParameter="Pendientes"
                                      HeightRequest="36" Padding="16,0" FontSize="13" CornerRadius="6" BorderWidth="1">
@@ -317,7 +303,6 @@
                                  </Button.Triggers>
                              </Button>
 
-                             <!-- Completadas -->
                              <Button Text="Completadas" 
                                      Command="{Binding AplicarFiltroCommand}" CommandParameter="Completadas"
                                      HeightRequest="36" Padding="16,0" FontSize="13" CornerRadius="6" BorderWidth="1">
@@ -348,10 +333,9 @@
                          </Border>
                      </Grid>
                      
-                     <!-- Tabla de Tareas -->
                      <Border BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" StrokeShape="RoundRectangle 8">
                          <Grid RowDefinitions="Auto,*">
-                             <!-- Header Tabla -->
+                             
                              <Grid Grid.Row="0" ColumnDefinitions="120,*,140,100,100" BackgroundColor="{StaticResource Gray50}" Padding="20,12">
                                  <Label Grid.Column="0" Text="ESTADO" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource Gray500Jazer}"/>
                                  <Label Grid.Column="1" Text="TAREA" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource Gray500Jazer}"/>
@@ -360,7 +344,6 @@
                                  <Label Grid.Column="4" Text="ACCIONES" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource Gray500Jazer}" HorizontalOptions="Center"/>
                              </Grid>
                              
-                             <!-- Lista -->
                              <CollectionView Grid.Row="1" ItemsSource="{Binding Tareas}" VerticalScrollBarVisibility="Always" HeightRequest="600">
                                  <CollectionView.ItemTemplate>
                                      <DataTemplate>
@@ -376,7 +359,6 @@
                                                  </VisualStateGroup>
                                              </VisualStateManager.VisualStateGroups>
                                              
-                                             <!-- Col 1: Estado -->
                                              <Border Grid.Column="0" 
                                                      BackgroundColor="{Binding Estado, Converter={StaticResource StatusBackgroundColorConverter}}"
                                                      StrokeThickness="0"
@@ -388,7 +370,6 @@
                                                         FontSize="11" FontAttributes="Bold"/>
                                              </Border>
                                              
-                                             <!-- Col 2: Info Tarea -->
                                              <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
                                                  <HorizontalStackLayout Spacing="8">
                                                      <Border BackgroundColor="{StaticResource Red100}" StrokeThickness="0" Padding="6,2" StrokeShape="RoundRectangle 4" VerticalOptions="Center" IsVisible="{Binding Prioridad, Converter={StaticResource IsPrioritariaConverter}}">
@@ -399,15 +380,11 @@
                                                  <Label Text="{Binding Descripcion}" FontSize="13" TextColor="{StaticResource Gray500Jazer}" LineBreakMode="TailTruncation"/>
                                              </VerticalStackLayout>
                                              
-                                             <!-- Col 3: Fecha -->
                                              <Label Grid.Column="2" Text="{Binding FechaVencimiento, StringFormat='{0:dd MMM yyyy}'}" FontSize="13" TextColor="{StaticResource Gray700Jazer}" VerticalOptions="Center"/>
                                              
-                                             <!-- Col 4: Tiempo -->
                                              <Label Grid.Column="3" Text="{Binding TiempoEstimado, StringFormat='{0}h'}" HorizontalOptions="Center" VerticalOptions="Center" TextColor="{StaticResource Gray700Jazer}"/>
                                              
-                                             <!-- Col 5: Acciones (Completar / Deshacer) -->
                                              <Grid Grid.Column="4" HorizontalOptions="Center">
-                                                 <!-- Botón Completar (Visible si NO está completada) -->
                                                  <Button Text="Completar" 
                                                          BackgroundColor="{StaticResource White}" 
                                                          BorderColor="{StaticResource Green500}"
@@ -425,7 +402,6 @@
                                                      </Button.Triggers>
                                                  </Button>
                                                  
-                                                 <!-- Botón Deshacer (Visible SI está completada) -->
                                                  <Button Text="Deshacer" 
                                                          BackgroundColor="{StaticResource White}" 
                                                          BorderColor="{StaticResource Red400}"
@@ -452,7 +428,6 @@
                                                      </Button.Triggers>
                                                  </Button>
                                              </Grid>
-                                             <!-- Fin Col 5 -->
                                          </Grid>
                                      </DataTemplate>
                                  </CollectionView.ItemTemplate>
@@ -462,7 +437,6 @@
                 </VerticalStackLayout>
             </ScrollView>
 
-            <!-- VISTA ALERTAS -->
             <Grid IsVisible="False">
                 <Grid.Triggers>
                     <DataTrigger TargetType="Grid" Binding="{Binding SelectedTabIndex}" Value="1">
@@ -472,7 +446,6 @@
                 
                 <ScrollView VerticalScrollBarVisibility="Always">
                     <VerticalStackLayout Spacing="24">
-                        <!-- Alertas Críticas -->
                         <VerticalStackLayout Spacing="12" IsVisible="{Binding AlertasCriticas.Count, Converter={StaticResource IntToBoolConverter}}">
                             <Label Text="Atención Requerida" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource Red600}"/>
                             <CollectionView ItemsSource="{Binding AlertasCriticas}" VerticalScrollBarVisibility="Always" HeightRequest="200">
@@ -496,7 +469,6 @@
                             </CollectionView>
                         </VerticalStackLayout>
 
-                        <!-- Notificaciones -->
                         <VerticalStackLayout Spacing="12">
                             <Label Text="Notificaciones Recientes" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource Gray700Jazer}"/>
                             <CollectionView ItemsSource="{Binding Notificaciones}" VerticalScrollBarVisibility="Always" HeightRequest="300">
@@ -534,8 +506,6 @@
                     </VerticalStackLayout>
                 </ScrollView>
             </Grid>
-
-            <!-- VISTA MENSAJES -->
             <Grid IsVisible="False" RowDefinitions="*,Auto" RowSpacing="16">
                 <Grid.Triggers>
                      <DataTrigger TargetType="Grid" Binding="{Binding SelectedTabIndex}" Value="2">
@@ -543,7 +513,6 @@
                      </DataTrigger>
                 </Grid.Triggers>
                 
-                <!-- Lista de Mensajes -->
                 <CollectionView Grid.Row="0" ItemsSource="{Binding Mensajes}" ItemsUpdatingScrollMode="KeepLastItemInView" VerticalScrollBarVisibility="Always">
                     <CollectionView.EmptyView>
                          <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="10">
@@ -554,7 +523,6 @@
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
                             <Grid Padding="0,4">
-                                <!-- Contenedor del mensaje con lógica de alineación -->
                                 <Border Padding="12,8" StrokeThickness="0" StrokeShape="RoundRectangle 12">
                                      <Border.Triggers>
                                          <DataTrigger TargetType="Border" Binding="{Binding EsMio}" Value="True">
@@ -598,7 +566,6 @@
                     </CollectionView.ItemTemplate>
                 </CollectionView>
 
-                <!-- Input Area -->
                 <Border Grid.Row="1" BackgroundColor="White" Stroke="{StaticResource Gray300Jazer}" StrokeShape="RoundRectangle 24" Padding="16,4" Margin="0,0,0,10">
                     <Grid ColumnDefinitions="*,Auto">
                         <Entry Text="{Binding NuevoMensajeContenido}" Placeholder="Escribe un mensaje..." 

@@ -10,6 +10,7 @@ namespace Panel.ViewModels;
 
 public partial class CentroControlContadorVM : ObservableObject
 {
+    // Servicios inyectados
     private readonly DatabaseService _databaseService;
     private readonly NetworkService _networkService;
     private readonly SyncService _syncService;
@@ -17,13 +18,13 @@ public partial class CentroControlContadorVM : ObservableObject
     [ObservableProperty]
     private User? _currentUser;
 
-    // Header Info
+    // Perfil y estado de conexión
     [ObservableProperty] private string _nombreContador = "Contador";
     [ObservableProperty] private string _initials = "CO";
     [ObservableProperty] private bool _conectado;
 
-    // Navigation and Tabs
-    [ObservableProperty] private int _selectedTabIndex = 0; // 0:Tareas, 1:Alertas, 2:Mensajes, 3:Documentos
+    // Navegación de pestañas
+    [ObservableProperty] private int _selectedTabIndex = 0; 
 
     [RelayCommand]
     private void SetTab(string indexStr)
@@ -34,31 +35,28 @@ public partial class CentroControlContadorVM : ObservableObject
         }
     }
 
-    // Statistics
+    // Métricas principales
     [ObservableProperty] private int _totalTareas;
     [ObservableProperty] private int _tareasCompletadas;
     [ObservableProperty] private int _tareasPendientesCount;
-    [ObservableProperty] private double _horasRegistradas; // Legacy
-    [ObservableProperty] private string _tiempoSesion = "00:00:00"; // For UI Display
+    [ObservableProperty] private double _horasRegistradas; 
+    [ObservableProperty] private string _tiempoSesion = "00:00:00"; 
     
-    // Timer
     private IDispatcherTimer? _timer;
     private DateTime _startTime;
     private int _tickCount = 0;
 
-    // Badges
+    // Alertas y mensajes
     [ObservableProperty] private int _alertasCount;
     [ObservableProperty] private int _mensajesNuevosCount;
     [ObservableProperty] private bool _hasAlertas;
     [ObservableProperty] private bool _hasMensajes;
 
-    // Filter State
-    [ObservableProperty] private string _filtroActual = "Todas"; // Todas, Pendientes, Completadas
-
-    // Collections
-    private List<Tarea> _allTareas = new(); // Master list
-    public ObservableCollection<Tarea> Tareas { get; } = new(); // Display list (filtered)
-    public ObservableCollection<Tarea> TareasPendientes { get; } = new(); // Widget list (always pending)
+    // Filtrado y colecciones
+    [ObservableProperty] private string _filtroActual = "Todas"; 
+    private List<Tarea> _allTareas = new();
+    public ObservableCollection<Tarea> Tareas { get; } = new(); 
+    public ObservableCollection<Tarea> TareasPendientes { get; } = new(); 
     
     public ObservableCollection<Alerta> AlertasCriticas { get; } = new();
     public ObservableCollection<Alerta> Notificaciones { get; } = new();
@@ -66,7 +64,6 @@ public partial class CentroControlContadorVM : ObservableObject
     public ObservableCollection<Documento> Documentos { get; } = new(); 
     public ObservableCollection<IGrouping<string, Documento>> DocumentosAgrupados { get; } = new();
 
-    // New Message Form (Manual implementation to handle character count)
     [ObservableProperty] private int _caracteresMensaje = 0;
 
     private string _nuevoMensajeContenido = "";
@@ -82,7 +79,6 @@ public partial class CentroControlContadorVM : ObservableObject
         }
     }
     
-    // Server Connection
     [ObservableProperty] private bool _isConnected;
     [ObservableProperty] private string _serverInfo = "No conectado";
     [ObservableProperty] private string _serverIpManual = "";
@@ -100,42 +96,22 @@ public partial class CentroControlContadorVM : ObservableObject
 
     private void OnNetworkMessageReceived(object? sender, SyncMessage message)
     {
-        if (message.Sender?.UserId == _currentUser?.Id) return; // Ignore self
+        if (message.Sender?.UserId == CurrentUser?.Id) return; // Ignore self
 
         MainThread.BeginInvokeOnMainThread(async () => 
         {
             if (message.EntityType == "Tarea" && message.Operation == SyncOperation.Insert)
             {
-                 // Check if for me? The message broadcast might be to all, but only relevant if assigned to me.
-                 // Ideally payload has details, but SyncMessage is generic.
-                 // We will fetch latest and check? Or just show generic "Nueva Tarea"?
-                 // For now, let's assume if we get a Tarea create, check if we have a new one?
-                 // Simpler: Just Reload and then check?
-                 // Let's just show "Nueva actividad" or trigger reload.
-                 // Actually, SyncService calls DataChanged which calls CargarTodos.
-                 // We can hook into that.
-                 // BUT user wants specific Toast.
-                 // Let's trust the sync loop will load it, but we show toast immediately? 
-                 // We don't know if it's for us without the object.
-                 // However, DatabaseService Sync likely inserts it.
-                 // Let's Query DB for last task?
-                 
-                 // Optimization: Just show "Se han actualizado las tareas" or wait for Cargar to finish and compare count?
-                 
-                 // BETTER: The message sender is Admin. 
                  MostrarNotificacionWindows("Nueva Actividad", "Se han actualizado las tareas/alertas.");
             }
             else if (message.EntityType == "Mensaje" && message.Operation == SyncOperation.Insert)
             {
-                 // Check if for me
-                 await CargarMensajes(); // Reload to be sure
-                 // We rely on CargarMensajes updating counts
+                 await CargarMensajes(); 
                  if (Mensajes.Any(m => !m.Leido && m.Para == _currentUser?.Id.ToString() && (DateTime.Now - m.MarcaTiempo).TotalSeconds < 10))
                  {
                      var msg = Mensajes.First(m => !m.Leido && m.Para == _currentUser?.Id.ToString());
                      MostrarNotificacionWindows($"Mensaje de {msg.DeNombre}", msg.Contenido);
                      
-                     // Also refresh alerts to include this message
                      await CargarAlertas();
                  }
             }
@@ -177,7 +153,6 @@ public partial class CentroControlContadorVM : ObservableObject
 
         ServerInfo = "Ingresa la IP del servidor para conectar";
         
-        // Start Session Timer
         _startTime = DateTime.Now;
         if (Application.Current?.Dispatcher != null)
         {
@@ -212,10 +187,8 @@ public partial class CentroControlContadorVM : ObservableObject
         _allTareas.Clear();
         _allTareas.AddRange(tareas);
 
-        // Update Display List
         ActualizarListaTareas();
 
-        // Update Widget List (Always Pendientes)
         TareasPendientes.Clear();
         foreach(var t in _allTareas.Where(t => t.Estado != "completada"))
         {
@@ -236,12 +209,11 @@ public partial class CentroControlContadorVM : ObservableObject
             else Notificaciones.Add(a);
         }
 
-        // Merge Direct Messages into Notifications
         var mensajes = await _databaseService.GetMensajesPorUsuarioAsync(_currentUser!.Id);
         foreach(var m in mensajes.Where(x => !x.Leido && x.Para == _currentUser.Id.ToString()))
         {
             Notificaciones.Add(new Alerta { 
-                Titulo = $"Mensaje de {m.De}", // We need name but fetching it is complex here without map. 
+                Titulo = $"Mensaje de {m.De}",  
                 Mensaje = m.Contenido, 
                 Tipo = "MENSAJE", 
                 FechaCreacion = m.MarcaTiempo,
@@ -249,7 +221,6 @@ public partial class CentroControlContadorVM : ObservableObject
             });
         }
         
-        // Sort by Date
         var sorted = new ObservableCollection<Alerta>(Notificaciones.OrderByDescending(n => n.FechaCreacion));
         Notificaciones.Clear();
         foreach(var n in sorted) Notificaciones.Add(n);
@@ -292,16 +263,14 @@ public partial class CentroControlContadorVM : ObservableObject
         Documentos.Clear();
         foreach (var d in docs) Documentos.Add(d);
         
-        // Logic for grouping would go here if we had Task info joined
     }
 
     private void CalcularEstadisticas()
     {
-        TotalTareas = _allTareas.Count; // Use all tasks, not filtered
+        TotalTareas = _allTareas.Count; 
         TareasCompletadas = _allTareas.Count(t => t.Estado == "completada");
-        TareasPendientesCount = _allTareas.Count(t => t.Estado == "pendiente"); // Changed to count pending
-        // HorasRegistradas logic would sum up tracked time
-        HorasRegistradas = 23.5; // Placeholder/Mock
+        TareasPendientesCount = _allTareas.Count(t => t.Estado == "pendiente"); 
+        HorasRegistradas = 23.5;
     }
 
     [RelayCommand]
@@ -340,7 +309,7 @@ public partial class CentroControlContadorVM : ObservableObject
         {
             alerta.Vista = true;
             await _databaseService.UpdateAlertaAsync(alerta);
-            await CargarAlertas(); // Refresh counts
+            await CargarAlertas(); 
         }
     }
 
@@ -353,11 +322,8 @@ public partial class CentroControlContadorVM : ObservableObject
             tarea.FechaCompletado = DateTime.Now;
             await _databaseService.UpdateTareaAsync(tarea);
             
-            // Fix: Actualizar UI inmediatamente para el Widget
             TareasPendientes.Remove(tarea);
             
-            // Refresh logic handled by widget or main view? 
-            // Better to refresh all to keep consistency
              await CargarTodosLosDatos();
         }
     }
@@ -377,11 +343,11 @@ public partial class CentroControlContadorVM : ObservableObject
     [RelayCommand]
     public async Task EnviarMensaje()
     {
-        if (string.IsNullOrWhiteSpace(NuevoMensajeContenido) || _currentUser == null) return;
+        if (string.IsNullOrWhiteSpace(NuevoMensajeContenido) || CurrentUser == null) return;
 
         var mensaje = new Mensaje
         {
-            De = _currentUser.Id.ToString(),
+            De = CurrentUser.Id.ToString(),
             Para = "admin",
             Contenido = NuevoMensajeContenido,
             Tipo = "MENSAJE",
@@ -391,7 +357,6 @@ public partial class CentroControlContadorVM : ObservableObject
 
         await _databaseService.SaveMensajeAsync(mensaje);
         NuevoMensajeContenido = "";
-        // CaracteresMensaje is updated automatically by property setter
         await CargarMensajes();
     }
 
@@ -438,10 +403,9 @@ public partial class CentroControlContadorVM : ObservableObject
         SessionService.ClearSession();
         Application.Current!.MainPage = Application.Current.Handler!.MauiContext!.Services.GetRequiredService<Views.LoginPage>();
         
-        // Fix: Asegurar tamaño completo al salir
         if (Application.Current is App app)
         {
-             app.HideWidgetAndShowMain(); // Esto fuerza mostrar el Main y maximizarlo
+             app.HideWidgetAndShowMain(); 
         }
     }
     
@@ -468,7 +432,6 @@ public partial class CentroControlContadorVM : ObservableObject
         
         _tickCount++;
         
-        // Send Heartbeat every 10 minutes (600 seconds) if connected
         if (_tickCount % 600 == 0 && IsConnected)
         {
              await EnviarHeartbeat();

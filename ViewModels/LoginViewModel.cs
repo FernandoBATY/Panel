@@ -4,16 +4,19 @@ using System.Windows.Input;
 using Panel.Services;
 using Panel.Views;
 using Microsoft.Maui.Controls;
-using Microsoft.Extensions.DependencyInjection; // For GetRequiredService
+using Microsoft.Extensions.DependencyInjection; 
 
 namespace Panel.ViewModels;
 
 public class LoginViewModel : INotifyPropertyChanged
 {
+    // Servicios dependientes e inyección
     private readonly DatabaseService _databaseService;
     private readonly NetworkService _networkService;
     private readonly SyncService _syncService;
     private readonly IServiceProvider _serviceProvider;
+
+    // Estado de entrada y mensajes
     private string _username = "";
     private string _password = "";
     private string _errorMessage = "";
@@ -26,6 +29,7 @@ public class LoginViewModel : INotifyPropertyChanged
         _networkService = networkService;
         _syncService = syncService;
         _serviceProvider = serviceProvider;
+        // Comandos de UI
         LoginCommand = new Command(async () => await LoginAsync());
         SincronizarInicialCommand = new Command(async () => await SincronizarInicial());
         ToggleSyncCommand = new Command(() => IsSyncVisible = !IsSyncVisible);
@@ -129,11 +133,12 @@ public class LoginViewModel : INotifyPropertyChanged
         }
     }
 
+    // Sincronización inicial para traer datos desde el servidor
     private async Task SincronizarInicial()
     {
         if (string.IsNullOrWhiteSpace(SyncIp))
         {
-            await Application.Current!.MainPage!.DisplayAlert("Error", "Ingresa la IP del servidor", "OK");
+            await Application.Current!.Windows[0].Page!.DisplayAlert("Error", "Ingresa la IP del servidor", "OK");
             return;
         }
 
@@ -142,17 +147,15 @@ public class LoginViewModel : INotifyPropertyChanged
 
         try
         {
-            // 1. Crear identidad temporal con ID persistente
             var tempIdentity = new Panel.Models.NodeIdentity 
             { 
-                NodeId = SessionService.GetOrCreateMachineNodeId(), // Reuse same ID per machine
+                NodeId = SessionService.GetOrCreateMachineNodeId(), 
                 Username = "Guest_Sync",
                 Role = "Guest",
                 MachineName = Environment.MachineName
             };
             SessionService.SetIdentity(tempIdentity);
 
-            // 2. Conectar
             var connected = await _networkService.ConnectToServerAsync(SyncIp.Trim());
             if (!connected)
             {
@@ -173,7 +176,6 @@ public class LoginViewModel : INotifyPropertyChanged
             
             _syncService.DataChanged += OnDataChanged;
 
-            // Wait loop (10s timeout)
             int ticks = 0;
             while (!syncComplete && ticks < 20) 
             {
@@ -185,10 +187,8 @@ public class LoginViewModel : INotifyPropertyChanged
 
             SyncStatus = "Procesando datos recibidos...";
 
-            // CRITICAL: Wait for data to flush and be processed
-            await Task.Delay(5000); // Increased to 5 seconds for reliability
+            await Task.Delay(5000); 
 
-            // Verify data was actually received
             var users = await _databaseService.GetAllUsersAsync();
             Console.WriteLine($"[SYNC VERIFY] Total users after sync: {users.Count}");
             
@@ -197,7 +197,6 @@ public class LoginViewModel : INotifyPropertyChanged
                 Console.WriteLine($"[SYNC VERIFY] - {u.Username} ({u.Role})");
             }
 
-            // Fresh install has 1 user (admin from seed), successful sync should have 2+
             if (users.Count < 2)
             {
                 SyncStatus = "⚠️ No se recibieron usuarios del servidor";
@@ -230,6 +229,7 @@ public class LoginViewModel : INotifyPropertyChanged
 
     public ICommand LoginCommand { get; }
 
+    // Flujo de autenticación y navegación
     private async Task LoginAsync()
     {
         if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))
@@ -243,14 +243,12 @@ public class LoginViewModel : INotifyPropertyChanged
         {
             ErrorMessage = "";
             
-            // Establecer sesión de usuario
             SessionService.SetCurrentUser(user);
             
             if (user.Role == "Admin")
             {
                 try 
                 {
-                    // Navigate to Admin Panel
                     var page = _serviceProvider.GetRequiredService<PaginaPanelAdmin>();
                     Application.Current!.MainPage = new NavigationPage(page);
                 }
@@ -264,7 +262,6 @@ public class LoginViewModel : INotifyPropertyChanged
             }
             else
             {
-                // Navigate to Accountant Control Center (Directly, as requested)
                 try
                 {
                     var page = _serviceProvider.GetRequiredService<PaginaCentroControlContador>();

@@ -8,6 +8,7 @@ public partial class PaginaPanelAdmin : ContentPage
     {
         try
         {
+            // Inicializa la vista y captura fallos tempranos
             InitializeComponent();
             BindingContext = vm;
         }
@@ -15,7 +16,7 @@ public partial class PaginaPanelAdmin : ContentPage
         {
             string logPath = System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "ADMIN_CTOR_CRASH.txt");
             System.IO.File.WriteAllText(logPath, ex.ToString());
-            throw; // Re-throw to be caught by ViewModel
+            throw; 
         }
     }
 
@@ -26,10 +27,10 @@ public partial class PaginaPanelAdmin : ContentPage
         var window = this.Window;
         if (window != null)
         {
-            // Maximizar en Windows
             var platformWindow = window.Handler.PlatformView as Microsoft.UI.Xaml.Window;
             if (platformWindow != null)
             {
+                // Abrir maximizado en Windows para vista de administración
                 var presenter = platformWindow.AppWindow.Presenter as Microsoft.UI.Windowing.OverlappedPresenter;
                 presenter?.Maximize();
             }
@@ -37,6 +38,7 @@ public partial class PaginaPanelAdmin : ContentPage
 #endif
         if (BindingContext is PanelAdminVM vm)
         {
+            // Cargar datos al entrar
             await vm.CargarDatosCommand.ExecuteAsync(null);
         }
     }

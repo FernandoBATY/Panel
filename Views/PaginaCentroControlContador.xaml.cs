@@ -4,6 +4,7 @@ public partial class PaginaCentroControlContador : ContentPage
 {
     public PaginaCentroControlContador(ViewModels.CentroControlContadorVM vm)
     {
+        // Inyección de ViewModel y enlace de datos
         InitializeComponent();
         BindingContext = vm;
     }
@@ -15,10 +16,10 @@ public partial class PaginaCentroControlContador : ContentPage
         var window = this.Window;
         if (window != null)
         {
-            // Maximizar en Windows
             var platformWindow = window.Handler.PlatformView as Microsoft.UI.Xaml.Window;
             if (platformWindow != null)
             {
+                // Forzar maximizado en escritorio Windows
                 var presenter = platformWindow.AppWindow.Presenter as Microsoft.UI.Windowing.OverlappedPresenter;
                 presenter?.Maximize();
             }
@@ -26,6 +27,7 @@ public partial class PaginaCentroControlContador : ContentPage
 #endif
         if (BindingContext is ViewModels.CentroControlContadorVM vm)
         {
+            // Cargar datos al mostrar la vista
             await vm.CargarTodosLosDatosCommand.ExecuteAsync(null);
         }
     }
@@ -36,8 +38,7 @@ public partial class PaginaCentroControlContador : ContentPage
         {
             if (BindingContext is ViewModels.CentroControlContadorVM vm)
             {
-                // Only execute if the new state matches logic (optional check)
-                // We just want to trigger the update command
+                // Marcar tarea completada desde la UI
                 vm.CompletarTareaCommand.Execute(tarea);
             }
         }

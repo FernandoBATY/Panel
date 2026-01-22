@@ -4,6 +4,7 @@ namespace Panel.Models;
 
 public class User
 {
+    // Identificación y credenciales
     [PrimaryKey, AutoIncrement]
     public int Id { get; set; }
 
@@ -12,13 +13,14 @@ public class User
 
     public string Password { get; set; } = string.Empty;
 
-    public string Role { get; set; } = "Contador"; // "Admin" or "Contador"
+    // Perfil y estado
+    public string Role { get; set; } = "Contador"; 
     public string Name { get; set; } = string.Empty;
-    public string Estado { get; set; } = "desconectado"; // "conectado", "desconectado"
-    public string Area { get; set; } = "General"; // "Ingresos", "Egresos", "Declaraciones", "Admin"
-    public string FotoPerfil { get; set; } = string.Empty; // Ruta local a imagen de perfil
+    public string Estado { get; set; } = "desconectado"; 
+    public string Area { get; set; } = "General"; 
+    public string FotoPerfil { get; set; } = string.Empty;
 
-    // Computed properties for UI (ignored in DB)
+    // Métricas calculadas (no persistentes)
     [Ignore]
     public int TotalTareas { get; set; }
     [Ignore]

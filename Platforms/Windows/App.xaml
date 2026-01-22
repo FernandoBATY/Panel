@@ -9,29 +9,24 @@
         <ResourceDictionary>
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Default">
-                    <!-- ScrollBar Thumb Colors (Solid Black) -->
                     <SolidColorBrush x:Key="ScrollBarThumbFill" Color="Black" />
                     <SolidColorBrush x:Key="ScrollBarThumbFillPointerOver" Color="Black" />
                     <SolidColorBrush x:Key="ScrollBarThumbFillPressed" Color="Black" />
                     <SolidColorBrush x:Key="ScrollBarThumbFillDisabled" Color="Black" />
                     
-                    <!-- Scrolling Indicator (The thin line when not interacting) -->
                     <SolidColorBrush x:Key="ScrollingIndicatorThumbFill" Color="Black" />
                     <SolidColorBrush x:Key="ScrollingIndicatorThumbFillPointerOver" Color="Black" />
                     <SolidColorBrush x:Key="ScrollingIndicatorThumbFillPressed" Color="Black" />
 
-                    <!-- Dimensions -->
                     <x:Double x:Key="ScrollBarSize">16</x:Double>
                     <x:Double x:Key="ScrollBarThumbMinSize">40</x:Double>
 
-                    <!-- Track Colors (Light Gray for contrast) -->
                     <SolidColorBrush x:Key="ScrollBarTrackFill" Color="#FFE0E0E0" />
                     <SolidColorBrush x:Key="ScrollBarTrackFillPointerOver" Color="#FFD0D0D0" />
                     <SolidColorBrush x:Key="ScrollBarTrackFillPressed" Color="#FFC0C0C0" />
                     <SolidColorBrush x:Key="ScrollBarTrackFillDisabled" Color="#FFF0F0F0" />
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Light">
-                    <!-- Same overrides for Light theme -->
                     <SolidColorBrush x:Key="ScrollBarThumbFill" Color="Black" />
                     <SolidColorBrush x:Key="ScrollBarThumbFillPointerOver" Color="Black" />
                     <SolidColorBrush x:Key="ScrollBarThumbFillPressed" Color="Black" />

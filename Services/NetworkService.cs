@@ -8,22 +8,25 @@ namespace Panel.Services;
 
 public class NetworkService
 {
+    // Configuración de red
     private const int TCP_PORT = 5000;
     private const int UDP_PORT = 5001;
     
+    // Componentes de red
     private TcpListener? _server;
     private TcpClient? _client;
     private UdpClient? _udpClient;
     private NetworkStream? _stream;
     
+    // Estado y clientes conectados
     private readonly List<ConnectedClient> _connectedClients = new();
     private bool _isRunning;
 
+    // Eventos de red
     public event EventHandler<SyncMessage>? MessageReceived;
     public event EventHandler<NodeIdentity>? ClientConnected;
     public event EventHandler<string>? ClientDisconnected;
 
-    // Lista de nodos conectados (para UI)
     public IReadOnlyList<NodeIdentity> ConnectedNodes => 
         _connectedClients.Select(c => c.Identity).ToList();
 
@@ -39,10 +42,8 @@ public class NetworkService
 
         Console.WriteLine($"[SERVER] Iniciado en puerto {TCP_PORT}");
 
-        // Aceptar conexiones en background
         _ = Task.Run(AcceptClientsAsync);
         
-        // Responder a discovery broadcasts
         _ = Task.Run(RespondToDiscoveryAsync);
     }
 
@@ -65,8 +66,8 @@ public class NetworkService
     private async Task HandleClientAsync(TcpClient client)
     {
         var stream = client.GetStream();
-        var buffer = new byte[65536]; // Larger buffer
-        var leftover = ""; // Store incomplete messages
+        var buffer = new byte[65536]; 
+        var leftover = ""; 
         ConnectedClient? connectedClient = null;
 
         try
@@ -83,7 +84,6 @@ public class NetworkService
                 {
                     var json = jsonMessages[i];
                     
-                    // If this is the last part and data didn't end with \n, it's incomplete
                     if (i == jsonMessages.Length - 1 && !data.EndsWith('\n'))
                     {
                         leftover = json;
@@ -104,10 +104,8 @@ public class NetworkService
 
                     if (message == null) continue;
 
-                    // Primer mensaje debe ser HELLO
                     if (message.Operation == SyncOperation.Hello && connectedClient == null)
                     {
-                        // Check for existing connection from same machine
                         var existingClient = _connectedClients
                             .FirstOrDefault(c => c.Identity.MachineName == message.Sender!.MachineName 
                                               && c.Identity.Role == "Guest");
@@ -133,16 +131,13 @@ public class NetworkService
                     }
                     else
                     {
-                        // Update Identity on Heartbeat
                         if (message.Operation == SyncOperation.Heartbeat && connectedClient != null && message.Sender != null)
                         {
                             connectedClient.Identity = message.Sender;
                         }
 
-                        // Reenviar mensaje a todos los demás clientes
                         await BroadcastMessageAsync(message, connectedClient?.Identity.NodeId);
                         
-                        // Notificar a la aplicación
                         MessageReceived?.Invoke(this, message);
                     }
                 }
@@ -175,7 +170,7 @@ public class NetworkService
     public async Task BroadcastMessageAsync(SyncMessage message, string? excludeNodeId = null)
     {
         var json = JsonSerializer.Serialize(message);
-        var data = Encoding.UTF8.GetBytes(json + "\n"); // Add newline delimiter
+        var data = Encoding.UTF8.GetBytes(json + "\n");
 
         foreach (var client in _connectedClients.ToList())
         {
@@ -195,7 +190,7 @@ public class NetworkService
     private async Task SendToClientAsync(ConnectedClient client, SyncMessage message)
     {
         var json = JsonSerializer.Serialize(message);
-        var data = Encoding.UTF8.GetBytes(json + "\n"); // Add newline delimiter
+        var data = Encoding.UTF8.GetBytes(json + "\n"); 
         await client.Stream.WriteAsync(data, 0, data.Length);
     }
 
@@ -230,6 +225,7 @@ public class NetworkService
 
     #region Client Methods (Contador/Admin secundario)
 
+    // Descubrimiento automático de servidor
     public async Task<bool> DiscoverAndConnectAsync()
     {
         try
@@ -258,6 +254,7 @@ public class NetworkService
         return false;
     }
 
+    // Conexión manual al servidor
     public async Task<bool> ConnectToServerAsync(string serverIp)
     {
         try
@@ -269,7 +266,6 @@ public class NetworkService
 
             Console.WriteLine($"[CLIENT] Conectado a servidor {serverIp}");
 
-            // Enviar HELLO con identidad
             var helloMsg = new SyncMessage
             {
                 Operation = SyncOperation.Hello,
@@ -278,7 +274,6 @@ public class NetworkService
 
             await SendMessageAsync(helloMsg);
 
-            // Escuchar mensajes del servidor
             _ = Task.Run(ReceiveMessagesAsync);
 
             return true;
@@ -290,10 +285,11 @@ public class NetworkService
         }
     }
 
+    // Recepción continua de mensajes del servidor
     private async Task ReceiveMessagesAsync()
     {
-        var buffer = new byte[65536]; // Larger buffer
-        var leftover = ""; // Store incomplete messages
+        var buffer = new byte[65536]; 
+        var leftover = ""; 
 
         while (_isRunning && _stream != null)
         {
@@ -305,12 +301,10 @@ public class NetworkService
                 var data = leftover + Encoding.UTF8.GetString(buffer, 0, bytesRead);
                 var messages = data.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
-                // Process all complete messages
                 for (int i = 0; i < messages.Length; i++)
                 {
                     var json = messages[i];
                     
-                    // If this is the last part and data didn't end with \n, it's incomplete
                     if (i == messages.Length - 1 && !data.EndsWith('\n'))
                     {
                         leftover = json;
@@ -344,12 +338,13 @@ public class NetworkService
         Disconnect();
     }
 
+    // Envío de mensajes al servidor
     public async Task SendMessageAsync(SyncMessage message)
     {
         if (_stream == null) return;
 
         var json = JsonSerializer.Serialize(message);
-        var data = Encoding.UTF8.GetBytes(json + "\n"); // Add newline delimiter
+        var data = Encoding.UTF8.GetBytes(json + "\n"); 
         await _stream.WriteAsync(data, 0, data.Length);
     }
 
@@ -357,6 +352,7 @@ public class NetworkService
 
     #region Common Methods
 
+    // Desconexión y limpieza de recursos
     public void Disconnect()
     {
         _isRunning = false;
@@ -368,19 +364,18 @@ public class NetworkService
         Console.WriteLine("[NETWORK] Desconectado");
     }
 
+    // Detección de IP de Tailscale o local
     public string? GetTailscaleIP()
     {
         try
         {
             var host = Dns.GetHostEntry(Dns.GetHostName());
             
-            // Buscar IP en rango Tailscale (100.64.0.0/10)
             foreach (var ip in host.AddressList)
             {
                 if (ip.AddressFamily == AddressFamily.InterNetwork)
                 {
                     var bytes = ip.GetAddressBytes();
-                    // Tailscale usa 100.64.0.0 - 100.127.255.255
                     if (bytes[0] == 100 && bytes[1] >= 64 && bytes[1] <= 127)
                     {
                         return ip.ToString();
@@ -388,7 +383,6 @@ public class NetworkService
                 }
             }
             
-            // Si no hay Tailscale, devolver IP local normal
             return GetLocalIPAddress();
         }
         catch

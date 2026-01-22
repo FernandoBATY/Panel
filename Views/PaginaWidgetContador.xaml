@@ -6,7 +6,7 @@
              Title="JAZER Widget"
              BackgroundColor="Transparent">
 
-    <!-- Container fixed size 280x220 -->
+    <!-- Tarjeta compacta del widget -->
     <Border Stroke="#E5E7EB" 
             StrokeThickness="1"
             BackgroundColor="White"
@@ -19,14 +19,13 @@
         </Border.Shadow>
 
         <Grid RowDefinitions="32,*,20">
-            <!-- SECTION 1: HEADER -->
+            <!-- Encabezado con identidad y acción de expandir -->
             <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Padding="12,0" BackgroundColor="White">
-                <!-- Col 1: Logo -->
+             
                 <Label Grid.Column="0" Text="JZ" 
                        TextColor="#1E3A8A" FontAttributes="Bold" FontSize="14" 
                        VerticalOptions="Center"/>
                 
-                <!-- Col 2: Info -->
                 <VerticalStackLayout Grid.Column="1" Margin="8,0,0,0" VerticalOptions="Center" Spacing="0">
                     <Label Text="{Binding NombreContador}" FontSize="12" LineBreakMode="TailTruncation" TextColor="#333"/>
                     <HorizontalStackLayout Spacing="4">
@@ -35,7 +34,6 @@
                     </HorizontalStackLayout>
                 </VerticalStackLayout>
 
-                <!-- Col 3: Expand Button -->
                 <Button Grid.Column="2" 
                         Text="⤢" 
                         FontSize="18"
@@ -46,20 +44,19 @@
                         Command="{Binding ExpandirCentroControlCommand}"/>
             </Grid>
 
-            <!-- SECTION 2: TASKS AREA -->
+            <!-- Lista de tareas rápidas -->
             <CollectionView Grid.Row="1" ItemsSource="{Binding Tareas}" Margin="0,4">
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
                         <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*,Auto" Padding="12,4">
-                            <!-- Row 1 -->
+                            
                             <CheckBox Grid.Row="0" Grid.Column="0" IsChecked="{Binding Estado, Converter={StaticResource StatusToBoolConverter}}" 
                                       VerticalOptions="Center"/>
                             <Label Grid.Row="0" Grid.Column="1" Text="{Binding Titulo}" 
                                    FontSize="11" VerticalOptions="Center" Margin="8,0,0,0" LineBreakMode="TailTruncation"/>
-                            <!-- Icon Placeholder -->
+                         
                             <Label Grid.Row="0" Grid.Column="2" Text="⏰" FontSize="12" VerticalOptions="Center"/>
 
-                            <!-- Row 2: Dates -->
                             <HorizontalStackLayout Grid.Row="1" Grid.Column="1" Spacing="8" Margin="8,0,0,0">
                                 <Label Text="{Binding FechaAsignacion, StringFormat='📅 {0:MMM dd}'}" FontSize="9" TextColor="#9CA3AF"/>
                                 <Label Text="{Binding FechaVencimiento, StringFormat='⏰ {0:MMM dd}'}" FontSize="9" TextColor="#9CA3AF"/>
@@ -74,7 +71,7 @@
                 </CollectionView.EmptyView>
             </CollectionView>
 
-            <!-- SECTION 3: MESSAGES BADGE -->
+            <!-- Aviso de nuevos mensajes -->
             <Grid Grid.Row="2" BackgroundColor="#DBEAFE" IsVisible="{Binding MensajesNuevos, Converter={StaticResource IntToBoolConverter}}">
                 <Label Text="{Binding MensajesNuevos, StringFormat='🔔 {0} mensaje(s) nuevo(s)'}" 
                        TextColor="#1E40AF" FontSize="10" 

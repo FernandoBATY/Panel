@@ -9,6 +9,7 @@ public partial class WidgetPage : ContentPage
 
     public WidgetPage()
     {
+        // Vista alojada que muestra el widget compacto
         InitializeComponent();
     }
 
@@ -20,22 +21,22 @@ public partial class WidgetPage : ContentPage
 
     private void OnOpenSystemClicked(object sender, EventArgs e)
     {
-        // Disparar evento para que App.xaml.cs lo maneje
+        // Mostrar la app principal desde el widget
         App.Current?.HideWidgetAndShowMain();
     }
 
     private async void OnTareaCheckedChanged(object sender, CheckedChangedEventArgs e)
     {
-        // Pequeño hack para obtener la Tarea desde el evento del CheckBox
         if (sender is CheckBox checkBox && checkBox.BindingContext is Tarea tarea && _viewModel != null)
         {
-            // Solo actuar si el usuario lo marcó (evitar ciclos por binding inicial)
             if (e.Value && tarea.Estado != "completada")
             {
+                // Completar tarea desde el widget
                 await _viewModel.CompletarTareaCommand.ExecuteAsync(tarea);
             }
             else if (!e.Value && tarea.Estado == "completada")
             {
+                // Revertir completado si se desmarca
                 await _viewModel.RevertirTareaCommand.ExecuteAsync(tarea);
             }
         }
