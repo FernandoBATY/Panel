@@ -37,7 +37,7 @@ public partial class CentroControlContadorVM : ObservableObject
     // Statistics
     [ObservableProperty] private int _totalTareas;
     [ObservableProperty] private int _tareasCompletadas;
-    [ObservableProperty] private int _tareasEnProgreso;
+    [ObservableProperty] private int _tareasPendientesCount;
     [ObservableProperty] private double _horasRegistradas; // Legacy
     [ObservableProperty] private string _tiempoSesion = "00:00:00"; // For UI Display
     
@@ -297,9 +297,9 @@ public partial class CentroControlContadorVM : ObservableObject
 
     private void CalcularEstadisticas()
     {
-        TotalTareas = Tareas.Count;
-        TareasCompletadas = Tareas.Count(t => t.Estado == "completada");
-        TareasEnProgreso = Tareas.Count(t => t.Estado == "en-progreso");
+        TotalTareas = _allTareas.Count; // Use all tasks, not filtered
+        TareasCompletadas = _allTareas.Count(t => t.Estado == "completada");
+        TareasPendientesCount = _allTareas.Count(t => t.Estado == "pendiente"); // Changed to count pending
         // HorasRegistradas logic would sum up tracked time
         HorasRegistradas = 23.5; // Placeholder/Mock
     }
@@ -468,8 +468,8 @@ public partial class CentroControlContadorVM : ObservableObject
         
         _tickCount++;
         
-        // Send Heartbeat every 10 seconds if connected
-        if (_tickCount % 10 == 0 && IsConnected)
+        // Send Heartbeat every 10 minutes (600 seconds) if connected
+        if (_tickCount % 600 == 0 && IsConnected)
         {
              await EnviarHeartbeat();
         }

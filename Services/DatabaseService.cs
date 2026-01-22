@@ -152,12 +152,15 @@ public class DatabaseService
     public async Task<int> SaveTareaAsync(Tarea tarea, bool skipSync = false)
     {
         await Init();
-        var result = await _database!.InsertAsync(tarea);
+        
+        // Tarea.Id is a string GUID, so always use InsertOrReplace
+        // This handles both new tasks and synced tasks correctly
+        var result = await _database!.InsertOrReplaceAsync(tarea);
         
         // Notificar sincronización (solo si no viene de red)
         if (!skipSync && _syncService != null)
         {
-            await _syncService.OnLocalChange(SyncOperation.Insert, tarea, "Tarea");
+            await _syncService.OnLocalChange(SyncOperation.Update, tarea, "Tarea");
         }
         
         return result;

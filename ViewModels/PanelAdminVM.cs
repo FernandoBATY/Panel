@@ -206,8 +206,20 @@ public partial class PanelAdminVM : ObservableObject
 
     private void OnClientConnected(object? sender, NodeIdentity identity)
     {
-        ConnectedNodes.Add(identity);
-        ConnectionStatus = $"Servidor activo - {ConnectedNodes.Count} conectados";
+        MainThread.BeginInvokeOnMainThread(() => 
+        {
+            ConnectedNodes.Add(identity);
+            ConnectionStatus = $"Servidor activo - {ConnectedNodes.Count} conectados";
+            
+            // Immediately mark as connected in the UI
+            var user = Contadores.FirstOrDefault(c => c.Id == identity.UserId);
+            if (user != null)
+            {
+                user.Estado = "conectado";
+                int idx = Contadores.IndexOf(user);
+                if (idx != -1) Contadores[idx] = user; // Refresh UI
+            }
+        });
     }
 
     private void OnClientDisconnected(object? sender, string nodeId)

@@ -74,7 +74,7 @@
                             Padding="12,6">
                         <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
                             <BoxView Color="{StaticResource Green500}" HeightRequest="8" WidthRequest="8" CornerRadius="4" VerticalOptions="Center"/>
-                            <Label Text="En línea" FontSize="13" TextColor="{StaticResource Green800}"/>
+                            <Label Text="Conectado al servidor" FontSize="13" TextColor="{StaticResource Green800}"/>
                         </HorizontalStackLayout>
                      </Border>
 
@@ -143,8 +143,8 @@
                 <!-- Stat 3 -->
                 <HorizontalStackLayout Grid.Column="2" Spacing="12" Margin="12,0,0,0">
                      <VerticalStackLayout>
-                         <Label Text="{Binding TareasEnProgreso}" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Blue500}"/>
-                         <Label Text="En Progreso" FontSize="12" TextColor="{StaticResource Gray500Jazer}"/>
+                         <Label Text="{Binding TareasPendientesCount}" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Yellow600}"/>
+                         <Label Text="Pendientes" FontSize="12" TextColor="{StaticResource Gray500Jazer}"/>
                      </VerticalStackLayout>
                      <BoxView WidthRequest="1" Color="{StaticResource Gray100Jazer}" HorizontalOptions="End" Margin="0,4"/>
                 </HorizontalStackLayout>
