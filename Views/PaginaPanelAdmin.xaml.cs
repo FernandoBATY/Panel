@@ -6,8 +6,17 @@ public partial class PaginaPanelAdmin : ContentPage
 {
 	public PaginaPanelAdmin(ViewModels.PanelAdminVM vm)
     {
-        InitializeComponent();
-        BindingContext = vm;
+        try
+        {
+            InitializeComponent();
+            BindingContext = vm;
+        }
+        catch (Exception ex)
+        {
+            string logPath = System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "ADMIN_CTOR_CRASH.txt");
+            System.IO.File.WriteAllText(logPath, ex.ToString());
+            throw; // Re-throw to be caught by ViewModel
+        }
     }
 
     protected override async void OnAppearing()

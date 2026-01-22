@@ -115,7 +115,8 @@ public class DatabaseService
         if (user.Id == 0)
             result = await _database!.InsertAsync(user);
         else
-            result = await _database!.UpdateAsync(user);
+            // Use InsertOrReplace for synced users that have an ID but might not exist locally
+            result = await _database!.InsertOrReplaceAsync(user);
 
         if (!skipSync && _syncService != null)
         {
@@ -335,5 +336,21 @@ public class DatabaseService
             Password = BCrypt.Net.BCrypt.HashPassword("password") 
         };
         await _database.InsertAsync(newAdmin);
+    }
+
+    public async Task BackupDatabaseAsync(string destinationPath)
+    {
+        await Init();
+        
+        try 
+        {
+            await _database!.ExecuteAsync($"VACUUM INTO ?", destinationPath);
+        }
+        catch (Exception)
+        {
+            var sourcePath = Path.Combine(FileSystem.AppDataDirectory, DatabaseName);
+            try { await _database!.ExecuteAsync("PRAGMA wal_checkpoint(FULL);"); } catch { }
+            File.Copy(sourcePath, destinationPath, overwrite: true);
+        }
     }
 }

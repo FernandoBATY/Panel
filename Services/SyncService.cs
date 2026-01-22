@@ -24,21 +24,28 @@ public class SyncService
     {
         if (!SessionService.IsAdmin()) return; // Only Admin sends Sync
 
-        Console.WriteLine($"[SYNC] Enviando FullSync a {clientIdentity.Username}...");
+        LogSync($"=== SERVIDOR: Enviando FullSync a {clientIdentity.Username} ===");
 
         try
         {
             // 1. Users
             var users = await _databaseService.GetAllUsersAsync();
-            foreach(var u in users) await SendDirectSync(u, "User", clientIdentity.NodeId);
+            LogSync($"SERVIDOR: Total usuarios en DB: {users.Count}");
+            foreach(var u in users) 
+            {
+                LogSync($"SERVIDOR: Enviando usuario: {u.Username} (Id: {u.Id})");
+                await SendDirectSync(u, "User", clientIdentity.NodeId);
+            }
 
             // 2. Tareas
             var tareas = await _databaseService.GetTareasAsync();
+            LogSync($"SERVIDOR: Total tareas en DB: {tareas.Count}");
             foreach(var t in tareas) await SendDirectSync(t, "Tarea", clientIdentity.NodeId);
 
             // 3. Alertas/Mensajes (Opcional, maybe only recent?)
             // For now send all to be safe for "Restoring DB"
             var msgs = await _databaseService.GetMensajesAsync();
+            LogSync($"SERVIDOR: Total mensajes en DB: {msgs.Count}");
             foreach(var m in msgs) await SendDirectSync(m, "Mensaje", clientIdentity.NodeId);
             
             // 4. Send "Done" marker
@@ -50,10 +57,11 @@ public class SyncService
                 Timestamp = DateTime.UtcNow
             };
             await _networkService.SendDirectlyToNodeAsync(clientIdentity.NodeId, doneMsg);
+            LogSync("SERVIDOR: Enviado marcador 'Done'");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[SYNC] Error sending FullSync: {ex.Message}");
+            LogSync($"SERVIDOR ERROR: {ex.Message}");
         }
     }
 
@@ -137,20 +145,48 @@ public class SyncService
         }
     }
 
+    private void LogSync(string message)
+    {
+        try
+        {
+            string logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SYNC_LOG.txt");
+            File.AppendAllText(logPath, $"[{DateTime.Now:HH:mm:ss}] {message}{Environment.NewLine}");
+        }
+        catch { }
+        Console.WriteLine($"[SYNC] {message}");
+    }
+
     private async Task ApplyInsert(SyncMessage message)
     {
+        LogSync($"ApplyInsert called for EntityType: {message.EntityType}");
+        
         switch (message.EntityType)
         {
             case "User":
+                LogSync($"User JSON: {message.EntityJson}");
                 var user = JsonSerializer.Deserialize<User>(message.EntityJson);
+                LogSync($"Deserialized user: {user?.Username ?? "NULL"}");
+                
                 if (user != null)
                 {
                      var existing = await _databaseService.GetAllUsersAsync();
+                     LogSync($"Existing users count: {existing.Count}");
+                     LogSync($"Checking if user.Id {user.Id} already exists...");
+                     
                      if (!existing.Any(u => u.Id == user.Id))
                      {
+                         LogSync($"User {user.Username} doesn't exist, saving...");
                          await _databaseService.SaveUserAsync(user, skipSync: true);
-                         Console.WriteLine($"[SYNC] Usuario recibido: {user.Username}");
+                         LogSync($"✅ Usuario guardado: {user.Username}");
                      }
+                     else
+                     {
+                         LogSync($"⚠️ Usuario {user.Username} ya existe, omitiendo.");
+                     }
+                }
+                else
+                {
+                    LogSync("❌ User deserializado es NULL!");
                 }
                 break;
 
@@ -179,6 +215,10 @@ public class SyncService
                         Console.WriteLine($"[SYNC] Mensaje insertado de {msg.De}");
                     }
                 }
+                break;
+                
+            case "Done":
+                Console.WriteLine("[SYNC] Received Done marker - sync complete");
                 break;
         }
     }

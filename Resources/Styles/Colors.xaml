@@ -101,6 +101,7 @@
     <Color x:Key="Orange400">#FB923C</Color>
     <Color x:Key="Orange500">#F59E0B</Color>
     <Color x:Key="Orange600">#D97706</Color>
+    <Color x:Key="Yellow600">#CA8A04</Color>
 
     <!-- Purples -->
     <Color x:Key="Purple50">#F3E8FF</Color>

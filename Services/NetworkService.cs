@@ -65,7 +65,8 @@ public class NetworkService
     private async Task HandleClientAsync(TcpClient client)
     {
         var stream = client.GetStream();
-        var buffer = new byte[8192];
+        var buffer = new byte[65536]; // Larger buffer
+        var leftover = ""; // Store incomplete messages
         ConnectedClient? connectedClient = null;
 
         try
@@ -75,41 +76,75 @@ public class NetworkService
                 var bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
                 if (bytesRead == 0) break;
 
-                var json = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                var message = JsonSerializer.Deserialize<SyncMessage>(json);
+                var data = leftover + Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                var jsonMessages = data.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
-                if (message == null) continue;
+                for (int i = 0; i < jsonMessages.Length; i++)
+                {
+                    var json = jsonMessages[i];
+                    
+                    // If this is the last part and data didn't end with \n, it's incomplete
+                    if (i == jsonMessages.Length - 1 && !data.EndsWith('\n'))
+                    {
+                        leftover = json;
+                        break;
+                    }
+                    
+                    leftover = "";
 
-                // Primer mensaje debe ser HELLO
-                if (message.Operation == SyncOperation.Hello && connectedClient == null)
-                {
-                    connectedClient = new ConnectedClient
+                    SyncMessage? message;
+                    try
                     {
-                        Client = client,
-                        Stream = stream,
-                        Identity = message.Sender!
-                    };
-                    
-                    _connectedClients.Add(connectedClient);
-                    ClientConnected?.Invoke(this, message.Sender!);
-                    
-                    Console.WriteLine($"[SERVER] Cliente conectado: {message.Sender!.Username} ({message.Sender.Role})");
-                    
-                    Console.WriteLine($"[SERVER] Cliente conectado: {message.Sender!.Username} ({message.Sender.Role})");
-                }
-                else
-                {
-                    // Update Identity on Heartbeat
-                    if (message.Operation == SyncOperation.Heartbeat && connectedClient != null && message.Sender != null)
+                        message = JsonSerializer.Deserialize<SyncMessage>(json);
+                    }
+                    catch (JsonException)
                     {
-                        connectedClient.Identity = message.Sender;
+                        continue;
                     }
 
-                    // Reenviar mensaje a todos los demás clientes
-                    await BroadcastMessageAsync(message, connectedClient?.Identity.NodeId);
-                    
-                    // Notificar a la aplicación
-                    MessageReceived?.Invoke(this, message);
+                    if (message == null) continue;
+
+                    // Primer mensaje debe ser HELLO
+                    if (message.Operation == SyncOperation.Hello && connectedClient == null)
+                    {
+                        // Check for existing connection from same machine
+                        var existingClient = _connectedClients
+                            .FirstOrDefault(c => c.Identity.MachineName == message.Sender!.MachineName 
+                                              && c.Identity.Role == "Guest");
+                        
+                        if (existingClient != null)
+                        {
+                            Console.WriteLine($"[SERVER] Reemplazando conexión existente de {existingClient.Identity.MachineName}");
+                            _connectedClients.Remove(existingClient);
+                            try { existingClient.Client.Close(); } catch { }
+                        }
+                        
+                        connectedClient = new ConnectedClient
+                        {
+                            Client = client,
+                            Stream = stream,
+                            Identity = message.Sender!
+                        };
+                        
+                        _connectedClients.Add(connectedClient);
+                        ClientConnected?.Invoke(this, message.Sender!);
+                        
+                        Console.WriteLine($"[SERVER] Cliente conectado: {message.Sender!.Username} ({message.Sender.Role})");
+                    }
+                    else
+                    {
+                        // Update Identity on Heartbeat
+                        if (message.Operation == SyncOperation.Heartbeat && connectedClient != null && message.Sender != null)
+                        {
+                            connectedClient.Identity = message.Sender;
+                        }
+
+                        // Reenviar mensaje a todos los demás clientes
+                        await BroadcastMessageAsync(message, connectedClient?.Identity.NodeId);
+                        
+                        // Notificar a la aplicación
+                        MessageReceived?.Invoke(this, message);
+                    }
                 }
             }
         }
@@ -140,7 +175,7 @@ public class NetworkService
     public async Task BroadcastMessageAsync(SyncMessage message, string? excludeNodeId = null)
     {
         var json = JsonSerializer.Serialize(message);
-        var data = Encoding.UTF8.GetBytes(json);
+        var data = Encoding.UTF8.GetBytes(json + "\n"); // Add newline delimiter
 
         foreach (var client in _connectedClients.ToList())
         {
@@ -160,7 +195,7 @@ public class NetworkService
     private async Task SendToClientAsync(ConnectedClient client, SyncMessage message)
     {
         var json = JsonSerializer.Serialize(message);
-        var data = Encoding.UTF8.GetBytes(json);
+        var data = Encoding.UTF8.GetBytes(json + "\n"); // Add newline delimiter
         await client.Stream.WriteAsync(data, 0, data.Length);
     }
 
@@ -257,7 +292,8 @@ public class NetworkService
 
     private async Task ReceiveMessagesAsync()
     {
-        var buffer = new byte[8192];
+        var buffer = new byte[65536]; // Larger buffer
+        var leftover = ""; // Store incomplete messages
 
         while (_isRunning && _stream != null)
         {
@@ -266,12 +302,36 @@ public class NetworkService
                 var bytesRead = await _stream.ReadAsync(buffer, 0, buffer.Length);
                 if (bytesRead == 0) break;
 
-                var json = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                var message = JsonSerializer.Deserialize<SyncMessage>(json);
+                var data = leftover + Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                var messages = data.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
-                if (message != null)
+                // Process all complete messages
+                for (int i = 0; i < messages.Length; i++)
                 {
-                    MessageReceived?.Invoke(this, message);
+                    var json = messages[i];
+                    
+                    // If this is the last part and data didn't end with \n, it's incomplete
+                    if (i == messages.Length - 1 && !data.EndsWith('\n'))
+                    {
+                        leftover = json;
+                        break;
+                    }
+                    
+                    leftover = "";
+                    
+                    try
+                    {
+                        var message = JsonSerializer.Deserialize<SyncMessage>(json);
+                        if (message != null)
+                        {
+                            Console.WriteLine($"[CLIENT] Mensaje recibido: {message.EntityType}");
+                            MessageReceived?.Invoke(this, message);
+                        }
+                    }
+                    catch (JsonException ex)
+                    {
+                        Console.WriteLine($"[CLIENT] Error parsing JSON: {ex.Message}");
+                    }
                 }
             }
             catch (Exception ex)
@@ -289,7 +349,7 @@ public class NetworkService
         if (_stream == null) return;
 
         var json = JsonSerializer.Serialize(message);
-        var data = Encoding.UTF8.GetBytes(json);
+        var data = Encoding.UTF8.GetBytes(json + "\n"); // Add newline delimiter
         await _stream.WriteAsync(data, 0, data.Length);
     }
 

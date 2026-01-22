@@ -52,4 +52,15 @@ public class SessionService
     {
         return _currentUser != null;
     }
+
+    public static string GetOrCreateMachineNodeId()
+    {
+        var stored = Preferences.Get("MachineNodeId", string.Empty);
+        if (!string.IsNullOrEmpty(stored)) return stored;
+        
+        var newId = Guid.NewGuid().ToString();
+        Preferences.Set("MachineNodeId", newId);
+        Console.WriteLine($"[SESSION] Created new MachineNodeId: {newId}");
+        return newId;
+    }
 }

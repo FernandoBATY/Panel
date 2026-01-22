@@ -421,6 +421,70 @@ public partial class PanelAdminVM : ObservableObject
     }
 
     [RelayCommand]
+    public async Task DescargarBackup()
+    {
+#if WINDOWS
+        try
+        {
+            var savePicker = new Windows.Storage.Pickers.FileSavePicker();
+            savePicker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary;
+            savePicker.FileTypeChoices.Add("SQLite Database", new List<string>() { ".db3" });
+            savePicker.SuggestedFileName = $"Jazer_Backup_{DateTime.Now:yyyyMMdd_HHmmss}";
+
+            // Retrieve the window handle (HWND) of the current WinUI 3 window.
+            var window = Application.Current?.Windows.FirstOrDefault()?.Handler?.PlatformView as Microsoft.UI.Xaml.Window;
+            if (window == null)
+            {
+                await Application.Current!.MainPage!.DisplayAlert("Error", "No se pudo acceder a la ventana actual.", "OK");
+                return;
+            }
+
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
+            WinRT.Interop.InitializeWithWindow.Initialize(savePicker, hwnd);
+
+            var file = await savePicker.PickSaveFileAsync();
+            if (file != null)
+            {
+                IsBusy = true;
+                // Delete if exists (PickSaveFileAsync usually asks to overwrite, but we ensure clean write)
+                // Actually VACUUM INTO fails if file exists.
+                // FileSavePicker returns a StorageFile, implying the file "exists" or is reserved.
+                // We need the PATH.
+                string path = file.Path;
+
+                // If VACUUM INTO requires the file to NOT exist, we should delete it first?
+                // Yes, VACUUM INTO raises error if file exists.
+                // But FileSavePicker creates the file (zero bytes)?
+                // Let's check. Yes, usually it creates it.
+                // So we should delete it before passing to VACUUM INTO.
+                // BUT, if we delete it, we lose the 'reservation' or handle?
+                // Windows might hold a lock?
+                // Alternative: Use DatabaseService's Fallback (File.Copy) which allows overwrite.
+                // Or better: Delete it here using System.IO (if not locked).
+                
+                try 
+                {
+                    if (File.Exists(path)) File.Delete(path);
+                } 
+                catch { /* Ignore if fails, DB service will handle error or try logic */ }
+
+                await _databaseService.BackupDatabaseAsync(path);
+                
+                IsBusy = false;
+                await Application.Current!.MainPage!.DisplayAlert("Backup Completo", $"Base de datos guardada en:\n{path}", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            IsBusy = false;
+            await Application.Current!.MainPage!.DisplayAlert("Error", $"Fallo al crear backup: {ex.Message}", "OK");
+        }
+#else
+        await Application.Current!.MainPage!.DisplayAlert("Info", "Esta función solo está disponible en Windows por el momento.", "OK");
+#endif
+    }
+
+    [RelayCommand]
     public async Task CerrarSesion()
     {
         // Detener servidor/cliente

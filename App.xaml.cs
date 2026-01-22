@@ -151,9 +151,6 @@ namespace Panel
                     }
                 }
             }
-#else
-            if (window == _mainWindow) 
-                window.WindowState = WindowState.Maximized;
 #endif
         }
     }

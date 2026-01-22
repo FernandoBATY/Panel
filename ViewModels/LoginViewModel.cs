@@ -142,10 +142,10 @@ public class LoginViewModel : INotifyPropertyChanged
 
         try
         {
-            // 1. Crear identidad temporal
+            // 1. Crear identidad temporal con ID persistente
             var tempIdentity = new Panel.Models.NodeIdentity 
             { 
-                NodeId = Guid.NewGuid().ToString(),
+                NodeId = SessionService.GetOrCreateMachineNodeId(), // Reuse same ID per machine
                 Username = "Guest_Sync",
                 Role = "Guest",
                 MachineName = Environment.MachineName
@@ -183,8 +183,36 @@ public class LoginViewModel : INotifyPropertyChanged
             
             _syncService.DataChanged -= OnDataChanged;
 
+            SyncStatus = "Procesando datos recibidos...";
+
+            // CRITICAL: Wait for data to flush and be processed
+            await Task.Delay(5000); // Increased to 5 seconds for reliability
+
+            // Verify data was actually received
+            var users = await _databaseService.GetAllUsersAsync();
+            Console.WriteLine($"[SYNC VERIFY] Total users after sync: {users.Count}");
+            
+            foreach (var u in users)
+            {
+                Console.WriteLine($"[SYNC VERIFY] - {u.Username} ({u.Role})");
+            }
+
+            // Fresh install has 1 user (admin from seed), successful sync should have 2+
+            if (users.Count < 2)
+            {
+                SyncStatus = "⚠️ No se recibieron usuarios del servidor";
+                await Application.Current!.MainPage!.DisplayAlert("Error de Sincronización", 
+                    $"Solo se detectaron {users.Count} usuario(s). Verifica que:\n\n" +
+                    "1. El servidor esté activo en la otra PC\n" +
+                    "2. La IP sea correcta\n" +
+                    "3. No haya firewall bloqueando el puerto 5000", "OK");
+                _networkService.Disconnect();
+                IsSyncing = false;
+                return;
+            }
+
             SyncStatus = "¡Sincronización Completada!";
-            await Application.Current!.MainPage!.DisplayAlert("Éxito", "Base de datos actualizada correctamente. Ahora puedes iniciar sesión.", "OK");
+            await Application.Current!.MainPage!.DisplayAlert("Éxito", $"Se sincronizaron {users.Count} usuarios correctamente.\n\nYa puedes iniciar sesión con cualquiera de ellos.", "OK");
             
             _networkService.Disconnect();
             IsSyncVisible = false; // Hide after success
@@ -192,6 +220,7 @@ public class LoginViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             SyncStatus = $"Error: {ex.Message}";
+            Console.WriteLine($"[SYNC ERROR] {ex}");
         }
         finally
         {
@@ -219,20 +248,39 @@ public class LoginViewModel : INotifyPropertyChanged
             
             if (user.Role == "Admin")
             {
-                // Navigate to Admin Panel
-                var page = _serviceProvider.GetRequiredService<PaginaPanelAdmin>();
-                Application.Current!.MainPage = new NavigationPage(page);
+                try 
+                {
+                    // Navigate to Admin Panel
+                    var page = _serviceProvider.GetRequiredService<PaginaPanelAdmin>();
+                    Application.Current!.MainPage = new NavigationPage(page);
+                }
+                catch (Exception ex)
+                {
+                   string logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "LOGIN_CRASH.txt");
+                   File.WriteAllText(logPath, $"ERROR NAVIGATING TO ADMIN:\n{ex.ToString()}");
+                   ErrorMessage = $"Error crítico: {ex.Message}";
+                   await Application.Current!.MainPage!.DisplayAlert("Crash Detectado", $"Error guardado en: {logPath}", "OK");
+                }
             }
             else
             {
                 // Navigate to Accountant Control Center (Directly, as requested)
-                // Navigate to Accountant Control Center (Directly, as requested)
-                var page = _serviceProvider.GetRequiredService<PaginaCentroControlContador>();
-                if (page.BindingContext is CentroControlContadorVM vm)
+                try
                 {
-                    vm.Init(user);
+                    var page = _serviceProvider.GetRequiredService<PaginaCentroControlContador>();
+                    if (page.BindingContext is CentroControlContadorVM vm)
+                    {
+                        vm.Init(user);
+                    }
+                    Application.Current!.MainPage = new NavigationPage(page);
                 }
-                Application.Current!.MainPage = new NavigationPage(page);
+                catch (Exception ex)
+                {
+                   string logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "LOGIN_CRASH.txt");
+                   File.WriteAllText(logPath, $"ERROR NAVIGATING TO ACCOUNTANT:\n{ex.ToString()}");
+                   ErrorMessage = $"Error crítico: {ex.Message}";
+                   await Application.Current!.MainPage!.DisplayAlert("Crash Detectado", $"Error guardado en: {logPath}", "OK");
+                }
             }
         }
         else
