@@ -73,7 +73,7 @@
             <Grid ColumnDefinitions="Auto,*,Auto">
                 <!-- Columna 1: Branding -->
                 <HorizontalStackLayout x:Name="BrandingStack" Grid.Column="0" Spacing="16" VerticalOptions="Center">
-                    <Image Source="logojazer.png" HeightRequest="45" WidthRequest="45" Aspect="AspectFit"/>
+                    <Image Source="logoconsultoria.jpg" HeightRequest="65" WidthRequest="65" Aspect="AspectFit"/>
                     
                     <!-- Perfil Admin -->
                     <Border HeightRequest="40" WidthRequest="40" StrokeShape="RoundRectangle 20" 
@@ -95,7 +95,7 @@
                 </HorizontalStackLayout>
 
                 <!-- Columna 2: Estado del Servidor (Centrado) -->
-                <HorizontalStackLayout x:Name="ServerStatusColumn" Grid.Column="1" HorizontalOptions="Center" VerticalOptions="Center" Spacing="12">
+                <HorizontalStackLayout x:Name="ServerStatusColumn" Grid.Column="1" HorizontalOptions="Center" VerticalOptions="Center" Spacing="16">
                      <Border BackgroundColor="{Binding IsServerRunning, Converter={StaticResource StatusBackgroundColorConverter}}" 
                              StrokeThickness="0" StrokeShape="RoundRectangle 16"
                              Padding="12,6">
@@ -105,14 +105,21 @@
                         </HorizontalStackLayout>
                      </Border>
                      
-                     <HorizontalStackLayout Spacing="8" IsVisible="{Binding IsServerRunning}">
-                        <Label Text="IP:" FontSize="13" TextColor="{StaticResource Gray500Jazer}" VerticalOptions="Center"/>
-                        <Label Text="{Binding ServerIP}" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource Green600}" FontFamily="Consolas" VerticalOptions="Center"/>
-                        <Button Text="Copiar" Command="{Binding CopiarIPCommand}" 
-                                BackgroundColor="Transparent" TextColor="{StaticResource Gray400Jazer}"
-                                HeightRequest="30" WidthRequest="40" Padding="0" FontSize="12"
-                                ToolTipProperties.Text="Copiar IP"/>
-                     </HorizontalStackLayout>
+                     <!-- IP Section -->
+                     <Border BackgroundColor="{StaticResource Gray50}" IsVisible="{Binding IsServerRunning}" Stroke="{StaticResource Gray200Jazer}" StrokeShape="RoundRectangle 8" Padding="12,4">
+                         <HorizontalStackLayout Spacing="10">
+                            <Label Text="IP:" FontSize="13" TextColor="{StaticResource Gray500Jazer}" VerticalOptions="Center"/>
+                            <Label Text="{Binding ServerIP}" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource Green600}" FontFamily="Consolas" VerticalOptions="Center"/>
+                            
+                            <BoxView WidthRequest="1" Color="{StaticResource Gray200Jazer}" Margin="4,4"/>
+                            
+                            <Button Text="Copiar" Command="{Binding CopiarIPCommand}" 
+                                    BackgroundColor="Transparent" TextColor="{StaticResource Blue600}"
+                                    FontAttributes="Bold"
+                                    HeightRequest="30" Padding="8,0" FontSize="12"
+                                    ToolTipProperties.Text="Copiar IP al portapapeles"/>
+                         </HorizontalStackLayout>
+                     </Border>
                 </HorizontalStackLayout>
 
                 <!-- Columna 3: Controles de Sesión -->
@@ -314,7 +321,7 @@
                         <VerticalStackLayout Spacing="16">
                             <Label Text="Equipo de Contadores" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource Gray900Jazer}"/>
                             
-                            <CollectionView ItemsSource="{Binding Contadores}" HeightRequest="400">
+                            <CollectionView ItemsSource="{Binding Contadores}" VerticalScrollBarVisibility="Always" HeightRequest="450">
                                 <CollectionView.Header>
                                     <Grid ColumnDefinitions="40,*,*" Padding="0,0,0,8">
                                         <Label Text="" Grid.Column="0"/>
@@ -442,63 +449,65 @@
             </ScrollView>
 
             <!-- VISTA 2: MENSAJERÍA -->
-            <Grid IsVisible="{Binding SelectedTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=2}" RowDefinitions="Auto,*" RowSpacing="24">
-                <VerticalStackLayout Grid.Row="0" Spacing="4">
-                     <Label Text="Centro de Mensajes" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource Gray800Jazer}"/>
-                     <Label Text="Comunicaciones internas y alertas" TextColor="{StaticResource Gray500Jazer}" FontSize="14"/>
-                </VerticalStackLayout>
-
-                <Grid Grid.Row="1" ColumnDefinitions="300,*" ColumnSpacing="24">
-                    <!-- Controles Envío -->
-                    <VerticalStackLayout Grid.Column="0" Spacing="24">
-                        <!-- Broadcast -->
-                        <Border BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="20" StrokeShape="RoundRectangle 12">
-                            <VerticalStackLayout Spacing="12">
-                                <Label Text="📢 Difusión General" FontAttributes="Bold" TextColor="{StaticResource Gray800Jazer}"/>
-                                <Editor Text="{Binding MensajeBroadcastContent}" Placeholder="Mensaje para todos..." HeightRequest="80" BackgroundColor="{StaticResource Gray50}"/>
-                                <Button Text="Enviar a Todos" Command="{Binding EnviarBroadcastCommand}" BackgroundColor="{StaticResource Purple600}" TextColor="White"/>
-                            </VerticalStackLayout>
-                        </Border>
-
-                        <!-- Mensaje Individual -->
-                        <Border BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="20" StrokeShape="RoundRectangle 12">
-                            <VerticalStackLayout Spacing="12">
-                                <Label Text="💬 Mensaje Directo" FontAttributes="Bold" TextColor="{StaticResource Gray800Jazer}"/>
-                                <Picker Title="Destinatario" ItemsSource="{Binding Contadores}" SelectedItem="{Binding DestinatarioMensaje}" ItemDisplayBinding="{Binding Username}" TextColor="Black" BackgroundColor="{StaticResource Gray50}"/>
-                                <Editor Text="{Binding MensajeIndividualContent}" Placeholder="Mensaje privado..." HeightRequest="80" BackgroundColor="{StaticResource Gray50}"/>
-                                <Button Text="Enviar Mensaje" Command="{Binding EnviarMensajeIndividualCommand}" BackgroundColor="{StaticResource Blue600}" TextColor="White"/>
-                            </VerticalStackLayout>
-                        </Border>
+            <ScrollView IsVisible="{Binding SelectedTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=2}" VerticalScrollBarVisibility="Always">
+                <Grid RowDefinitions="Auto,*" RowSpacing="24">
+                    <VerticalStackLayout Grid.Row="0" Spacing="4">
+                         <Label Text="Centro de Mensajes" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource Gray800Jazer}"/>
+                         <Label Text="Comunicaciones internas y alertas" TextColor="{StaticResource Gray500Jazer}" FontSize="14"/>
                     </VerticalStackLayout>
-
-                    <!-- Historial -->
-                    <Border Grid.Column="1" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="24" StrokeShape="RoundRectangle 12">
-                        <VerticalStackLayout Spacing="12">
-                            <Label Text="Historial de Comunicaciones" FontAttributes="Bold" TextColor="{StaticResource Gray700Jazer}"/>
-                            <CollectionView ItemsSource="{Binding Mensajes}" VerticalScrollBarVisibility="Always">
-                                <CollectionView.EmptyView>
-                                    <Label Text="No hay mensajes registrados" TextColor="{StaticResource Gray400Jazer}" HorizontalOptions="Center" Margin="0,20"/>
-                                </CollectionView.EmptyView>
-                                <CollectionView.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Padding="0,8" ColumnDefinitions="Auto,*">
-                                            <Label Grid.Column="0" Text="{Binding MarcaTiempo, StringFormat='{0:HH:mm}'}" TextColor="{StaticResource Gray400Jazer}" FontSize="11" VerticalOptions="Start" Margin="0,2,10,0"/>
-                                            <VerticalStackLayout Grid.Column="1" Spacing="2">
-                                                <HorizontalStackLayout Spacing="6">
-                                                    <Label Text="{Binding DeNombre}" FontAttributes="Bold" TextColor="{StaticResource Blue700}" FontSize="12"/>
-                                                    <Label Text="➔" FontSize="10" TextColor="{StaticResource Gray400Jazer}" VerticalOptions="Center"/>
-                                                    <Label Text="{Binding ParaNombre}" FontAttributes="Bold" TextColor="{StaticResource Gray600Jazer}" FontSize="12"/>
-                                                </HorizontalStackLayout>
-                                                <Label Text="{Binding Contenido}" TextColor="{StaticResource Gray800Jazer}" FontSize="13"/>
-                                            </VerticalStackLayout>
-                                        </Grid>
-                                    </DataTemplate>
-                                </CollectionView.ItemTemplate>
-                            </CollectionView>
+    
+                    <Grid Grid.Row="1" ColumnDefinitions="300,*" ColumnSpacing="24">
+                        <!-- Controles Envío -->
+                        <VerticalStackLayout Grid.Column="0" Spacing="24">
+                            <!-- Broadcast -->
+                            <Border BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="20" StrokeShape="RoundRectangle 12">
+                                <VerticalStackLayout Spacing="12">
+                                    <Label Text="📢 Difusión General" FontAttributes="Bold" TextColor="{StaticResource Gray800Jazer}"/>
+                                    <Editor Text="{Binding MensajeBroadcastContent}" Placeholder="Mensaje para todos..." HeightRequest="80" BackgroundColor="{StaticResource Gray50}" TextColor="Black"/>
+                                    <Button Text="Enviar a Todos" Command="{Binding EnviarBroadcastCommand}" BackgroundColor="{StaticResource Purple600}" TextColor="White"/>
+                                </VerticalStackLayout>
+                            </Border>
+    
+                            <!-- Mensaje Individual -->
+                            <Border BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="20" StrokeShape="RoundRectangle 12">
+                                <VerticalStackLayout Spacing="12">
+                                    <Label Text="💬 Mensaje Directo" FontAttributes="Bold" TextColor="{StaticResource Gray800Jazer}"/>
+                                    <Picker Title="Destinatario" ItemsSource="{Binding Contadores}" SelectedItem="{Binding DestinatarioMensaje}" ItemDisplayBinding="{Binding Username}" TextColor="Black" BackgroundColor="{StaticResource Gray50}"/>
+                                    <Editor Text="{Binding MensajeIndividualContent}" Placeholder="Mensaje privado..." HeightRequest="80" BackgroundColor="{StaticResource Gray50}" TextColor="Black"/>
+                                    <Button Text="Enviar Mensaje" Command="{Binding EnviarMensajeIndividualCommand}" BackgroundColor="{StaticResource Blue600}" TextColor="White"/>
+                                </VerticalStackLayout>
+                            </Border>
                         </VerticalStackLayout>
-                    </Border>
+    
+                        <!-- Historial -->
+                        <Border Grid.Column="1" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="24" StrokeShape="RoundRectangle 12">
+                            <Grid RowDefinitions="Auto,*">
+                                <Label Grid.Row="0" Text="Historial de Comunicaciones" FontAttributes="Bold" TextColor="{StaticResource Gray700Jazer}" Margin="0,0,0,12"/>
+                                <CollectionView Grid.Row="1" ItemsSource="{Binding Mensajes}" VerticalScrollBarVisibility="Always" HeightRequest="500">
+                                    <CollectionView.EmptyView>
+                                        <Label Text="No hay mensajes registrados" TextColor="{StaticResource Gray400Jazer}" HorizontalOptions="Center" Margin="0,20"/>
+                                    </CollectionView.EmptyView>
+                                    <CollectionView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Padding="0,8" ColumnDefinitions="Auto,*">
+                                                <Label Grid.Column="0" Text="{Binding MarcaTiempo, StringFormat='{0:HH:mm}'}" TextColor="{StaticResource Gray400Jazer}" FontSize="11" VerticalOptions="Start" Margin="0,2,10,0"/>
+                                                <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                                    <HorizontalStackLayout Spacing="6">
+                                                        <Label Text="{Binding DeNombre}" FontAttributes="Bold" TextColor="{StaticResource Blue700}" FontSize="12"/>
+                                                        <Label Text="➔" FontSize="10" TextColor="{StaticResource Gray400Jazer}" VerticalOptions="Center"/>
+                                                        <Label Text="{Binding ParaNombre}" FontAttributes="Bold" TextColor="{StaticResource Gray600Jazer}" FontSize="12"/>
+                                                    </HorizontalStackLayout>
+                                                    <Label Text="{Binding Contenido}" TextColor="{StaticResource Gray800Jazer}" FontSize="13"/>
+                                                </VerticalStackLayout>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </CollectionView.ItemTemplate>
+                                </CollectionView>
+                            </Grid>
+                        </Border>
+                    </Grid>
                 </Grid>
-            </Grid>
+            </ScrollView>
 
             <!-- VISTA 3: REPORTES -->
             <Grid IsVisible="{Binding SelectedTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=3}">
@@ -523,7 +532,7 @@
                             <VerticalStackLayout>
                                 <Label Text="Cumplimiento Mensual (Acumulado al Día)" FontAttributes="Bold" TextColor="{StaticResource Gray900Jazer}" Margin="20,16,20,8"/>
                                 <Grid RowDefinitions="Auto,*" Margin="0,0,0,16">
-                                    <CollectionView ItemsSource="{Binding ReportesKPI}">
+                                    <CollectionView ItemsSource="{Binding ReportesKPI}" VerticalScrollBarVisibility="Always" HeightRequest="300">
                                         <CollectionView.Header>
                                              <Grid ColumnDefinitions="2*,*,*,*" Padding="20,8" BackgroundColor="{StaticResource Gray100}">
                                                  <Label Grid.Column="0" Text="CATEGORÍA" FontSize="11" FontAttributes="Bold" TextColor="Black"/>
@@ -624,7 +633,7 @@
                                 </Grid>
                                 
                                 <!-- Lista Reportes -->
-                                <CollectionView Grid.Row="1" ItemsSource="{Binding ReportesDetallados}">
+                                <CollectionView Grid.Row="1" ItemsSource="{Binding ReportesDetallados}" VerticalScrollBarVisibility="Always" HeightRequest="400">
                                     <CollectionView.ItemTemplate>
                                         <DataTemplate>
                                             <Grid ColumnDefinitions="2*,*,*,*,*" Padding="20,16">
@@ -659,128 +668,133 @@
             </Grid>
 
             <!-- VISTA 4: GESTIÓN DE USUARIOS -->
-            <Grid IsVisible="{Binding SelectedTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=4}" RowDefinitions="Auto,*" RowSpacing="24">
-                <VerticalStackLayout Grid.Row="0" Spacing="4">
-                     <Label Text="Gestión de Usuarios" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource Gray800Jazer}"/>
-                     <Label Text="Crear, editar y eliminar usuarios del sistema" TextColor="{StaticResource Gray500Jazer}" FontSize="14"/>
-                </VerticalStackLayout>
-
-                <Grid x:Name="UsersGrid" Grid.Row="1" ColumnDefinitions="350,*" ColumnSpacing="24">
-                    <!-- Formulario Crear/Editar Usuario (Izquierda) -->
-                    <Border x:Name="FormUserBorder" Grid.Column="0" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="20" StrokeShape="RoundRectangle 12" VerticalOptions="Start">
-                        <VerticalStackLayout Spacing="16">
-                            <HorizontalStackLayout Spacing="12">
-                                <Label Text="{Binding IsEditMode, Converter={StaticResource BoolToStringConverter}, ConverterParameter='Editar Usuario|Nuevo Usuario'}" 
-                                       FontSize="16" FontAttributes="Bold" TextColor="{StaticResource Blue700}"/>
-                                <Button Text="Cancelar" Command="{Binding CancelarEdicionCommand}" 
-                                        IsVisible="{Binding IsEditMode}"
-                                        BackgroundColor="Transparent" TextColor="{StaticResource Red400}"
-                                        HeightRequest="30" Padding="8,0"/>
-                            </HorizontalStackLayout>
-                            
-                            <VerticalStackLayout Spacing="4">
-                                <Label Text="Nombre Completo" FontSize="12" TextColor="{StaticResource Gray600Jazer}"/>
-                                <Entry Text="{Binding NuevoUsuarioNombre}" Placeholder="Ej: María García" BackgroundColor="{StaticResource Gray50}" TextColor="Black"/>
-                            </VerticalStackLayout>
-
-                            <VerticalStackLayout Spacing="4">
-                                <Label Text="Usuario (Login)" FontSize="12" TextColor="{StaticResource Gray600Jazer}"/>
-                                <Entry Text="{Binding NuevoUsuarioUsername}" Placeholder="Ej: maria" BackgroundColor="{StaticResource Gray50}" TextColor="Black"/>
-                            </VerticalStackLayout>
-
-                            <VerticalStackLayout Spacing="4">
-                                <Label Text="Contraseña" FontSize="12" TextColor="{StaticResource Gray600Jazer}"/>
-                                <Entry Text="{Binding NuevoUsuarioPassword}" Placeholder="Nueva contraseña" IsPassword="True" BackgroundColor="{StaticResource Gray50}" TextColor="Black"/>
-                            </VerticalStackLayout>
-
-                            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+            <ScrollView IsVisible="{Binding SelectedTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=4}" VerticalScrollBarVisibility="Always">
+                <Grid RowDefinitions="Auto,*" RowSpacing="24">
+                    <VerticalStackLayout Grid.Row="0" Spacing="4">
+                         <Label Text="Gestión de Usuarios" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource Gray800Jazer}"/>
+                         <Label Text="Crear, editar y eliminar usuarios del sistema" TextColor="{StaticResource Gray500Jazer}" FontSize="14"/>
+                    </VerticalStackLayout>
+    
+                    <Grid x:Name="UsersGrid" Grid.Row="1" ColumnDefinitions="350,*" ColumnSpacing="24">
+                        <!-- Formulario Crear/Editar Usuario (Izquierda) -->
+                        <Border x:Name="FormUserBorder" Grid.Column="0" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="20" StrokeShape="RoundRectangle 12" VerticalOptions="Start">
+                            <VerticalStackLayout Spacing="16">
+                                <HorizontalStackLayout Spacing="12">
+                                    <Label Text="{Binding IsEditMode, Converter={StaticResource BoolToStringConverter}, ConverterParameter='Editar Usuario|Nuevo Usuario'}" 
+                                           FontSize="16" FontAttributes="Bold" TextColor="{StaticResource Blue700}"/>
+                                    <Button Text="Cancelar" Command="{Binding CancelarEdicionCommand}" 
+                                            IsVisible="{Binding IsEditMode}"
+                                            BackgroundColor="Transparent" TextColor="{StaticResource Red400}"
+                                            HeightRequest="30" Padding="8,0"/>
+                                </HorizontalStackLayout>
+                                
                                 <VerticalStackLayout Spacing="4">
-                                    <Label Text="Rol" FontSize="12" TextColor="{StaticResource Gray600Jazer}"/>
-                                    <Picker ItemsSource="{Binding Roles}" SelectedItem="{Binding NuevoUsuarioRol}" 
-                                            BackgroundColor="{StaticResource Gray50}" TextColor="Black"/>
+                                    <Label Text="Nombre Completo" FontSize="12" TextColor="{StaticResource Gray600Jazer}"/>
+                                    <Entry Text="{Binding NuevoUsuarioNombre}" Placeholder="Ej: María García" BackgroundColor="{StaticResource Gray50}" TextColor="Black"/>
                                 </VerticalStackLayout>
-                                <VerticalStackLayout Grid.Column="1" Spacing="4">
-                                    <Label Text="Área" FontSize="12" TextColor="{StaticResource Gray600Jazer}"/>
-                                    <Picker ItemsSource="{Binding Areas}" SelectedItem="{Binding NuevoUsuarioArea}" 
-                                            BackgroundColor="{StaticResource Gray50}" TextColor="Black"/>
+    
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="Usuario (Login)" FontSize="12" TextColor="{StaticResource Gray600Jazer}"/>
+                                    <Entry Text="{Binding NuevoUsuarioUsername}" Placeholder="Ej: maria" BackgroundColor="{StaticResource Gray50}" TextColor="Black"/>
                                 </VerticalStackLayout>
-                            </Grid>
-
-                            <Button Text="{Binding IsEditMode, Converter={StaticResource BoolToStringConverter}, ConverterParameter='Guardar Cambios|Crear Usuario'}" 
-                                    Command="{Binding GuardarUsuarioCommand}" 
-                                    BackgroundColor="{StaticResource Blue600}" TextColor="White" FontAttributes="Bold" 
-                                    CornerRadius="8" HeightRequest="45" Margin="0,10,0,0"/>
-                        </VerticalStackLayout>
-                    </Border>
-
-                    <!-- Lista de Usuarios (Derecha) -->
-                    <Border x:Name="ListUserBorder" Grid.Column="1" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="0" StrokeShape="RoundRectangle 12">
-                        <Grid RowDefinitions="Auto,*">
-                            <!-- Header Tabla -->
-                            <Grid Grid.Row="0" ColumnDefinitions="60,2*,*,*,*,120" BackgroundColor="{StaticResource Gray100}" Padding="20,12">
-                                <Label Grid.Column="0" Text="FOTO" FontSize="11" FontAttributes="Bold" TextColor="Black"/>
-                                <Label Grid.Column="1" Text="NOMBRE" FontSize="11" FontAttributes="Bold" TextColor="Black"/>
-                                <Label Grid.Column="2" Text="USUARIO" FontSize="11" FontAttributes="Bold" TextColor="Black"/>
-                                <Label Grid.Column="3" Text="ROL" FontSize="11" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
-                                <Label Grid.Column="4" Text="ÁREA" FontSize="11" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
-                                <Label Grid.Column="5" Text="ACCIONES" FontSize="11" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
-                            </Grid>
-                            
-                            <!-- Lista Usuarios -->
-                            <CollectionView Grid.Row="1" ItemsSource="{Binding TodosLosUsuarios}" VerticalScrollBarVisibility="Always">
-                                <CollectionView.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid ColumnDefinitions="60,2*,*,*,*,120" Padding="20,12">
-                                            <!-- Foto Perfil (Imagen o Iniciales) -->
-                                            <Border Grid.Column="0" HeightRequest="40" WidthRequest="40" StrokeShape="RoundRectangle 20" 
-                                                    BackgroundColor="{StaticResource Blue50}" StrokeThickness="0">
-                                                <Grid>
-                                                    <Label Text="{Binding Name, Converter={StaticResource StringToInitialsConverter}}" 
-                                                           FontSize="14" FontAttributes="Bold" TextColor="{StaticResource Blue600}"
-                                                           HorizontalOptions="Center" VerticalOptions="Center"/>
-                                                    
-                                                    <Image Source="{Binding FotoPerfil, Converter={StaticResource FileToImageSourceConverter}}" 
-                                                           Aspect="AspectFill"
-                                                           IsVisible="{Binding FotoPerfil, Converter={StaticResource StringNotEmptyConverter}}"/>
-                                                </Grid>
-                                            </Border>
-                                            
-                                            <Label Grid.Column="1" Text="{Binding Name}" VerticalOptions="Center" TextColor="Black" FontAttributes="Bold"/>
-                                            <Label Grid.Column="2" Text="{Binding Username}" VerticalOptions="Center" TextColor="{StaticResource Gray600Jazer}"/>
-                                            
-                                            <Border Grid.Column="3" BackgroundColor="{StaticResource Blue50}" StrokeThickness="0" Padding="8,4" 
-                                                    HorizontalOptions="Center" VerticalOptions="Center" StrokeShape="RoundRectangle 4">
-                                                <Label Text="{Binding Role}" TextColor="{StaticResource Blue600}" FontSize="11" FontAttributes="Bold"/>
-                                            </Border>
-                                            
-                                            <Label Grid.Column="4" Text="{Binding Area}" VerticalOptions="Center" TextColor="{StaticResource Gray600Jazer}" HorizontalOptions="Center"/>
-                                            
-                                            <!-- Botones Acciones -->
-                                            <HorizontalStackLayout Grid.Column="5" Spacing="8" HorizontalOptions="Center" VerticalOptions="Center">
-                                                <Button Text="📷" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SeleccionarFotoCommand}" 
-                                                        CommandParameter="{Binding .}"
-                                                        BackgroundColor="{StaticResource Gray100Jazer}" TextColor="Black"
-                                                        HeightRequest="32" WidthRequest="32" Padding="0" CornerRadius="6"
-                                                        ToolTipProperties.Text="Cambiar Foto"/>
-                                                <Button Text="✏️" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.IniciarEdicionCommand}" 
-                                                        CommandParameter="{Binding .}"
-                                                        BackgroundColor="{StaticResource Blue50}" TextColor="{StaticResource Blue600}"
-                                                        HeightRequest="32" WidthRequest="32" Padding="0" CornerRadius="6"
-                                                        ToolTipProperties.Text="Editar"/>
-                                                <Button Text="🗑️" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EliminarUsuarioCommand}" 
-                                                        CommandParameter="{Binding .}"
-                                                        BackgroundColor="{StaticResource Red50}" TextColor="{StaticResource Red400}"
-                                                        HeightRequest="32" WidthRequest="32" Padding="0" CornerRadius="6"
-                                                        ToolTipProperties.Text="Eliminar"/>
-                                            </HorizontalStackLayout>
+    
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="Contraseña" FontSize="12" TextColor="{StaticResource Gray600Jazer}"/>
+                                    <Entry Text="{Binding NuevoUsuarioPassword}" Placeholder="Nueva contraseña" IsPassword="True" BackgroundColor="{StaticResource Gray50}" TextColor="Black"/>
+                                </VerticalStackLayout>
+    
+                                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                                    <VerticalStackLayout Spacing="4">
+                                        <Label Text="Rol" FontSize="12" TextColor="{StaticResource Gray600Jazer}"/>
+                                        <Picker ItemsSource="{Binding Roles}" SelectedItem="{Binding NuevoUsuarioRol}" 
+                                                BackgroundColor="{StaticResource Gray50}" TextColor="Black"/>
+                                    </VerticalStackLayout>
+                                    <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                        <Label Text="Área" FontSize="12" TextColor="{StaticResource Gray600Jazer}"/>
+                                        <Picker ItemsSource="{Binding Areas}" SelectedItem="{Binding NuevoUsuarioArea}" 
+                                                BackgroundColor="{StaticResource Gray50}" TextColor="Black"/>
+                                    </VerticalStackLayout>
+                                </Grid>
+    
+                                <Button Text="{Binding IsEditMode, Converter={StaticResource BoolToStringConverter}, ConverterParameter='Guardar Cambios|Crear Usuario'}" 
+                                        Command="{Binding GuardarUsuarioCommand}" 
+                                        BackgroundColor="{StaticResource Blue600}" TextColor="White" FontAttributes="Bold" 
+                                        CornerRadius="8" HeightRequest="45" Margin="0,10,0,0"/>
+                            </VerticalStackLayout>
+                        </Border>
+    
+                        <!-- Lista de Usuarios (Derecha) -->
+                        <Border x:Name="ListUserBorder" Grid.Column="1" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" Padding="0" StrokeShape="RoundRectangle 12">
+                                <!-- Contenedor con Scroll Horizontal -->
+                                <ScrollView Grid.Row="1" Orientation="Horizontal" HorizontalScrollBarVisibility="Always">
+                                    <Grid RowDefinitions="Auto,*" WidthRequest="800">
+                                        <!-- Header Tabla (Ancho Fijo) -->
+                                        <Grid Grid.Row="0" ColumnDefinitions="60,200,120,100,120,150" BackgroundColor="{StaticResource Gray100}" Padding="20,12">
+                                            <Label Grid.Column="0" Text="FOTO" FontSize="11" FontAttributes="Bold" TextColor="Black"/>
+                                            <Label Grid.Column="1" Text="NOMBRE" FontSize="11" FontAttributes="Bold" TextColor="Black"/>
+                                            <Label Grid.Column="2" Text="USUARIO" FontSize="11" FontAttributes="Bold" TextColor="Black"/>
+                                            <Label Grid.Column="3" Text="ROL" FontSize="11" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
+                                            <Label Grid.Column="4" Text="ÁREA" FontSize="11" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
+                                            <Label Grid.Column="5" Text="ACCIONES" FontSize="11" FontAttributes="Bold" TextColor="Black" HorizontalOptions="Center"/>
                                         </Grid>
-                                    </DataTemplate>
-                                </CollectionView.ItemTemplate>
-                            </CollectionView>
-                        </Grid>
-                    </Border>
+                                        
+                                        <!-- Lista Usuarios (Ancho Fijo) -->
+                                        <CollectionView Grid.Row="1" ItemsSource="{Binding TodosLosUsuarios}" VerticalScrollBarVisibility="Always" HeightRequest="600">
+                                            <CollectionView.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid ColumnDefinitions="60,200,120,100,120,150" Padding="20,12">
+                                                        <!-- Foto Perfil (Imagen o Iniciales) -->
+                                                        <Border Grid.Column="0" HeightRequest="40" WidthRequest="40" StrokeShape="RoundRectangle 20" 
+                                                                BackgroundColor="{StaticResource Blue50}" StrokeThickness="0">
+                                                            <Grid>
+                                                                <Label Text="{Binding Name, Converter={StaticResource StringToInitialsConverter}}" 
+                                                                       FontSize="14" FontAttributes="Bold" TextColor="{StaticResource Blue600}"
+                                                                       HorizontalOptions="Center" VerticalOptions="Center"/>
+                                                                
+                                                                <Image Source="{Binding FotoPerfil, Converter={StaticResource FileToImageSourceConverter}}" 
+                                                                       Aspect="AspectFill"
+                                                                       IsVisible="{Binding FotoPerfil, Converter={StaticResource StringNotEmptyConverter}}"/>
+                                                            </Grid>
+                                                        </Border>
+                                                        
+                                                        <Label Grid.Column="1" Text="{Binding Name}" VerticalOptions="Center" TextColor="Black" FontAttributes="Bold"/>
+                                                        <Label Grid.Column="2" Text="{Binding Username}" VerticalOptions="Center" TextColor="{StaticResource Gray600Jazer}"/>
+                                                        
+                                                        <Border Grid.Column="3" BackgroundColor="{StaticResource Blue50}" StrokeThickness="0" Padding="8,4" 
+                                                                HorizontalOptions="Center" VerticalOptions="Center" StrokeShape="RoundRectangle 4">
+                                                            <Label Text="{Binding Role}" TextColor="{StaticResource Blue600}" FontSize="11" FontAttributes="Bold"/>
+                                                        </Border>
+                                                        
+                                                        <Label Grid.Column="4" Text="{Binding Area}" VerticalOptions="Center" TextColor="{StaticResource Gray600Jazer}" HorizontalOptions="Center"/>
+                                                        
+                                                        <!-- Botones Acciones -->
+                                                        <HorizontalStackLayout Grid.Column="5" Spacing="8" HorizontalOptions="Center" VerticalOptions="Center">
+                                                            <Button Text="📷" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SeleccionarFotoCommand}" 
+                                                                    CommandParameter="{Binding .}"
+                                                                    BackgroundColor="{StaticResource Gray100Jazer}" TextColor="Black"
+                                                                    HeightRequest="32" WidthRequest="32" Padding="0" CornerRadius="6"
+                                                                    ToolTipProperties.Text="Cambiar Foto"/>
+                                                            <Button Text="✏️" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.IniciarEdicionCommand}" 
+                                                                    CommandParameter="{Binding .}"
+                                                                    BackgroundColor="{StaticResource Blue50}" TextColor="{StaticResource Blue600}"
+                                                                    HeightRequest="32" WidthRequest="32" Padding="0" CornerRadius="6"
+                                                                    ToolTipProperties.Text="Editar"/>
+                                                            <Button Text="🗑️" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EliminarUsuarioCommand}" 
+                                                                    CommandParameter="{Binding .}"
+                                                                    BackgroundColor="{StaticResource Red50}" TextColor="{StaticResource Red400}"
+                                                                    HeightRequest="32" WidthRequest="32" Padding="0" CornerRadius="6"
+                                                                    ToolTipProperties.Text="Eliminar"/>
+                                                        </HorizontalStackLayout>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </CollectionView.ItemTemplate>
+                                        </CollectionView>
+                                    </Grid>
+                                </ScrollView>
+                        </Border>
+                    </Grid>
                 </Grid>
-            </Grid>
+            </ScrollView>
 
         </Grid>
     </Grid>

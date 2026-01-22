@@ -45,17 +45,35 @@ public partial class CentroControlContadorVM : ObservableObject
     [ObservableProperty] private bool _hasAlertas;
     [ObservableProperty] private bool _hasMensajes;
 
+    // Filter State
+    [ObservableProperty] private string _filtroActual = "Todas"; // Todas, Pendientes, Completadas
+
     // Collections
-    public ObservableCollection<Tarea> Tareas { get; } = new();
+    private List<Tarea> _allTareas = new(); // Master list
+    public ObservableCollection<Tarea> Tareas { get; } = new(); // Display list (filtered)
+    public ObservableCollection<Tarea> TareasPendientes { get; } = new(); // Widget list (always pending)
+    
     public ObservableCollection<Alerta> AlertasCriticas { get; } = new();
     public ObservableCollection<Alerta> Notificaciones { get; } = new();
     public ObservableCollection<Mensaje> Mensajes { get; } = new();
-    public ObservableCollection<Documento> Documentos { get; } = new(); // For simple list
-    public ObservableCollection<IGrouping<string, Documento>> DocumentosAgrupados { get; } = new(); // For grouped view
+    public ObservableCollection<Documento> Documentos { get; } = new(); 
+    public ObservableCollection<IGrouping<string, Documento>> DocumentosAgrupados { get; } = new();
 
-    // New Message Form
-    [ObservableProperty] private string _nuevoMensajeContenido = "";
+    // New Message Form (Manual implementation to handle character count)
     [ObservableProperty] private int _caracteresMensaje = 0;
+
+    private string _nuevoMensajeContenido = "";
+    public string NuevoMensajeContenido
+    {
+        get => _nuevoMensajeContenido;
+        set
+        {
+            if (SetProperty(ref _nuevoMensajeContenido, value))
+            {
+                CaracteresMensaje = value.Length;
+            }
+        }
+    }
     
     // Server Connection
     [ObservableProperty] private bool _isConnected;
@@ -107,8 +125,19 @@ public partial class CentroControlContadorVM : ObservableObject
     private async Task CargarTareas()
     {
         var tareas = await _databaseService.GetTareasPorUsuarioAsync(_currentUser!.Id);
-        Tareas.Clear();
-        foreach (var t in tareas) Tareas.Add(t);
+        
+        _allTareas.Clear();
+        _allTareas.AddRange(tareas);
+
+        // Update Display List
+        ActualizarListaTareas();
+
+        // Update Widget List (Always Pendientes)
+        TareasPendientes.Clear();
+        foreach(var t in _allTareas.Where(t => t.Estado != "completada"))
+        {
+            TareasPendientes.Add(t);
+        }
     }
 
     private async Task CargarAlertas()
@@ -175,6 +204,35 @@ public partial class CentroControlContadorVM : ObservableObject
     }
 
     [RelayCommand]
+    private void AplicarFiltro(string filtro)
+    {
+        FiltroActual = filtro;
+        ActualizarListaTareas();
+    }
+
+    private void ActualizarListaTareas()
+    {
+        Tareas.Clear();
+        IEnumerable<Tarea> filtered = _allTareas;
+
+        switch (FiltroActual)
+        {
+            case "Pendientes":
+                filtered = _allTareas.Where(t => t.Estado != "completada");
+                break;
+            case "Completadas":
+                filtered = _allTareas.Where(t => t.Estado == "completada");
+                break;
+            case "Todas":
+            default:
+                filtered = _allTareas;
+                break;
+        }
+
+        foreach (var t in filtered) Tareas.Add(t);
+    }
+
+    [RelayCommand]
     public async Task MarcarAlertaVista(Alerta alerta)
     {
         if (alerta != null && !alerta.Vista)
@@ -192,6 +250,24 @@ public partial class CentroControlContadorVM : ObservableObject
         {
             tarea.Estado = "completada";
             tarea.FechaCompletado = DateTime.Now;
+            await _databaseService.UpdateTareaAsync(tarea);
+            
+            // Fix: Actualizar UI inmediatamente para el Widget
+            TareasPendientes.Remove(tarea);
+            
+            // Refresh logic handled by widget or main view? 
+            // Better to refresh all to keep consistency
+             await CargarTodosLosDatos();
+        }
+    }
+
+    [RelayCommand]
+    public async Task RevertirTarea(Tarea tarea)
+    {
+        if (tarea != null)
+        {
+            tarea.Estado = "pendiente"; 
+            tarea.FechaCompletado = null;
             await _databaseService.UpdateTareaAsync(tarea);
             await CargarTodosLosDatos();
         }
@@ -214,7 +290,7 @@ public partial class CentroControlContadorVM : ObservableObject
 
         await _databaseService.SaveMensajeAsync(mensaje);
         NuevoMensajeContenido = "";
-        CaracteresMensaje = 0;
+        // CaracteresMensaje is updated automatically by property setter
         await CargarMensajes();
     }
 
@@ -260,12 +336,12 @@ public partial class CentroControlContadorVM : ObservableObject
         IsConnected = false;
         SessionService.ClearSession();
         Application.Current!.MainPage = Application.Current.Handler!.MauiContext!.Services.GetRequiredService<Views.LoginPage>();
-    }
-    
-    // UI Helper for text changed
-    partial void OnNuevoMensajeContenidoChanged(string value)
-    {
-        CaracteresMensaje = value.Length;
+        
+        // Fix: Asegurar tamaño completo al salir
+        if (Application.Current is App app)
+        {
+             app.HideWidgetAndShowMain(); // Esto fuerza mostrar el Main y maximizarlo
+        }
     }
     
     private async void OnSyncDataChanged(object? sender, string entityType)

@@ -37,6 +37,11 @@ public class SessionService
         return _currentUser?.Role == "Admin";
     }
 
+    public static bool IsContador()
+    {
+        return _currentUser?.Role == "Contador";
+    }
+
     public static bool IsAuthenticated()
     {
         return _currentUser != null;

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:Panel.ViewModels"
+             x:Class="Panel.Views.WidgetPage"
+             BackgroundColor="Transparent"
+             Title="Widget">
+
+    <Border BackgroundColor="#E6FFFFFF" 
+            Stroke="{StaticResource Blue500}"
+            StrokeThickness="1"
+            StrokeShape="RoundRectangle 16"
+            Padding="20"
+            Margin="10">
+        <Border.Shadow>
+            <Shadow Brush="Black" Offset="4,4" Radius="15" Opacity="0.15"/>
+        </Border.Shadow>
+
+        <Grid RowDefinitions="Auto,*,Auto" RowSpacing="12">
+            
+            <!-- Header: Info Contador -->
+            <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,*,Auto">
+                <!-- Logo -->
+                <Image Grid.Column="0" Source="logoconsultoria.jpg" HeightRequest="32" WidthRequest="32" Aspect="AspectFit" Margin="0,0,12,0" VerticalOptions="Center"/>
+
+                <VerticalStackLayout Grid.Column="1" Spacing="0" VerticalOptions="Center">
+                    <Label Text="{Binding NombreContador}" FontAttributes="Bold" FontSize="14" TextColor="{StaticResource Blue900}" Margin="0,0,0,2"/>
+                    <HorizontalStackLayout Spacing="3">
+                        <Label Text="{Binding TareasCompletadas}" FontAttributes="Bold" TextColor="{StaticResource Green600}" FontSize="11"/>
+                        <Label Text="/" TextColor="{StaticResource Blue300}" FontSize="11"/>
+                        <Label Text="{Binding TotalTareas}" TextColor="{StaticResource Blue300}" FontSize="11"/>
+                        <Label Text="completadas" TextColor="{StaticResource Blue400}" FontSize="11"/>
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+                
+                <!-- Botón Maximizar Sistema -->
+                <Button Grid.Column="3" 
+                        Text="↗"
+                        FontSize="16"
+                        TextColor="{StaticResource Blue600}"
+                        BackgroundColor="Transparent"
+                        Padding="0"
+                        HeightRequest="32" WidthRequest="32"
+                        Clicked="OnOpenSystemClicked"/>
+            </Grid>
+
+            <!-- Lista de Tareas (Simplificada) -->
+            <CollectionView Grid.Row="1" ItemsSource="{Binding TareasPendientes}" HeightRequest="250">
+                <CollectionView.EmptyView>
+                    <Label Text="No hay tareas pendientes" FontSize="11" TextColor="Gray" HorizontalOptions="Center" VerticalOptions="Center"/>
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid ColumnDefinitions="Auto,*" Padding="0,6">
+                            <CheckBox IsChecked="{Binding Estado, Converter={StaticResource StatusToBoolConverter}, Mode=OneWay}" 
+                                      Color="{StaticResource Blue500}"
+                                      CheckedChanged="OnTareaCheckedChanged"/>
+                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="0">
+                                <Label Text="{Binding Titulo}" FontSize="12" TextColor="{StaticResource Gray900Jazer}" LineBreakMode="TailTruncation"/>
+                                <Label Text="{Binding FechaVencimiento, StringFormat='{0:dd/MM}'}" FontSize="10" TextColor="Gray"/>
+                            </VerticalStackLayout>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </Grid>
+    </Border>
+</ContentPage>

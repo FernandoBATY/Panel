@@ -5,39 +5,51 @@
              x:Class="Panel.Views.LoginPage"
              Title="Login">
 
-    <Grid RowDefinitions="*,Auto,*" ColumnDefinitions="*,Auto,*" BackgroundColor="#F0F0F0">
-        <Frame Grid.Row="1" Grid.Column="1" 
-               Padding="30" 
-               CornerRadius="0" 
+    <Grid BackgroundColor="#F0F0F0">
+        <Frame VerticalOptions="Center" 
+               HorizontalOptions="Center"
+               WidthRequest="450"
+               Padding="40" 
+               CornerRadius="12" 
                BackgroundColor="White" 
-               HasShadow="False"
-               WidthRequest="400"
-               VerticalOptions="Center"
-               HorizontalOptions="Center">
+               HasShadow="True"
+               BorderColor="#E5E7EB">
             
-            <VerticalStackLayout Spacing="20" VerticalOptions="Center">
+            <VerticalStackLayout Spacing="25">
                 
+                <Image Source="logoconsultoria.jpg" 
+                       HeightRequest="280" 
+                       WidthRequest="280" 
+                       HorizontalOptions="Center" 
+                       Margin="0,0,0,10"
+                       Aspect="AspectFit"/>
+
                 <Label Text="Bienvenido" 
-                       FontSize="24" 
+                       FontSize="26" 
                        FontAttributes="Bold" 
                        HorizontalOptions="Center" 
                        TextColor="#111827"/>
                 
-                <Entry Placeholder="Usuario" 
-                       Text="{Binding Username}" 
-                       TextColor="Black"
-                       PlaceholderColor="#666"
-                       ClearButtonVisibility="WhileEditing"/>
-                
-                <Entry Placeholder="Contraseña" 
-                       Text="{Binding Password}" 
-                       TextColor="Black"
-                       PlaceholderColor="#666"
-                       IsPassword="True"/>
+                <VerticalStackLayout Spacing="15">
+                    <Entry Placeholder="Usuario" 
+                           Text="{Binding Username}" 
+                           TextColor="Black"
+                           HeightRequest="45"
+                           PlaceholderColor="#9CA3AF"
+                           ClearButtonVisibility="WhileEditing"/>
+                    
+                    <Entry Placeholder="Contraseña" 
+                           Text="{Binding Password}" 
+                           TextColor="Black"
+                           HeightRequest="45"
+                           PlaceholderColor="#9CA3AF"
+                           IsPassword="True"/>
+                </VerticalStackLayout>
                 
                 <Label Text="{Binding ErrorMessage}" 
-                       TextColor="Red" 
+                       TextColor="#EF4444" 
                        FontSize="Small"
+                       HeightRequest="20"
                        HorizontalOptions="Center"/>
                 
                 <Button Text="Iniciar Sesión" 
@@ -45,7 +57,7 @@
                         BackgroundColor="#2563EB" 
                         TextColor="White" 
                         CornerRadius="8" 
-                        HeightRequest="45"
+                        HeightRequest="50"
                         FontAttributes="Bold"
                         Margin="0,10,0,0"/>
             </VerticalStackLayout>

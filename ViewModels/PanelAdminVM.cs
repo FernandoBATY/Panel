@@ -366,6 +366,7 @@ public partial class PanelAdminVM : ObservableObject
         if (!string.IsNullOrWhiteSpace(ServerIP) && ServerIP != "No detectada")
         {
             await Clipboard.Default.SetTextAsync(ServerIP);
+            await Application.Current!.MainPage!.DisplayAlert("Copiado", "La IP ya se copió al portapapeles", "OK");
         }
     }
 
@@ -395,7 +396,7 @@ public partial class PanelAdminVM : ObservableObject
             var tailscaleIp = _networkService.GetTailscaleIP();
             ServerIP = tailscaleIp ?? "No detectada";
             
-            ConnectionStatus = $"Servidor iniciado - Comparte esta IP: {ServerIP}";
+            ConnectionStatus = "Servidor iniciado y activo";
         }
         catch (Exception ex)
         {
