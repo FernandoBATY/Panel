@@ -26,6 +26,7 @@ namespace Panel
             builder.Services.AddTransient<ViewModels.WidgetContadorVM>();
             builder.Services.AddTransient<ViewModels.PanelAdminVM>();
             builder.Services.AddTransient<ViewModels.CentroControlContadorVM>();
+            builder.Services.AddTransient<ViewModels.PlantillasComentariosVM>();
             builder.Services.AddTransient<LoginPage>();
             builder.Services.AddTransient<PaginaWidgetContador>();
             builder.Services.AddTransient<PaginaCentroControlContador>();

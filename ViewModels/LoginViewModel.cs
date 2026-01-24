@@ -199,7 +199,7 @@ public class LoginViewModel : INotifyPropertyChanged
 
             if (users.Count < 2)
             {
-                SyncStatus = "⚠️ No se recibieron usuarios del servidor";
+                SyncStatus = "[WARN] No se recibieron usuarios del servidor";
                 await Application.Current!.MainPage!.DisplayAlert("Error de Sincronización", 
                     $"Solo se detectaron {users.Count} usuario(s). Verifica que:\n\n" +
                     "1. El servidor esté activo en la otra PC\n" +

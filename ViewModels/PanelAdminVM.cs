@@ -5,12 +5,17 @@ using Panel.Services;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Microsoft.Maui.Dispatching;
 
 namespace Panel.ViewModels;
+
+// Modelo para los iconos de etiquetas
+public record IconoEtiqueta(string Name, string PathData);
 
 public partial class PanelAdminVM : ObservableObject
 {
     private readonly DatabaseService _databaseService;
+    private IDispatcherTimer? _alertasTimer;
 
     // Usuario logueado y métricas generales
     [ObservableProperty]
@@ -158,12 +163,27 @@ public partial class PanelAdminVM : ObservableObject
         userMap["admin"] = "Administrador";
         userMap["todos"] = "Todos";
 
-        var msgs = msgsAll.GroupBy(m => m.Id).Select(g => g.First()).ToList();
+        var msgs = msgsAll.GroupBy(m => m.Id).Select(g => g.First())
+            .OrderBy(m => m.MarcaTiempo)
+            .ToList();
         
+        // Marcar primer mensaje de cada día
+        DateTime? ultimaFecha = null;
         foreach (var m in msgs)
         {
             m.DeNombre = userMap.TryGetValue(m.De, out var de) ? de : $"ID:{m.De}";
             m.ParaNombre = userMap.TryGetValue(m.Para, out var para) ? para : $"ID:{m.Para}";
+            m.EsMio = m.De == "admin";
+            
+            if (ultimaFecha == null || m.MarcaTiempo.Date != ultimaFecha.Value.Date)
+            {
+                m.EsPrimerMensajeDelDia = true;
+                ultimaFecha = m.MarcaTiempo;
+            }
+            else
+            {
+                m.EsPrimerMensajeDelDia = false;
+            }
         }
 
         MainThread.BeginInvokeOnMainThread(() => 
@@ -198,6 +218,40 @@ public partial class PanelAdminVM : ObservableObject
         UsuarioLogueado = SessionService.CurrentUser;
 
         Task.Run(CargarDatos);
+        
+        // Iniciar timer para revisión automática de alertas (cada 30 minutos)
+        IniciarTimerAlertas();
+    }
+
+    private void IniciarTimerAlertas()
+    {
+        if (Application.Current?.Dispatcher == null) return;
+        
+        _alertasTimer = Application.Current.Dispatcher.CreateTimer();
+        _alertasTimer.Interval = TimeSpan.FromMinutes(30);
+        _alertasTimer.Tick += async (s, e) => await RevisarAlertasAutomaticas();
+        _alertasTimer.Start();
+        
+        // Ejecutar una vez al iniciar
+        Task.Run(RevisarAlertasAutomaticas);
+    }
+
+    [RelayCommand]
+    public async Task RevisarAlertasAutomaticas()
+    {
+        try
+        {
+            var (vencimiento, retrasadas) = await _databaseService.EjecutarRevisionAlertasAsync();
+            
+            if (vencimiento > 0 || retrasadas > 0)
+            {
+                System.Diagnostics.Debug.WriteLine($"Alertas generadas: {vencimiento} vencimiento, {retrasadas} retrasadas");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error revisando alertas: {ex.Message}");
+        }
     }
 
     private void OnClientConnected(object? sender, NodeIdentity identity)
@@ -335,6 +389,8 @@ public partial class PanelAdminVM : ObservableObject
         });
 
         await CargarMensajes();
+        await CargarPlantillas();
+        await CargarEtiquetas();
     }
 
     [RelayCommand]
@@ -357,6 +413,9 @@ public partial class PanelAdminVM : ObservableObject
         };
         
         await _databaseService.SaveTareaAsync(nueva);
+
+        // Generar alerta automática de asignación
+        await _databaseService.CrearAlertaAsignacionAsync(nueva, UsuarioLogueado?.Id ?? 0);
 
         Tareas.Add(nueva);
         TotalPendientes++; 
@@ -479,8 +538,28 @@ public partial class PanelAdminVM : ObservableObject
 
     private async void OnSyncDataChanged(object? sender, string entityType)
     {
-        if (entityType == "Mensaje") await CargarMensajes();
-        else await CargarDatos();
+        switch (entityType)
+        {
+            case "Mensaje":
+                await CargarMensajes();
+                break;
+            case "PlantillaTarea":
+                await CargarPlantillas();
+                break;
+            case "Etiqueta":
+            case "TareaEtiqueta":
+                await CargarEtiquetas();
+                if (TareaParaEtiquetas != null)
+                    await AbrirEtiquetasDeTarea(TareaParaEtiquetas);
+                break;
+            case "Comentario":
+                if (TareaParaComentarios != null)
+                    await CargarComentariosDeTarea(TareaParaComentarios.Id);
+                break;
+            default:
+                await CargarDatos();
+                break;
+        }
     }
 
 
@@ -630,4 +709,445 @@ public partial class PanelAdminVM : ObservableObject
 
     [ObservableProperty]
     private bool _isBusy;
+
+    #region Plantillas de Tareas
+
+    public ObservableCollection<PlantillaTarea> Plantillas { get; } = new();
+
+    [ObservableProperty] private string _plantillaNombre = string.Empty;
+    [ObservableProperty] private string _plantillaDescripcion = string.Empty;
+    [ObservableProperty] private string _plantillaCategoriaKPI = "General";
+    [ObservableProperty] private decimal _plantillaTiempoEstimado = 4;
+    [ObservableProperty] private string _plantillaPrioridad = "Media";
+    [ObservableProperty] private string _plantillaFrecuencia = "Manual";
+    [ObservableProperty] private int _plantillaDiaEjecucion = 1;
+    [ObservableProperty] private int _plantillaDiasAnticipacion = 7;
+    [ObservableProperty] private string _plantillaChecklist = string.Empty;
+    [ObservableProperty] private User? _plantillaAsignadoPorDefecto;
+    [ObservableProperty] private PlantillaTarea? _plantillaSeleccionada;
+    [ObservableProperty] private bool _isEditandoPlantilla;
+
+    public List<string> Frecuencias { get; } = new() { "Manual", "Diaria", "Semanal", "Mensual", "Trimestral" };
+
+    [RelayCommand]
+    public async Task CargarPlantillas()
+    {
+        var plantillas = await _databaseService.GetAllPlantillasAsync();
+        var usuarios = await _databaseService.GetAllUsersAsync();
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            Plantillas.Clear();
+            foreach (var p in plantillas)
+            {
+                var creador = usuarios.FirstOrDefault(u => u.Id == p.CreadorId);
+                p.CreadorNombre = creador?.Name ?? "Sistema";
+
+                var asignado = usuarios.FirstOrDefault(u => u.Id == p.AsignadoPorDefectoId);
+                p.AsignadoNombre = asignado?.Name ?? "Sin asignar";
+
+                Plantillas.Add(p);
+            }
+        });
+    }
+
+    [RelayCommand]
+    public async Task GuardarPlantilla()
+    {
+        if (string.IsNullOrWhiteSpace(PlantillaNombre)) return;
+
+        var plantilla = IsEditandoPlantilla && PlantillaSeleccionada != null
+            ? PlantillaSeleccionada
+            : new PlantillaTarea();
+
+        plantilla.Nombre = PlantillaNombre;
+        plantilla.DescripcionBase = PlantillaDescripcion;
+        plantilla.CategoriaKPI = PlantillaCategoriaKPI;
+        plantilla.TiempoEstimadoHoras = PlantillaTiempoEstimado;
+        plantilla.Prioridad = PlantillaPrioridad;
+        plantilla.Frecuencia = PlantillaFrecuencia;
+        plantilla.DiaEjecucion = PlantillaDiaEjecucion;
+        plantilla.DiasAnticipacion = PlantillaDiasAnticipacion;
+        plantilla.Checklist = PlantillaChecklist;
+        plantilla.AsignadoPorDefectoId = PlantillaAsignadoPorDefecto?.Id ?? 0;
+        plantilla.CreadorId = UsuarioLogueado?.Id ?? 0;
+
+        await _databaseService.SavePlantillaAsync(plantilla);
+
+        LimpiarFormularioPlantilla();
+        await CargarPlantillas();
+    }
+
+    [RelayCommand]
+    public void EditarPlantilla(PlantillaTarea plantilla)
+    {
+        if (plantilla == null) return;
+
+        IsEditandoPlantilla = true;
+        PlantillaSeleccionada = plantilla;
+
+        PlantillaNombre = plantilla.Nombre;
+        PlantillaDescripcion = plantilla.DescripcionBase;
+        PlantillaCategoriaKPI = plantilla.CategoriaKPI;
+        PlantillaTiempoEstimado = plantilla.TiempoEstimadoHoras;
+        PlantillaPrioridad = plantilla.Prioridad;
+        PlantillaFrecuencia = plantilla.Frecuencia;
+        PlantillaDiaEjecucion = plantilla.DiaEjecucion;
+        PlantillaDiasAnticipacion = plantilla.DiasAnticipacion;
+        PlantillaChecklist = plantilla.Checklist;
+
+        var usuario = Contadores.FirstOrDefault(u => u.Id == plantilla.AsignadoPorDefectoId);
+        PlantillaAsignadoPorDefecto = usuario;
+    }
+
+    [RelayCommand]
+    public async Task EliminarPlantilla(PlantillaTarea plantilla)
+    {
+        if (plantilla == null) return;
+
+        bool confirm = await Application.Current!.Windows[0].Page!.DisplayAlert(
+            "Confirmar", $"¿Eliminar la plantilla '{plantilla.Nombre}'?", "Sí", "No");
+
+        if (!confirm) return;
+
+        await _databaseService.DeletePlantillaAsync(plantilla);
+        await CargarPlantillas();
+    }
+
+    [RelayCommand]
+    public async Task GenerarTareaDesdePlantilla(PlantillaTarea plantilla)
+    {
+        if (plantilla == null) return;
+
+        var tarea = await _databaseService.GenerarTareaDesdePlantillaAsync(plantilla);
+
+        await Application.Current!.Windows[0].Page!.DisplayAlert(
+            "Tarea Creada",
+            $"Se creó la tarea:\n'{tarea.Titulo}'\n\nVencimiento: {tarea.FechaVencimiento:dd/MM/yyyy}",
+            "OK");
+
+        await CargarPlantillas();
+        await CargarDatos();
+    }
+
+    [RelayCommand]
+    public async Task GenerarTareasRecurrentes()
+    {
+        IsBusy = true;
+
+        var tareasGeneradas = await _databaseService.GenerarTareasRecurrentesAsync();
+
+        IsBusy = false;
+
+        string mensaje = tareasGeneradas.Count > 0 
+            ? $"Se generaron {tareasGeneradas.Count} tareas automáticamente."
+            : "No hay tareas recurrentes para generar hoy.";
+
+        await Application.Current!.Windows[0].Page!.DisplayAlert(
+            "Tareas Recurrentes", mensaje, "OK");
+
+        await CargarDatos();
+    }
+
+    [RelayCommand]
+    public void CancelarEdicionPlantilla()
+    {
+        LimpiarFormularioPlantilla();
+    }
+
+    private void LimpiarFormularioPlantilla()
+    {
+        IsEditandoPlantilla = false;
+        PlantillaSeleccionada = null;
+        PlantillaNombre = string.Empty;
+        PlantillaDescripcion = string.Empty;
+        PlantillaCategoriaKPI = "General";
+        PlantillaTiempoEstimado = 4;
+        PlantillaPrioridad = "Media";
+        PlantillaFrecuencia = "Manual";
+        PlantillaDiaEjecucion = 1;
+        PlantillaDiasAnticipacion = 7;
+        PlantillaChecklist = string.Empty;
+        PlantillaAsignadoPorDefecto = null;
+    }
+
+    #endregion
+
+    #region Etiquetas
+
+    public ObservableCollection<Etiqueta> Etiquetas { get; } = new();
+    public ObservableCollection<TareaEtiqueta> EtiquetasDeTareaActual { get; } = new();
+
+    [ObservableProperty] private string _etiquetaNombre = string.Empty;
+    [ObservableProperty] private string _etiquetaColorHex = "#3B82F6";
+    [ObservableProperty] private string _etiquetaDescripcion = string.Empty;
+    [ObservableProperty] private string _etiquetaIcono = "tag";
+    [ObservableProperty] private Etiqueta? _etiquetaSeleccionada;
+    [ObservableProperty] private bool _isEditandoEtiqueta;
+    [ObservableProperty] private Tarea? _tareaParaEtiquetas;
+    
+    // PathData calculado para la vista previa
+    public string EtiquetaIconoPathData => Converters.IconNameToPathConverter.IconPaths.TryGetValue(EtiquetaIcono, out var path) 
+        ? path 
+        : Converters.IconNameToPathConverter.IconPaths["tag"];
+
+    partial void OnEtiquetaIconoChanged(string value)
+    {
+        OnPropertyChanged(nameof(EtiquetaIconoPathData));
+    }
+
+    public List<string> ColoresEtiquetas { get; } = new()
+    {
+        "#EF4444", "#F59E0B", "#10B981", "#3B82F6", "#8B5CF6",
+        "#EC4899", "#6B7280", "#14B8A6", "#F97316", "#84CC16"
+    };
+
+    public List<IconoEtiqueta> IconosEtiquetas { get; } = new()
+    {
+        new("tag", "M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z M6 6h.008v.008H6V6Z"),
+        new("campana", "M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"),
+        new("dinero", "M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"),
+        new("nube", "M2.25 15a4.5 4.5 0 0 0 4.5 4.5H18a3.75 3.75 0 0 0 1.332-7.257 3 3 0 0 0-3.758-3.848 5.25 5.25 0 0 0-10.233 2.33A4.502 4.502 0 0 0 2.25 15Z"),
+        new("advertencia", "M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"),
+        new("trofeo", "M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 0 1-.982-3.172M9.497 14.25a7.454 7.454 0 0 0 .981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 0 0 7.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 0 0 2.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 0 1 2.916.52 6.003 6.003 0 0 1-5.395 4.972m0 0a6.726 6.726 0 0 1-2.749 1.35m0 0a6.772 6.772 0 0 1-3.044 0")
+    };
+
+    [RelayCommand]
+    public async Task CargarEtiquetas()
+    {
+        var etiquetas = await _databaseService.GetEtiquetasConUsoAsync();
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            Etiquetas.Clear();
+            foreach (var e in etiquetas) Etiquetas.Add(e);
+        });
+    }
+
+    [RelayCommand]
+    public async Task GuardarEtiqueta()
+    {
+        if (string.IsNullOrWhiteSpace(EtiquetaNombre)) return;
+
+        var etiqueta = IsEditandoEtiqueta && EtiquetaSeleccionada != null
+            ? EtiquetaSeleccionada
+            : new Etiqueta();
+
+        etiqueta.Nombre = EtiquetaNombre;
+        etiqueta.ColorHex = EtiquetaColorHex;
+        etiqueta.Descripcion = EtiquetaDescripcion;
+        etiqueta.Icono = EtiquetaIcono;
+        etiqueta.CreadorId = UsuarioLogueado?.Id ?? 0;
+
+        await _databaseService.SaveEtiquetaAsync(etiqueta);
+
+        LimpiarFormularioEtiqueta();
+        await CargarEtiquetas();
+    }
+
+    [RelayCommand]
+    public void EditarEtiqueta(Etiqueta etiqueta)
+    {
+        if (etiqueta == null) return;
+
+        IsEditandoEtiqueta = true;
+        EtiquetaSeleccionada = etiqueta;
+
+        EtiquetaNombre = etiqueta.Nombre;
+        EtiquetaColorHex = etiqueta.ColorHex;
+        EtiquetaDescripcion = etiqueta.Descripcion;
+        EtiquetaIcono = etiqueta.Icono;
+    }
+
+    [RelayCommand]
+    public async Task EliminarEtiqueta(Etiqueta etiqueta)
+    {
+        if (etiqueta == null) return;
+
+        bool confirm = await Application.Current!.Windows[0].Page!.DisplayAlert(
+            "Confirmar", $"¿Eliminar la etiqueta '{etiqueta.Nombre}'?", "Sí", "No");
+
+        if (!confirm) return;
+
+        await _databaseService.DeleteEtiquetaAsync(etiqueta);
+        await CargarEtiquetas();
+    }
+
+    [RelayCommand]
+    public void CancelarEdicionEtiqueta()
+    {
+        LimpiarFormularioEtiqueta();
+    }
+
+    [RelayCommand]
+    public void SeleccionarIcono(IconoEtiqueta icono)
+    {
+        if (icono != null)
+            EtiquetaIcono = icono.Name;
+    }
+
+    [RelayCommand]
+    public void SeleccionarColor(string color)
+    {
+        if (!string.IsNullOrEmpty(color))
+            EtiquetaColorHex = color;
+    }
+
+    private void LimpiarFormularioEtiqueta()
+    {
+        IsEditandoEtiqueta = false;
+        EtiquetaSeleccionada = null;
+        EtiquetaNombre = string.Empty;
+        EtiquetaColorHex = "#3B82F6";
+        EtiquetaDescripcion = string.Empty;
+        EtiquetaIcono = "tag";
+    }
+
+    [RelayCommand]
+    public async Task AbrirEtiquetasDeTarea(Tarea tarea)
+    {
+        if (tarea == null) return;
+
+        TareaParaEtiquetas = tarea;
+        var etiquetasTarea = await _databaseService.GetEtiquetasPorTareaAsync(tarea.Id);
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            EtiquetasDeTareaActual.Clear();
+            foreach (var te in etiquetasTarea) EtiquetasDeTareaActual.Add(te);
+
+            // Marcar etiquetas ya asignadas
+            foreach (var e in Etiquetas)
+            {
+                e.EstaSeleccionada = etiquetasTarea.Any(te => te.EtiquetaId == e.Id);
+            }
+        });
+    }
+
+    [RelayCommand]
+    public async Task ToggleEtiquetaEnTarea(Etiqueta etiqueta)
+    {
+        if (etiqueta == null || TareaParaEtiquetas == null) return;
+
+        if (etiqueta.EstaSeleccionada)
+        {
+            await _databaseService.RemoverEtiquetaDeTareaAsync(TareaParaEtiquetas.Id, etiqueta.Id);
+        }
+        else
+        {
+            await _databaseService.AsignarEtiquetaATareaAsync(TareaParaEtiquetas.Id, etiqueta.Id, UsuarioLogueado?.Id ?? 0);
+        }
+
+        etiqueta.EstaSeleccionada = !etiqueta.EstaSeleccionada;
+        await CargarEtiquetas();
+    }
+
+    [RelayCommand]
+    public void CerrarPanelEtiquetas()
+    {
+        TareaParaEtiquetas = null;
+        foreach (var e in Etiquetas)
+        {
+            e.EstaSeleccionada = false;
+        }
+    }
+
+    #endregion
+
+    #region Comentarios en Tareas
+
+    public ObservableCollection<Comentario> ComentariosTareaActual { get; } = new();
+
+    [ObservableProperty] private Tarea? _tareaParaComentarios;
+    [ObservableProperty] private string _nuevoComentarioContenido = string.Empty;
+    [ObservableProperty] private int _totalComentariosTarea;
+
+    [RelayCommand]
+    public async Task AbrirComentariosDeTarea(Tarea tarea)
+    {
+        if (tarea == null) return;
+
+        TareaParaComentarios = tarea;
+        await CargarComentariosDeTarea(tarea.Id);
+    }
+
+    private async Task CargarComentariosDeTarea(string tareaId)
+    {
+        var comentarios = await _databaseService.GetComentariosPorTareaAsync(tareaId);
+        var usuarios = await _databaseService.GetAllUsersAsync();
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            ComentariosTareaActual.Clear();
+            foreach (var c in comentarios)
+            {
+                var autor = usuarios.FirstOrDefault(u => u.Id == c.AutorId);
+                c.AutorNombre = autor?.Name ?? "Sistema";
+                c.AutorFoto = autor?.FotoPerfil ?? "";
+                c.EsMio = c.AutorId == UsuarioLogueado?.Id;
+                ComentariosTareaActual.Add(c);
+            }
+            TotalComentariosTarea = comentarios.Count;
+        });
+    }
+
+    [RelayCommand]
+    public async Task AgregarComentario()
+    {
+        if (string.IsNullOrWhiteSpace(NuevoComentarioContenido) || TareaParaComentarios == null)
+            return;
+
+        var comentario = new Comentario
+        {
+            TareaId = TareaParaComentarios.Id,
+            AutorId = UsuarioLogueado?.Id ?? 0,
+            Contenido = NuevoComentarioContenido,
+            Tipo = "Comentario"
+        };
+
+        // Detectar menciones @usuario
+        var usuarios = await _databaseService.GetAllUsersAsync();
+        var menciones = new List<int>();
+        foreach (var u in usuarios)
+        {
+            if (NuevoComentarioContenido.Contains($"@{u.Username}") || NuevoComentarioContenido.Contains($"@{u.Name}"))
+            {
+                menciones.Add(u.Id);
+            }
+        }
+
+        if (menciones.Any())
+        {
+            comentario.Menciones = System.Text.Json.JsonSerializer.Serialize(menciones);
+        }
+
+        await _databaseService.SaveComentarioAsync(comentario);
+
+        NuevoComentarioContenido = string.Empty;
+        await CargarComentariosDeTarea(TareaParaComentarios.Id);
+    }
+
+    [RelayCommand]
+    public async Task EliminarComentario(Comentario comentario)
+    {
+        if (comentario == null) return;
+
+        // Solo autor o admin puede eliminar
+        if (comentario.AutorId != UsuarioLogueado?.Id && UsuarioLogueado?.Role != "Admin")
+        {
+            await Application.Current!.Windows[0].Page!.DisplayAlert("Error", "Solo puedes eliminar tus propios comentarios.", "OK");
+            return;
+        }
+
+        bool confirm = await Application.Current!.Windows[0].Page!.DisplayAlert("Confirmar", "¿Eliminar este comentario?", "Sí", "No");
+
+        if (confirm)
+        {
+            await _databaseService.DeleteComentarioAsync(comentario);
+            if (TareaParaComentarios != null)
+                await CargarComentariosDeTarea(TareaParaComentarios.Id);
+        }
+    }
+
+    #endregion
 }

@@ -47,6 +47,29 @@ public class SyncService
             var msgs = await _databaseService.GetMensajesAsync();
             LogSync($"SERVIDOR: Total mensajes en DB: {msgs.Count}");
             foreach(var m in msgs) await SendDirectSync(m, "Mensaje", clientIdentity.NodeId);
+
+            // Sincronizar Plantillas de Tareas
+            var plantillas = await _databaseService.GetAllPlantillasAsync();
+            LogSync($"SERVIDOR: Total plantillas en DB: {plantillas.Count}");
+            foreach(var p in plantillas) await SendDirectSync(p, "PlantillaTarea", clientIdentity.NodeId);
+
+            // Sincronizar Comentarios
+            var comentarios = await _databaseService.GetComentariosRecientesAsync(500);
+            LogSync($"SERVIDOR: Total comentarios en DB: {comentarios.Count}");
+            foreach(var c in comentarios) await SendDirectSync(c, "Comentario", clientIdentity.NodeId);
+
+            // Sincronizar Etiquetas
+            var etiquetas = await _databaseService.GetAllEtiquetasAsync();
+            LogSync($"SERVIDOR: Total etiquetas en DB: {etiquetas.Count}");
+            foreach(var e in etiquetas) await SendDirectSync(e, "Etiqueta", clientIdentity.NodeId);
+
+            // Sincronizar TareaEtiqueta (relaciones)
+            var tareasAll = await _databaseService.GetTareasAsync();
+            foreach(var t in tareasAll)
+            {
+                var relaciones = await _databaseService.GetEtiquetasPorTareaAsync(t.Id);
+                foreach(var te in relaciones) await SendDirectSync(te, "TareaEtiqueta", clientIdentity.NodeId);
+            }
             
             var doneMsg = new SyncMessage
             {
@@ -174,16 +197,16 @@ public class SyncService
                      {
                          LogSync($"User {user.Username} doesn't exist, saving...");
                          await _databaseService.SaveUserAsync(user, skipSync: true);
-                         LogSync($"✅ Usuario guardado: {user.Username}");
+                         LogSync($"[OK] Usuario guardado: {user.Username}");
                      }
                      else
                      {
-                         LogSync($"⚠️ Usuario {user.Username} ya existe, omitiendo.");
+                         LogSync($"[WARN] Usuario {user.Username} ya existe, omitiendo.");
                      }
                 }
                 else
                 {
-                    LogSync("❌ User deserializado es NULL!");
+                    LogSync("[ERROR] User deserializado es NULL!");
                 }
                 break;
 
@@ -210,6 +233,58 @@ public class SyncService
                         await _databaseService.SaveMensajeAsync(msg, skipSync: true);
                         Console.WriteLine($"[SYNC] Mensaje insertado de {msg.De}");
                     }
+                }
+                break;
+
+            case "PlantillaTarea":
+                var plantilla = JsonSerializer.Deserialize<PlantillaTarea>(message.EntityJson);
+                if (plantilla != null)
+                {
+                    var existingPlantilla = await _databaseService.GetPlantillaByIdAsync(plantilla.Id);
+                    if (existingPlantilla == null)
+                    {
+                        await _databaseService.SavePlantillaAsync(plantilla, skipSync: true);
+                        Console.WriteLine($"[SYNC] Plantilla insertada: {plantilla.Nombre}");
+                    }
+                }
+                break;
+
+            case "Comentario":
+                var comentario = JsonSerializer.Deserialize<Comentario>(message.EntityJson);
+                if (comentario != null)
+                {
+                    var existingComentarios = await _databaseService.GetComentariosPorTareaAsync(comentario.TareaId);
+                    if (!existingComentarios.Any(c => c.Id == comentario.Id))
+                    {
+                        await _databaseService.SaveComentarioAsync(comentario, skipSync: true);
+                        Console.WriteLine($"[SYNC] Comentario insertado en tarea {comentario.TareaId}");
+                    }
+                }
+                break;
+
+            case "Etiqueta":
+                var etiqueta = JsonSerializer.Deserialize<Etiqueta>(message.EntityJson);
+                if (etiqueta != null)
+                {
+                    var existingEtiqueta = await _databaseService.GetEtiquetaByIdAsync(etiqueta.Id);
+                    if (existingEtiqueta == null)
+                    {
+                        await _databaseService.SaveEtiquetaAsync(etiqueta, skipSync: true);
+                        Console.WriteLine($"[SYNC] Etiqueta insertada: {etiqueta.Nombre}");
+                    }
+                }
+                break;
+
+            case "TareaEtiqueta":
+                var tareaEtiqueta = JsonSerializer.Deserialize<TareaEtiqueta>(message.EntityJson);
+                if (tareaEtiqueta != null)
+                {
+                    await _databaseService.AsignarEtiquetaATareaAsync(
+                        tareaEtiqueta.TareaId, 
+                        tareaEtiqueta.EtiquetaId, 
+                        tareaEtiqueta.AsignadoPorId, 
+                        skipSync: true);
+                    Console.WriteLine($"[SYNC] TareaEtiqueta insertada");
                 }
                 break;
                 
@@ -249,6 +324,33 @@ public class SyncService
                 {
                     await _databaseService.UpdateMensajeAsync(msgUpdate, skipSync: true);
                     Console.WriteLine($"[SYNC] Mensaje actualizado");
+                }
+                break;
+
+            case "PlantillaTarea":
+                var plantillaUpdate = JsonSerializer.Deserialize<PlantillaTarea>(message.EntityJson);
+                if (plantillaUpdate != null)
+                {
+                    await _databaseService.SavePlantillaAsync(plantillaUpdate, skipSync: true);
+                    Console.WriteLine($"[SYNC] Plantilla actualizada: {plantillaUpdate.Nombre}");
+                }
+                break;
+
+            case "Comentario":
+                var comentarioUpdate = JsonSerializer.Deserialize<Comentario>(message.EntityJson);
+                if (comentarioUpdate != null)
+                {
+                    await _databaseService.SaveComentarioAsync(comentarioUpdate, skipSync: true);
+                    Console.WriteLine($"[SYNC] Comentario actualizado");
+                }
+                break;
+
+            case "Etiqueta":
+                var etiquetaUpdate = JsonSerializer.Deserialize<Etiqueta>(message.EntityJson);
+                if (etiquetaUpdate != null)
+                {
+                    await _databaseService.SaveEtiquetaAsync(etiquetaUpdate, skipSync: true);
+                    Console.WriteLine($"[SYNC] Etiqueta actualizada: {etiquetaUpdate.Nombre}");
                 }
                 break;
         }

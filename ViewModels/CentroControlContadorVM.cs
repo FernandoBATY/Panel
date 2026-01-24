@@ -42,6 +42,39 @@ public partial class CentroControlContadorVM : ObservableObject
     [ObservableProperty] private double _horasRegistradas; 
     [ObservableProperty] private string _tiempoSesion = "00:00:00"; 
     
+    // ============================================
+    // MÉTRICAS AVANZADAS (NUEVO)
+    // ============================================
+    [ObservableProperty] private int _tareasVencidas;
+    [ObservableProperty] private int _tareasEstaSemana;
+    [ObservableProperty] private double _porcentajeEficiencia;
+    [ObservableProperty] private int _rachaProductividad;
+    [ObservableProperty] private string _rachaTexto = "0 días";
+    
+    // ============================================
+    // TAREAS DEL DÍA (MI DÍA)
+    // ============================================
+    public ObservableCollection<Tarea> TareasDelDia { get; } = new();
+    [ObservableProperty] private bool _hayTareasDelDia;
+    
+    // ============================================
+    // HISTORIAL DE ACTIVIDAD
+    // ============================================
+    public ObservableCollection<ActividadReciente> HistorialActividad { get; } = new();
+    
+    // ============================================
+    // PROGRESO SEMANAL (GRÁFICA)
+    // ============================================
+    public ObservableCollection<ProgresoSemanalItem> ProgresoSemanal { get; } = new();
+    [ObservableProperty] private int _maxTareasSemana = 1;
+    
+    // ============================================
+    // NOTAS RÁPIDAS
+    // ============================================
+    [ObservableProperty] private string _notasRapidas = "";
+    [ObservableProperty] private bool _notaGuardadaVisible = false;
+    [ObservableProperty] private string _notaGuardadaMensaje = "";
+    
     private IDispatcherTimer? _timer;
     private DateTime _startTime;
     private int _tickCount = 0;
@@ -61,8 +94,25 @@ public partial class CentroControlContadorVM : ObservableObject
     public ObservableCollection<Alerta> AlertasCriticas { get; } = new();
     public ObservableCollection<Alerta> Notificaciones { get; } = new();
     public ObservableCollection<Mensaje> Mensajes { get; } = new();
-    public ObservableCollection<Documento> Documentos { get; } = new(); 
-    public ObservableCollection<IGrouping<string, Documento>> DocumentosAgrupados { get; } = new();
+
+    // ============================================
+    // COMENTARIOS DE TAREAS
+    // ============================================
+    public ObservableCollection<Comentario> ComentariosTareaActual { get; } = new();
+    
+    [ObservableProperty] private Tarea? _tareaSeleccionadaParaComentarios;
+    [ObservableProperty] private string _nuevoComentarioContenido = "";
+    [ObservableProperty] private bool _mostrarPanelComentarios;
+    [ObservableProperty] private int _comentariosCount;
+
+    // ============================================
+    // ETIQUETAS DE TAREAS
+    // ============================================
+    public ObservableCollection<Etiqueta> EtiquetasDisponibles { get; } = new();
+    public ObservableCollection<Etiqueta> EtiquetasTareaActual { get; } = new();
+    
+    [ObservableProperty] private Etiqueta? _etiquetaFiltroSeleccionada;
+    [ObservableProperty] private bool _filtrandoPorEtiqueta;
 
     [ObservableProperty] private int _caracteresMensaje = 0;
 
@@ -149,6 +199,7 @@ public partial class CentroControlContadorVM : ObservableObject
         Initials = user.Name.Length >= 2 ? user.Name.Substring(0, 2).ToUpper() : "CO";
         Conectado = user.Estado == "conectado";
         
+        Task.Run(async () => await CargarNotasGuardadas());
         Task.Run(CargarTodosLosDatos);
 
         ServerInfo = "Ingresa la IP del servidor para conectar";
@@ -171,7 +222,7 @@ public partial class CentroControlContadorVM : ObservableObject
             await CargarTareas();
             await CargarAlertas();
             await CargarMensajes();
-            await CargarDocumentos();
+            await CargarEtiquetas();
             CalcularEstadisticas();
         }
         finally
@@ -238,16 +289,31 @@ public partial class CentroControlContadorVM : ObservableObject
         userMap["admin"] = "Administrador";
         userMap["todos"] = "Todos";
 
+        var msgs = mensajesAll.OrderBy(m => m.MarcaTiempo).ToList();
+        
+        // Marcar primer mensaje de cada día
+        DateTime? ultimaFecha = null;
+        foreach (var m in msgs)
+        {
+            m.EsMio = m.De == _currentUser!.Id.ToString();
+            m.DeNombre = userMap.TryGetValue(m.De, out var de) ? de : $"ID:{m.De}";
+            m.ParaNombre = userMap.TryGetValue(m.Para, out var para) ? para : $"ID:{m.Para}";
+            
+            if (ultimaFecha == null || m.MarcaTiempo.Date != ultimaFecha.Value.Date)
+            {
+                m.EsPrimerMensajeDelDia = true;
+                ultimaFecha = m.MarcaTiempo;
+            }
+            else
+            {
+                m.EsPrimerMensajeDelDia = false;
+            }
+        }
+
         MainThread.BeginInvokeOnMainThread(() => 
         {
             Mensajes.Clear();
-            foreach (var m in mensajesAll) 
-            {
-                m.EsMio = m.De == _currentUser!.Id.ToString();
-                m.DeNombre = userMap.TryGetValue(m.De, out var de) ? de : $"ID:{m.De}";
-                m.ParaNombre = userMap.TryGetValue(m.Para, out var para) ? para : $"ID:{m.Para}";
-                Mensajes.Add(m);
-            }
+            foreach (var m in msgs) Mensajes.Add(m);
         });
 
         MainThread.BeginInvokeOnMainThread(() => 
@@ -257,12 +323,14 @@ public partial class CentroControlContadorVM : ObservableObject
         });
     }
 
-    private async Task CargarDocumentos()
+    private async Task CargarEtiquetas()
     {
-        var docs = await _databaseService.GetDocumentosPorUsuarioAsync(_currentUser!.Id);
-        Documentos.Clear();
-        foreach (var d in docs) Documentos.Add(d);
-        
+        var etiquetas = await _databaseService.GetEtiquetasConUsoAsync();
+        EtiquetasDisponibles.Clear();
+        foreach (var e in etiquetas.Where(et => et.Activa))
+        {
+            EtiquetasDisponibles.Add(e);
+        }
     }
 
     private void CalcularEstadisticas()
@@ -271,6 +339,401 @@ public partial class CentroControlContadorVM : ObservableObject
         TareasCompletadas = _allTareas.Count(t => t.Estado == "completada");
         TareasPendientesCount = _allTareas.Count(t => t.Estado == "pendiente"); 
         HorasRegistradas = 23.5;
+        
+        // Métricas avanzadas
+        CalcularMetricasAvanzadas();
+        CargarTareasDelDia();
+        CargarHistorialActividad();
+        CargarProgresoSemanal();
+    }
+    
+    private void CalcularMetricasAvanzadas()
+    {
+        var hoy = DateTime.Today;
+        var inicioSemana = hoy.AddDays(-(int)hoy.DayOfWeek);
+        var finSemana = inicioSemana.AddDays(7);
+        
+        // Tareas vencidas (pendientes con fecha límite pasada)
+        TareasVencidas = _allTareas.Count(t => 
+            t.Estado != "completada" && 
+            t.FechaVencimiento.Date < hoy);
+        
+        // Tareas de esta semana
+        TareasEstaSemana = _allTareas.Count(t => 
+            t.FechaVencimiento.Date >= inicioSemana && 
+            t.FechaVencimiento.Date < finSemana);
+        
+        // Porcentaje de eficiencia (completadas a tiempo vs total completadas)
+        var completadas = _allTareas.Where(t => t.Estado == "completada").ToList();
+        if (completadas.Any())
+        {
+            var aTiempo = completadas.Count(t => 
+                t.FechaCompletado.HasValue && 
+                t.FechaCompletado.Value.Date <= t.FechaVencimiento.Date);
+            PorcentajeEficiencia = Math.Round((double)aTiempo / completadas.Count * 100, 1);
+        }
+        else
+        {
+            PorcentajeEficiencia = 0;
+        }
+        
+        // Racha de productividad (días consecutivos con al menos 1 tarea completada)
+        CalcularRachaProductividad();
+    }
+    
+    private void CalcularRachaProductividad()
+    {
+        var completadas = _allTareas
+            .Where(t => t.Estado == "completada" && t.FechaCompletado.HasValue)
+            .OrderByDescending(t => t.FechaCompletado!.Value.Date)
+            .ToList();
+            
+        if (!completadas.Any())
+        {
+            RachaProductividad = 0;
+            RachaTexto = "0 días";
+            return;
+        }
+        
+        var fechas = completadas
+            .Select(t => t.FechaCompletado!.Value.Date)
+            .Distinct()
+            .OrderByDescending(d => d)
+            .ToList();
+        
+        int racha = 0;
+        var fechaEsperada = DateTime.Today;
+        
+        foreach (var fecha in fechas)
+        {
+            if (fecha == fechaEsperada || fecha == fechaEsperada.AddDays(-1))
+            {
+                racha++;
+                fechaEsperada = fecha.AddDays(-1);
+            }
+            else
+            {
+                break;
+            }
+        }
+        
+        RachaProductividad = racha;
+        RachaTexto = racha == 1 ? "1 día" : $"{racha} días";
+    }
+    
+    private void CargarTareasDelDia()
+    {
+        var hoy = DateTime.Today;
+        var manana = hoy.AddDays(1);
+        
+        // Tareas urgentes: vencen hoy, mañana, o ya vencidas + prioritarias
+        var tareasUrgentes = _allTareas
+            .Where(t => t.Estado != "completada")
+            .Where(t => 
+                t.FechaVencimiento.Date <= manana ||
+                t.Prioridad == "alta" || t.Prioridad == "urgente")
+            .OrderBy(t => t.FechaVencimiento)
+            .ThenByDescending(t => t.Prioridad == "alta" || t.Prioridad == "urgente")
+            .Take(5)
+            .ToList();
+        
+        TareasDelDia.Clear();
+        foreach (var t in tareasUrgentes)
+        {
+            TareasDelDia.Add(t);
+        }
+        
+        HayTareasDelDia = TareasDelDia.Any();
+    }
+    
+    private async void CargarHistorialActividad()
+    {
+        var actividades = new List<ActividadReciente>();
+        
+        // Tareas completadas recientemente
+        var tareasRecientes = _allTareas
+            .Where(t => t.Estado == "completada" && t.FechaCompletado.HasValue)
+            .OrderByDescending(t => t.FechaCompletado)
+            .Take(5)
+            .Select(t => new ActividadReciente
+            {
+                Tipo = "tarea_completada",
+                Icono = "check",
+                Titulo = $"Completaste \"{t.Titulo}\"",
+                Fecha = t.FechaCompletado!.Value,
+                ColorIcono = "#10B981"
+            });
+        actividades.AddRange(tareasRecientes);
+        
+        // Mensajes enviados recientes
+        var mensajesRecientes = Mensajes
+            .Where(m => m.EsMio)
+            .OrderByDescending(m => m.MarcaTiempo)
+            .Take(3)
+            .Select(m => new ActividadReciente
+            {
+                Tipo = "mensaje_enviado",
+                Icono = "chat",
+                Titulo = $"Enviaste un mensaje",
+                Fecha = m.MarcaTiempo,
+                ColorIcono = "#3B82F6"
+            });
+        actividades.AddRange(mensajesRecientes);
+        
+        // Ordenar por fecha y tomar las últimas 8
+        var ordenado = actividades
+            .OrderByDescending(a => a.Fecha)
+            .Take(8)
+            .ToList();
+        
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            HistorialActividad.Clear();
+            foreach (var a in ordenado)
+            {
+                HistorialActividad.Add(a);
+            }
+        });
+    }
+    
+    private void CargarProgresoSemanal()
+    {
+        var hoy = DateTime.Today;
+        var hace7Dias = hoy.AddDays(-6);
+        
+        var progreso = new List<ProgresoSemanalItem>();
+        
+        for (int i = 0; i < 7; i++)
+        {
+            var fecha = hace7Dias.AddDays(i);
+            var completadasEnDia = _allTareas.Count(t => 
+                t.Estado == "completada" && 
+                t.FechaCompletado.HasValue && 
+                t.FechaCompletado.Value.Date == fecha);
+            
+            progreso.Add(new ProgresoSemanalItem
+            {
+                Fecha = fecha,
+                DiaSemana = ObtenerDiaSemanaCorto(fecha.DayOfWeek),
+                Cantidad = completadasEnDia,
+                EsHoy = fecha == hoy
+            });
+        }
+        
+        MaxTareasSemana = Math.Max(1, progreso.Max(p => p.Cantidad));
+        
+        // Calcular altura proporcional
+        foreach (var p in progreso)
+        {
+            p.AlturaBarra = MaxTareasSemana > 0 ? (double)p.Cantidad / MaxTareasSemana * 60 : 0;
+            p.AlturaBarra = Math.Max(4, p.AlturaBarra); // Mínimo visible
+        }
+        
+        ProgresoSemanal.Clear();
+        foreach (var p in progreso)
+        {
+            ProgresoSemanal.Add(p);
+        }
+    }
+    
+    private string ObtenerDiaSemanaCorto(DayOfWeek dia)
+    {
+        return dia switch
+        {
+            DayOfWeek.Monday => "LU",
+            DayOfWeek.Tuesday => "MA",
+            DayOfWeek.Wednesday => "MI",
+            DayOfWeek.Thursday => "JU",
+            DayOfWeek.Friday => "VI",
+            DayOfWeek.Saturday => "SA",
+            DayOfWeek.Sunday => "DO",
+            _ => "??"
+        };
+    }
+    
+    [RelayCommand]
+    private async Task GuardarNotas()
+    {
+        if (_currentUser == null) return;
+        
+        try
+        {
+            var nota = new NotaRapida
+            {
+                UsuarioId = _currentUser.Id,
+                Contenido = NotasRapidas ?? ""
+            };
+            await _databaseService.SaveNotaRapidaAsync(nota);
+            
+            // Mostrar mensaje de confirmación
+            NotaGuardadaMensaje = "✓ Nota guardada";
+            NotaGuardadaVisible = true;
+            
+            // Ocultar mensaje después de 3 segundos
+            await Task.Delay(3000);
+            NotaGuardadaVisible = false;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error guardando notas: {ex.Message}");
+            NotaGuardadaMensaje = "✗ Error al guardar la nota";
+            NotaGuardadaVisible = true;
+            await Task.Delay(3000);
+            NotaGuardadaVisible = false;
+        }
+    }
+    
+    [RelayCommand]
+    private async Task LimpiarNotas()
+    {
+        if (_currentUser == null) return;
+        
+        try
+        {
+            await _databaseService.LimpiarNotaRapidaAsync(_currentUser.Id);
+            NotasRapidas = "";
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error limpiando notas: {ex.Message}");
+        }
+    }
+    
+    private async Task CargarNotasGuardadas()
+    {
+        if (_currentUser == null) return;
+        
+        try
+        {
+            var nota = await _databaseService.GetNotaRapidaPorUsuarioAsync(_currentUser.Id);
+            NotasRapidas = nota?.Contenido ?? "";
+        }
+        catch
+        {
+            NotasRapidas = "";
+        }
+    }
+
+    // ============================================
+    // COMANDOS DE COMENTARIOS
+    // ============================================
+    [RelayCommand]
+    public async Task AbrirComentarios(Tarea tarea)
+    {
+        if (tarea == null) return;
+        
+        TareaSeleccionadaParaComentarios = tarea;
+        await CargarComentariosDeTarea();
+        await CargarEtiquetasDeTarea();
+        MostrarPanelComentarios = true;
+    }
+
+    [RelayCommand]
+    public void CerrarComentarios()
+    {
+        MostrarPanelComentarios = false;
+        TareaSeleccionadaParaComentarios = null;
+        ComentariosTareaActual.Clear();
+        EtiquetasTareaActual.Clear();
+        NuevoComentarioContenido = "";
+    }
+
+    private async Task CargarComentariosDeTarea()
+    {
+        if (TareaSeleccionadaParaComentarios == null) return;
+
+        var comentarios = await _databaseService.GetComentariosPorTareaAsync(TareaSeleccionadaParaComentarios.Id);
+        ComentariosTareaActual.Clear();
+        
+        foreach (var c in comentarios)
+        {
+            c.EsMio = c.AutorId == _currentUser?.Id;
+            ComentariosTareaActual.Add(c);
+        }
+        
+        ComentariosCount = comentarios.Count;
+    }
+
+    private async Task CargarEtiquetasDeTarea()
+    {
+        if (TareaSeleccionadaParaComentarios == null) return;
+
+        var etiquetasRelaciones = await _databaseService.GetEtiquetasPorTareaAsync(TareaSeleccionadaParaComentarios.Id);
+        EtiquetasTareaActual.Clear();
+        
+        foreach (var etiqueta in EtiquetasDisponibles)
+        {
+            if (etiquetasRelaciones.Any(te => te.EtiquetaId == etiqueta.Id))
+            {
+                EtiquetasTareaActual.Add(etiqueta);
+            }
+        }
+    }
+
+    [RelayCommand]
+    public async Task AgregarComentario()
+    {
+        if (string.IsNullOrWhiteSpace(NuevoComentarioContenido) || 
+            TareaSeleccionadaParaComentarios == null || 
+            _currentUser == null) return;
+
+        var comentario = new Comentario
+        {
+            TareaId = TareaSeleccionadaParaComentarios.Id,
+            AutorId = _currentUser.Id,
+            Contenido = NuevoComentarioContenido.Trim(),
+            Tipo = "Comentario",
+            FechaCreacion = DateTime.Now
+        };
+
+        await _databaseService.SaveComentarioAsync(comentario);
+        NuevoComentarioContenido = "";
+        await CargarComentariosDeTarea();
+    }
+
+    [RelayCommand]
+    public async Task EliminarComentario(Comentario comentario)
+    {
+        if (comentario == null || comentario.AutorId != _currentUser?.Id) return;
+
+        await _databaseService.DeleteComentarioAsync(comentario);
+        await CargarComentariosDeTarea();
+    }
+
+    // ============================================
+    // COMANDOS DE ETIQUETAS (FILTRADO)
+    // ============================================
+    [RelayCommand]
+    public async Task FiltrarPorEtiqueta(Etiqueta? etiqueta)
+    {
+        if (etiqueta == null)
+        {
+            // Quitar filtro de etiqueta
+            EtiquetaFiltroSeleccionada = null;
+            FiltrandoPorEtiqueta = false;
+            ActualizarListaTareas();
+            return;
+        }
+
+        EtiquetaFiltroSeleccionada = etiqueta;
+        FiltrandoPorEtiqueta = true;
+
+        var tareasConEtiqueta = await _databaseService.FiltrarTareasPorEtiquetasAsync(new List<int> { etiqueta.Id });
+        var idsConEtiqueta = tareasConEtiqueta.Select(t => t.Id).ToHashSet();
+
+        Tareas.Clear();
+        foreach (var t in _allTareas.Where(tarea => idsConEtiqueta.Contains(tarea.Id)))
+        {
+            Tareas.Add(t);
+        }
+    }
+
+    [RelayCommand]
+    public void QuitarFiltroEtiqueta()
+    {
+        EtiquetaFiltroSeleccionada = null;
+        FiltrandoPorEtiqueta = false;
+        ActualizarListaTareas();
     }
 
     [RelayCommand]
@@ -321,6 +784,9 @@ public partial class CentroControlContadorVM : ObservableObject
             tarea.Estado = "completada";
             tarea.FechaCompletado = DateTime.Now;
             await _databaseService.UpdateTareaAsync(tarea);
+            
+            // Generar alerta automática de tarea completada para admins
+            await _databaseService.CrearAlertaTareaCompletadaAsync(tarea);
             
             TareasPendientes.Remove(tarea);
             
@@ -412,6 +878,14 @@ public partial class CentroControlContadorVM : ObservableObject
     private async void OnSyncDataChanged(object? sender, string entityType)
     {
         if (entityType == "Mensaje") await CargarMensajes();
+        else if (entityType == "Comentario" && TareaSeleccionadaParaComentarios != null) 
+            await CargarComentariosDeTarea();
+        else if (entityType == "Etiqueta" || entityType == "TareaEtiqueta")
+        {
+            await CargarEtiquetas();
+            if (TareaSeleccionadaParaComentarios != null)
+                await CargarEtiquetasDeTarea();
+        }
         else await CargarTodosLosDatos();
     }
 

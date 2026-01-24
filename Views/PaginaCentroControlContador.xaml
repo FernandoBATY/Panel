@@ -17,8 +17,6 @@
                         <AdaptiveTrigger MinWindowWidth="0"/>
                     </VisualState.StateTriggers>
                     <VisualState.Setters>
-                        <Setter TargetName="StatsGrid" Property="ColumnDefinitions" Value="*,*"/>
-                        <Setter TargetName="StatsGrid" Property="RowDefinitions" Value="Auto,Auto"/>
                         <Setter TargetName="BrandingStack" Property="IsVisible" Value="False"/>
                         <Setter TargetName="ConnectionStatusColumn" Property="HorizontalOptions" Value="Start"/>
                     </VisualState.Setters>
@@ -29,8 +27,7 @@
                         <AdaptiveTrigger MinWindowWidth="900"/>
                     </VisualState.StateTriggers>
                     <VisualState.Setters>
-                        <Setter TargetName="StatsGrid" Property="ColumnDefinitions" Value="*,*,*,*"/>
-                        <Setter TargetName="StatsGrid" Property="RowDefinitions" Value="Auto"/>
+                        <!-- Stats ahora es HorizontalStackLayout, no necesita ajustes de Grid -->
                     </VisualState.Setters>
                 </VisualState>
             </VisualStateGroup>
@@ -115,41 +112,62 @@
             </Grid>
         </Border>
 
-        <!-- Tarjetas de estadísticas rápidas -->
+        <!-- Tarjetas de estadísticas rápidas MEJORADAS -->
         <Border Grid.Row="1" Margin="0" Padding="32,12" BackgroundColor="{StaticResource White}" StrokeThickness="0">
-            <Grid x:Name="StatsGrid" ColumnDefinitions="*,*,*,*">
+            <HorizontalStackLayout x:Name="StatsGrid" Spacing="0">
                
-                <HorizontalStackLayout Grid.Column="0" Spacing="12">
-                     <VerticalStackLayout>
-                         <Label Text="{Binding TotalTareas}" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Gray800Jazer}"/>
-                         <Label Text="Tareas Totales" FontSize="12" TextColor="{StaticResource Gray500Jazer}"/>
+                <HorizontalStackLayout Spacing="12">
+                     <VerticalStackLayout WidthRequest="85">
+                         <Label Text="{Binding TotalTareas}" FontSize="22" FontAttributes="Bold" TextColor="{StaticResource Gray800Jazer}"/>
+                         <Label Text="Totales" FontSize="10" TextColor="{StaticResource Gray500Jazer}"/>
                      </VerticalStackLayout>
-                     <BoxView WidthRequest="1" Color="{StaticResource Gray100Jazer}" HorizontalOptions="End" Margin="0,4"/>
+                     <BoxView WidthRequest="1" Color="{StaticResource Gray200Jazer}" Margin="0,4"/>
                 </HorizontalStackLayout>
                 
-                <HorizontalStackLayout Grid.Column="1" Spacing="12" Margin="12,0,0,0">
-                     <VerticalStackLayout>
-                         <Label Text="{Binding TareasCompletadas}" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Green500}"/>
-                         <Label Text="Completadas" FontSize="12" TextColor="{StaticResource Gray500Jazer}"/>
+                <HorizontalStackLayout Spacing="12" Margin="16,0,0,0">
+                     <VerticalStackLayout WidthRequest="85">
+                         <Label Text="{Binding TareasCompletadas}" FontSize="22" FontAttributes="Bold" TextColor="{StaticResource Green500}"/>
+                         <Label Text="Completadas" FontSize="10" TextColor="{StaticResource Gray500Jazer}"/>
                      </VerticalStackLayout>
-                     <BoxView WidthRequest="1" Color="{StaticResource Gray100Jazer}" HorizontalOptions="End" Margin="0,4"/>
+                     <BoxView WidthRequest="1" Color="{StaticResource Gray200Jazer}" Margin="0,4"/>
                 </HorizontalStackLayout>
 
-                <HorizontalStackLayout Grid.Column="2" Spacing="12" Margin="12,0,0,0">
-                     <VerticalStackLayout>
-                         <Label Text="{Binding TareasPendientesCount}" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Yellow600}"/>
-                         <Label Text="Pendientes" FontSize="12" TextColor="{StaticResource Gray500Jazer}"/>
+                <HorizontalStackLayout Spacing="12" Margin="16,0,0,0">
+                     <VerticalStackLayout WidthRequest="85">
+                         <Label Text="{Binding TareasPendientesCount}" FontSize="22" FontAttributes="Bold" TextColor="{StaticResource Yellow600}"/>
+                         <Label Text="Pendientes" FontSize="10" TextColor="{StaticResource Gray500Jazer}"/>
                      </VerticalStackLayout>
-                     <BoxView WidthRequest="1" Color="{StaticResource Gray100Jazer}" HorizontalOptions="End" Margin="0,4"/>
+                     <BoxView WidthRequest="1" Color="{StaticResource Gray200Jazer}" Margin="0,4"/>
                 </HorizontalStackLayout>
-
-                <HorizontalStackLayout Grid.Column="3" Spacing="12" Margin="12,0,0,0">
+                
+                <!-- NUEVAS MÉTRICAS -->
+                <HorizontalStackLayout Spacing="12" Margin="16,0,0,0">
+                     <VerticalStackLayout WidthRequest="70">
+                         <Label Text="{Binding TareasVencidas}" FontSize="22" FontAttributes="Bold" TextColor="{StaticResource Red500}"/>
+                         <Label Text="Vencidas" FontSize="10" TextColor="{StaticResource Gray500Jazer}"/>
+                     </VerticalStackLayout>
+                     <BoxView WidthRequest="1" Color="{StaticResource Gray200Jazer}" Margin="0,4"/>
+                </HorizontalStackLayout>
+                
+                <HorizontalStackLayout Spacing="12" Margin="16,0,0,0">
+                     <VerticalStackLayout WidthRequest="70">
+                         <Label Text="{Binding PorcentajeEficiencia, StringFormat='{0}%'}" FontSize="22" FontAttributes="Bold" TextColor="{StaticResource Blue500}"/>
+                         <Label Text="Eficiencia" FontSize="10" TextColor="{StaticResource Gray500Jazer}"/>
+                     </VerticalStackLayout>
+                     <BoxView WidthRequest="1" Color="{StaticResource Gray200Jazer}" Margin="0,4"/>
+                </HorizontalStackLayout>
+                
+                <HorizontalStackLayout Spacing="8" Margin="16,0,0,0">
                      <VerticalStackLayout>
-                         <Label Text="{Binding TiempoSesion}" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource Purple500}" FontFamily="Consolas"/>
-                         <Label Text="Tiempo Sesión" FontSize="12" TextColor="{StaticResource Gray500Jazer}"/>
+                         <HorizontalStackLayout Spacing="4">
+                             <Path Data="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z M12 18a3.75 3.75 0 0 0 .495-7.468 5.99 5.99 0 0 0-1.925 3.547 5.975 5.975 0 0 1-2.133-1.001A3.75 3.75 0 0 0 12 18Z" 
+                                   Fill="{StaticResource Orange500}" WidthRequest="18" HeightRequest="18" Aspect="Uniform" VerticalOptions="Center"/>
+                             <Label Text="{Binding RachaTexto}" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource Orange500}" VerticalOptions="Center"/>
+                         </HorizontalStackLayout>
+                         <Label Text="Racha" FontSize="10" TextColor="{StaticResource Gray500Jazer}"/>
                      </VerticalStackLayout>
                 </HorizontalStackLayout>
-            </Grid>
+            </HorizontalStackLayout>
         </Border>
 
         <!-- Pestañas principales -->
@@ -255,76 +273,325 @@
                 </ScrollView.Triggers>
                      
                 <VerticalStackLayout Spacing="24" Padding="0,0,0,20">
+                
+                     <!-- ============================================ -->
+                     <!-- SECCIÓN SUPERIOR: Mi Día + Progreso + Historial + Notas -->
+                     <!-- ============================================ -->
+                     <Grid ColumnDefinitions="*,300" ColumnSpacing="24">
+                         <!-- COLUMNA IZQUIERDA: Mi Día + Progreso Semanal -->
+                         <VerticalStackLayout Grid.Column="0" Spacing="16">
+                             
+                             <!-- MI DÍA - Tareas Urgentes -->
+                             <Border BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" StrokeShape="RoundRectangle 12" Padding="20">
+                                 <VerticalStackLayout Spacing="12">
+                                     <HorizontalStackLayout Spacing="8">
+                                         <Path Data="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" 
+                                               Stroke="{StaticResource Orange500}" StrokeThickness="2" WidthRequest="22" HeightRequest="22" Aspect="Uniform"/>
+                                         <Label Text="Mi Día" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource Gray900Jazer}"/>
+                                         <Border Padding="6,2" StrokeShape="RoundRectangle 10" BackgroundColor="{StaticResource Orange100}" StrokeThickness="0">
+                                             <Label Text="{Binding TareasDelDia.Count, StringFormat='{0} urgentes'}" FontSize="11" TextColor="{StaticResource Orange700}" FontAttributes="Bold"/>
+                                         </Border>
+                                     </HorizontalStackLayout>
+                                     
+                                     <!-- Lista de tareas urgentes -->
+                                     <CollectionView ItemsSource="{Binding TareasDelDia}" HeightRequest="160">
+                                         <CollectionView.EmptyView>
+                                             <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="8" Padding="20">
+                                                 <Path Data="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" 
+                                                       Stroke="{StaticResource Green500}" StrokeThickness="2" WidthRequest="40" HeightRequest="40" Aspect="Uniform" HorizontalOptions="Center"/>
+                                                 <Label Text="¡Todo al día!" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource Green600}" HorizontalOptions="Center"/>
+                                                 <Label Text="No tienes tareas urgentes pendientes" FontSize="12" TextColor="{StaticResource Gray500Jazer}" HorizontalOptions="Center"/>
+                                             </VerticalStackLayout>
+                                         </CollectionView.EmptyView>
+                                         <CollectionView.ItemTemplate>
+                                             <DataTemplate>
+                                                 <Border Margin="0,4" Padding="12,10" BackgroundColor="{StaticResource Gray50}" StrokeShape="RoundRectangle 8" StrokeThickness="0">
+                                                     <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                                         <!-- Indicador de urgencia -->
+                                                         <Border WidthRequest="4" HeightRequest="36" StrokeShape="RoundRectangle 2" StrokeThickness="0" VerticalOptions="Center">
+                                                             <Border.Triggers>
+                                                                 <DataTrigger TargetType="Border" Binding="{Binding Prioridad}" Value="alta">
+                                                                     <Setter Property="BackgroundColor" Value="{StaticResource Red500}"/>
+                                                                 </DataTrigger>
+                                                                 <DataTrigger TargetType="Border" Binding="{Binding Prioridad}" Value="urgente">
+                                                                     <Setter Property="BackgroundColor" Value="{StaticResource Red500}"/>
+                                                                 </DataTrigger>
+                                                             </Border.Triggers>
+                                                             <Border.Style>
+                                                                 <Style TargetType="Border">
+                                                                     <Setter Property="BackgroundColor" Value="{StaticResource Orange500}"/>
+                                                                 </Style>
+                                                             </Border.Style>
+                                                         </Border>
+                                                         
+                                                         <!-- Info de tarea -->
+                                                         <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                                             <Label Text="{Binding Titulo}" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource Gray900Jazer}" LineBreakMode="TailTruncation"/>
+                                                             <HorizontalStackLayout Spacing="8">
+                                                                 <HorizontalStackLayout Spacing="4">
+                                                                     <Path Data="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" 
+                                                                           Stroke="{StaticResource Gray400Jazer}" StrokeThickness="1.5" WidthRequest="12" HeightRequest="12" Aspect="Uniform"/>
+                                                                     <Label Text="{Binding FechaVencimiento, StringFormat='{0:dd MMM}'}" FontSize="11" TextColor="{StaticResource Gray500Jazer}"/>
+                                                                 </HorizontalStackLayout>
+                                                             </HorizontalStackLayout>
+                                                         </VerticalStackLayout>
+                                                         
+                                                         <!-- Botón completar rápido -->
+                                                         <Border Grid.Column="2" BackgroundColor="{StaticResource Green100}" StrokeShape="RoundRectangle 6" 
+                                                                 HeightRequest="32" WidthRequest="32" StrokeThickness="0">
+                                                             <Border.GestureRecognizers>
+                                                                 <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CentroControlContadorVM}}, Path=CompletarTareaCommand}" CommandParameter="{Binding .}"/>
+                                                             </Border.GestureRecognizers>
+                                                             <Path Data="m4.5 12.75 6 6 9-13.5" 
+                                                                   Stroke="{StaticResource Green600}" StrokeThickness="2" 
+                                                                   WidthRequest="14" HeightRequest="14" Aspect="Uniform" HorizontalOptions="Center" VerticalOptions="Center"/>
+                                                         </Border>
+                                                     </Grid>
+                                                 </Border>
+                                             </DataTemplate>
+                                         </CollectionView.ItemTemplate>
+                                     </CollectionView>
+                                 </VerticalStackLayout>
+                             </Border>
+                             
+                             <!-- PROGRESO SEMANAL - Gráfica de barras -->
+                             <Border BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" StrokeShape="RoundRectangle 12" Padding="20">
+                                 <VerticalStackLayout Spacing="16">
+                                     <HorizontalStackLayout Spacing="8">
+                                         <Path Data="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" 
+                                               Stroke="{StaticResource Blue500}" StrokeThickness="2" WidthRequest="20" HeightRequest="20" Aspect="Uniform"/>
+                                         <Label Text="Progreso Semanal" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource Gray900Jazer}"/>
+                                     </HorizontalStackLayout>
+                                     
+                                     <!-- Gráfica de barras -->
+                                     <Grid HeightRequest="100" Padding="0,10">
+                                         <CollectionView ItemsSource="{Binding ProgresoSemanal}" VerticalOptions="End">
+                                             <CollectionView.ItemsLayout>
+                                                 <LinearItemsLayout Orientation="Horizontal" ItemSpacing="8"/>
+                                             </CollectionView.ItemsLayout>
+                                             <CollectionView.ItemTemplate>
+                                                 <DataTemplate>
+                                                     <VerticalStackLayout Spacing="6" WidthRequest="40" VerticalOptions="End">
+                                                         <!-- Número de tareas -->
+                                                         <Label Text="{Binding Cantidad}" FontSize="11" FontAttributes="Bold" 
+                                                                HorizontalOptions="Center" TextColor="{StaticResource Gray600Jazer}"/>
+                                                         <!-- Barra -->
+                                                         <Border HeightRequest="{Binding AlturaBarra}" WidthRequest="28" 
+                                                                 StrokeShape="RoundRectangle 4,4,0,0" StrokeThickness="0"
+                                                                 HorizontalOptions="Center">
+                                                             <Border.Triggers>
+                                                                 <DataTrigger TargetType="Border" Binding="{Binding EsHoy}" Value="True">
+                                                                     <Setter Property="BackgroundColor" Value="{StaticResource Blue500}"/>
+                                                                 </DataTrigger>
+                                                                 <DataTrigger TargetType="Border" Binding="{Binding EsHoy}" Value="False">
+                                                                     <Setter Property="BackgroundColor" Value="{StaticResource Blue200}"/>
+                                                                 </DataTrigger>
+                                                             </Border.Triggers>
+                                                         </Border>
+                                                         <!-- Día -->
+                                                         <Label Text="{Binding DiaSemana}" FontSize="10" HorizontalOptions="Center">
+                                                             <Label.Triggers>
+                                                                 <DataTrigger TargetType="Label" Binding="{Binding EsHoy}" Value="True">
+                                                                     <Setter Property="TextColor" Value="{StaticResource Blue600}"/>
+                                                                     <Setter Property="FontAttributes" Value="Bold"/>
+                                                                 </DataTrigger>
+                                                                 <DataTrigger TargetType="Label" Binding="{Binding EsHoy}" Value="False">
+                                                                     <Setter Property="TextColor" Value="{StaticResource Gray500Jazer}"/>
+                                                                 </DataTrigger>
+                                                             </Label.Triggers>
+                                                         </Label>
+                                                     </VerticalStackLayout>
+                                                 </DataTemplate>
+                                             </CollectionView.ItemTemplate>
+                                         </CollectionView>
+                                     </Grid>
+                                 </VerticalStackLayout>
+                             </Border>
+                         </VerticalStackLayout>
+                         
+                         <!-- COLUMNA DERECHA: Historial + Notas -->
+                         <VerticalStackLayout Grid.Column="1" Spacing="16">
+                             
+                             <!-- HISTORIAL DE ACTIVIDAD -->
+                             <Border BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" StrokeShape="RoundRectangle 12" Padding="16" HeightRequest="180">
+                                 <VerticalStackLayout Spacing="12">
+                                     <HorizontalStackLayout Spacing="8">
+                                         <Path Data="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" 
+                                               Stroke="{StaticResource Purple500}" StrokeThickness="2" WidthRequest="18" HeightRequest="18" Aspect="Uniform"/>
+                                         <Label Text="Actividad Reciente" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource Gray900Jazer}"/>
+                                     </HorizontalStackLayout>
+                                     
+                                     <CollectionView ItemsSource="{Binding HistorialActividad}" HeightRequest="120">
+                                         <CollectionView.EmptyView>
+                                             <Label Text="Sin actividad reciente" FontSize="12" TextColor="{StaticResource Gray400Jazer}" HorizontalOptions="Center" VerticalOptions="Center"/>
+                                         </CollectionView.EmptyView>
+                                         <CollectionView.ItemTemplate>
+                                             <DataTemplate>
+                                                 <Grid ColumnDefinitions="24,*,Auto" ColumnSpacing="8" Padding="0,4">
+                                                     <!-- Icono -->
+                                                     <Border HeightRequest="20" WidthRequest="20" StrokeShape="RoundRectangle 10" StrokeThickness="0"
+                                                             BackgroundColor="{Binding ColorIcono}" HorizontalOptions="Center">
+                                                         <Path Data="m4.5 12.75 6 6 9-13.5" Stroke="White" StrokeThickness="1.5" 
+                                                               WidthRequest="10" HeightRequest="10" Aspect="Uniform" HorizontalOptions="Center" VerticalOptions="Center"/>
+                                                     </Border>
+                                                     <!-- Texto -->
+                                                     <Label Grid.Column="1" Text="{Binding Titulo}" FontSize="11" TextColor="{StaticResource Gray700Jazer}" 
+                                                            LineBreakMode="TailTruncation" VerticalOptions="Center"/>
+                                                     <!-- Tiempo -->
+                                                     <Label Grid.Column="2" Text="{Binding TiempoRelativo}" FontSize="10" TextColor="{StaticResource Gray400Jazer}" VerticalOptions="Center"/>
+                                                 </Grid>
+                                             </DataTemplate>
+                                         </CollectionView.ItemTemplate>
+                                     </CollectionView>
+                                 </VerticalStackLayout>
+                             </Border>
+                             
+                             <!-- NOTAS RÁPIDAS -->
+                             <Border BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" StrokeShape="RoundRectangle 12" Padding="16">
+                                 <VerticalStackLayout Spacing="12">
+                                     <Grid ColumnDefinitions="*,Auto,Auto">
+                                         <HorizontalStackLayout Spacing="8">
+                                             <Path Data="M16.862 4.487l1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" 
+                                                   Stroke="{StaticResource Yellow600}" StrokeThickness="2" WidthRequest="18" HeightRequest="18" Aspect="Uniform"/>
+                                             <Label Text="Notas Rápidas" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource Gray900Jazer}"/>
+                                         </HorizontalStackLayout>
+                                         <Button Grid.Column="1" Text="Limpiar" Command="{Binding LimpiarNotasCommand}"
+                                                 BackgroundColor="{StaticResource Red100}" TextColor="{StaticResource Red600}"
+                                                 FontSize="10" HeightRequest="26" Padding="10,0" CornerRadius="6" Margin="0,0,8,0"/>
+                                         <Button Grid.Column="2" Text="Guardar" Command="{Binding GuardarNotasCommand}"
+                                                 BackgroundColor="{StaticResource Yellow100}" TextColor="{StaticResource Yellow700}"
+                                                 FontSize="10" HeightRequest="26" Padding="10,0" CornerRadius="6"/>
+                                     </Grid>
+                                     
+                                     <Border Stroke="{StaticResource Gray200Jazer}" StrokeShape="RoundRectangle 8" Padding="8" BackgroundColor="{StaticResource Yellow50}">
+                                         <Editor Text="{Binding NotasRapidas}" Placeholder="Escribe tus notas del día aquí..." 
+                                                 PlaceholderColor="{StaticResource Gray400Jazer}" TextColor="{StaticResource Gray800Jazer}"
+                                                 FontSize="12" HeightRequest="100" AutoSize="Disabled" BackgroundColor="Transparent"/>
+                                     </Border>
+                                     
+                                     <!-- Mensaje de confirmación de guardado -->
+                                     <Border IsVisible="{Binding NotaGuardadaVisible}" BackgroundColor="{StaticResource Green50}" 
+                                             Stroke="{StaticResource Green200}" StrokeShape="RoundRectangle 6" Padding="10,8">
+                                         <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
+                                             <Path Data="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" 
+                                                   Stroke="{StaticResource Green600}" StrokeThickness="1.5" 
+                                                   WidthRequest="16" HeightRequest="16" Aspect="Uniform" VerticalOptions="Center"/>
+                                             <Label Text="{Binding NotaGuardadaMensaje}" FontSize="12" TextColor="{StaticResource Green700}" VerticalOptions="Center"/>
+                                         </HorizontalStackLayout>
+                                     </Border>
+                                 </VerticalStackLayout>
+                             </Border>
+                         </VerticalStackLayout>
+                     </Grid>
+                     
+                     <!-- Separador visual -->
+                     <BoxView HeightRequest="1" Color="{StaticResource Gray200Jazer}" Margin="0,8"/>
                      
                      <Grid ColumnDefinitions="*,Auto">
-                         <HorizontalStackLayout Grid.Column="0" Spacing="10">
+                         <VerticalStackLayout Grid.Column="0" Spacing="8">
+                             <HorizontalStackLayout Spacing="10">
+                                 
+                                 <Button Text="Todas" 
+                                         Command="{Binding AplicarFiltroCommand}" CommandParameter="Todas"
+                                         HeightRequest="36" Padding="16,0" FontSize="13" CornerRadius="6" BorderWidth="1">
+                                     <Button.Triggers>
+                                         <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="Todas">
+                                             <Setter Property="BackgroundColor" Value="{StaticResource Blue500}"/>
+                                             <Setter Property="TextColor" Value="White"/>
+                                             <Setter Property="BorderColor" Value="{StaticResource Blue500}"/>
+                                         </DataTrigger>
+                                         <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="Pendientes">
+                                             <Setter Property="BackgroundColor" Value="White"/>
+                                             <Setter Property="TextColor" Value="{StaticResource Gray700Jazer}"/>
+                                             <Setter Property="BorderColor" Value="{StaticResource Gray300Jazer}"/>
+                                         </DataTrigger>
+                                         <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="Completadas">
+                                             <Setter Property="BackgroundColor" Value="White"/>
+                                             <Setter Property="TextColor" Value="{StaticResource Gray700Jazer}"/>
+                                             <Setter Property="BorderColor" Value="{StaticResource Gray300Jazer}"/>
+                                         </DataTrigger>
+                                     </Button.Triggers>
+                                 </Button>
+
+                                 <Button Text="Pendientes" 
+                                         Command="{Binding AplicarFiltroCommand}" CommandParameter="Pendientes"
+                                         HeightRequest="36" Padding="16,0" FontSize="13" CornerRadius="6" BorderWidth="1">
+                                     <Button.Triggers>
+                                         <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="Pendientes">
+                                             <Setter Property="BackgroundColor" Value="{StaticResource Blue500}"/>
+                                             <Setter Property="TextColor" Value="White"/>
+                                             <Setter Property="BorderColor" Value="{StaticResource Blue500}"/>
+                                         </DataTrigger>
+                                         <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="Todas">
+                                             <Setter Property="BackgroundColor" Value="White"/>
+                                             <Setter Property="TextColor" Value="{StaticResource Gray700Jazer}"/>
+                                             <Setter Property="BorderColor" Value="{StaticResource Gray300Jazer}"/>
+                                         </DataTrigger>
+                                         <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="Completadas">
+                                             <Setter Property="BackgroundColor" Value="White"/>
+                                             <Setter Property="TextColor" Value="{StaticResource Gray700Jazer}"/>
+                                             <Setter Property="BorderColor" Value="{StaticResource Gray300Jazer}"/>
+                                         </DataTrigger>
+                                     </Button.Triggers>
+                                 </Button>
+
+                                 <Button Text="Completadas" 
+                                         Command="{Binding AplicarFiltroCommand}" CommandParameter="Completadas"
+                                         HeightRequest="36" Padding="16,0" FontSize="13" CornerRadius="6" BorderWidth="1">
+                                     <Button.Triggers>
+                                         <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="Completadas">
+                                             <Setter Property="BackgroundColor" Value="{StaticResource Blue500}"/>
+                                             <Setter Property="TextColor" Value="White"/>
+                                             <Setter Property="BorderColor" Value="{StaticResource Blue500}"/>
+                                         </DataTrigger>
+                                         <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="Todas">
+                                             <Setter Property="BackgroundColor" Value="White"/>
+                                             <Setter Property="TextColor" Value="{StaticResource Gray700Jazer}"/>
+                                             <Setter Property="BorderColor" Value="{StaticResource Gray300Jazer}"/>
+                                         </DataTrigger>
+                                         <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="Pendientes">
+                                             <Setter Property="BackgroundColor" Value="White"/>
+                                             <Setter Property="TextColor" Value="{StaticResource Gray700Jazer}"/>
+                                             <Setter Property="BorderColor" Value="{StaticResource Gray300Jazer}"/>
+                                         </DataTrigger>
+                                     </Button.Triggers>
+                                 </Button>
+                             </HorizontalStackLayout>
                              
-                             <Button Text="Todas" 
-                                     Command="{Binding AplicarFiltroCommand}" CommandParameter="Todas"
-                                     HeightRequest="36" Padding="16,0" FontSize="13" CornerRadius="6" BorderWidth="1">
-                                 <Button.Triggers>
-                                     <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="Todas">
-                                         <Setter Property="BackgroundColor" Value="{StaticResource Blue500}"/>
-                                         <Setter Property="TextColor" Value="White"/>
-                                         <Setter Property="BorderColor" Value="{StaticResource Blue500}"/>
-                                     </DataTrigger>
-                                     <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="Pendientes">
-                                         <Setter Property="BackgroundColor" Value="White"/>
-                                         <Setter Property="TextColor" Value="{StaticResource Gray700Jazer}"/>
-                                         <Setter Property="BorderColor" Value="{StaticResource Gray300Jazer}"/>
-                                     </DataTrigger>
-                                     <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="Completadas">
-                                         <Setter Property="BackgroundColor" Value="White"/>
-                                         <Setter Property="TextColor" Value="{StaticResource Gray700Jazer}"/>
-                                         <Setter Property="BorderColor" Value="{StaticResource Gray300Jazer}"/>
-                                     </DataTrigger>
-                                 </Button.Triggers>
-                             </Button>
-
-                             <Button Text="Pendientes" 
-                                     Command="{Binding AplicarFiltroCommand}" CommandParameter="Pendientes"
-                                     HeightRequest="36" Padding="16,0" FontSize="13" CornerRadius="6" BorderWidth="1">
-                                 <Button.Triggers>
-                                     <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="Pendientes">
-                                         <Setter Property="BackgroundColor" Value="{StaticResource Blue500}"/>
-                                         <Setter Property="TextColor" Value="White"/>
-                                         <Setter Property="BorderColor" Value="{StaticResource Blue500}"/>
-                                     </DataTrigger>
-                                     <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="Todas">
-                                         <Setter Property="BackgroundColor" Value="White"/>
-                                         <Setter Property="TextColor" Value="{StaticResource Gray700Jazer}"/>
-                                         <Setter Property="BorderColor" Value="{StaticResource Gray300Jazer}"/>
-                                     </DataTrigger>
-                                     <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="Completadas">
-                                         <Setter Property="BackgroundColor" Value="White"/>
-                                         <Setter Property="TextColor" Value="{StaticResource Gray700Jazer}"/>
-                                         <Setter Property="BorderColor" Value="{StaticResource Gray300Jazer}"/>
-                                     </DataTrigger>
-                                 </Button.Triggers>
-                             </Button>
-
-                             <Button Text="Completadas" 
-                                     Command="{Binding AplicarFiltroCommand}" CommandParameter="Completadas"
-                                     HeightRequest="36" Padding="16,0" FontSize="13" CornerRadius="6" BorderWidth="1">
-                                 <Button.Triggers>
-                                     <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="Completadas">
-                                         <Setter Property="BackgroundColor" Value="{StaticResource Blue500}"/>
-                                         <Setter Property="TextColor" Value="White"/>
-                                         <Setter Property="BorderColor" Value="{StaticResource Blue500}"/>
-                                     </DataTrigger>
-                                     <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="Todas">
-                                         <Setter Property="BackgroundColor" Value="White"/>
-                                         <Setter Property="TextColor" Value="{StaticResource Gray700Jazer}"/>
-                                         <Setter Property="BorderColor" Value="{StaticResource Gray300Jazer}"/>
-                                     </DataTrigger>
-                                     <DataTrigger TargetType="Button" Binding="{Binding FiltroActual}" Value="Pendientes">
-                                         <Setter Property="BackgroundColor" Value="White"/>
-                                         <Setter Property="TextColor" Value="{StaticResource Gray700Jazer}"/>
-                                         <Setter Property="BorderColor" Value="{StaticResource Gray300Jazer}"/>
-                                     </DataTrigger>
-                                 </Button.Triggers>
-                             </Button>
-                         </HorizontalStackLayout>
+                             <!-- Filtros por Etiquetas -->
+                             <HorizontalStackLayout Spacing="8" IsVisible="{Binding EtiquetasDisponibles.Count, Converter={StaticResource IntToBoolConverter}}">
+                                 <Label Text="Etiquetas:" FontSize="12" TextColor="{StaticResource Gray500Jazer}" VerticalOptions="Center"/>
+                                 <CollectionView ItemsSource="{Binding EtiquetasDisponibles}" HeightRequest="32" VerticalOptions="Center">
+                                     <CollectionView.ItemsLayout>
+                                         <LinearItemsLayout Orientation="Horizontal" ItemSpacing="6"/>
+                                     </CollectionView.ItemsLayout>
+                                     <CollectionView.ItemTemplate>
+                                         <DataTemplate>
+                                             <Border Padding="8,4" StrokeShape="RoundRectangle 12" StrokeThickness="1"
+                                                     Stroke="{Binding ColorEtiqueta}" BackgroundColor="{StaticResource White}">
+                                                 <Border.GestureRecognizers>
+                                                     <TapGestureRecognizer 
+                                                         Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CentroControlContadorVM}}, Path=FiltrarPorEtiquetaCommand}"
+                                                         CommandParameter="{Binding .}"/>
+                                                 </Border.GestureRecognizers>
+                                                 <HorizontalStackLayout Spacing="4">
+                                                     <Path Data="{Binding Icono, Converter={StaticResource IconNameToPathConverter}}" 
+                                                           Stroke="{Binding ColorEtiqueta}" StrokeThickness="1.5"
+                                                           WidthRequest="11" HeightRequest="11" Aspect="Uniform" VerticalOptions="Center"/>
+                                                     <Label Text="{Binding Nombre}" FontSize="11" TextColor="{Binding ColorEtiqueta}" VerticalOptions="Center"/>
+                                                 </HorizontalStackLayout>
+                                             </Border>
+                                         </DataTemplate>
+                                     </CollectionView.ItemTemplate>
+                                 </CollectionView>
+                                 
+                                 <!-- Botón quitar filtro -->
+                                 <Button Text="X Quitar" FontSize="11" HeightRequest="28" Padding="8,0"
+                                         BackgroundColor="{StaticResource Red100}" TextColor="{StaticResource Red600}"
+                                         CornerRadius="6" IsVisible="{Binding FiltrandoPorEtiqueta}"
+                                         Command="{Binding QuitarFiltroEtiquetaCommand}"/>
+                             </HorizontalStackLayout>
+                         </VerticalStackLayout>
                          
                          <Border Grid.Column="1" Stroke="{StaticResource Gray300Jazer}" StrokeShape="RoundRectangle 6" BackgroundColor="White" Padding="8,0" HeightRequest="36">
                              <Grid ColumnDefinitions="*">
@@ -336,7 +603,7 @@
                      <Border BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" StrokeShape="RoundRectangle 8">
                          <Grid RowDefinitions="Auto,*">
                              
-                             <Grid Grid.Row="0" ColumnDefinitions="120,*,140,100,100" BackgroundColor="{StaticResource Gray50}" Padding="20,12">
+                             <Grid Grid.Row="0" ColumnDefinitions="120,*,140,100,140" BackgroundColor="{StaticResource Gray50}" Padding="20,12">
                                  <Label Grid.Column="0" Text="ESTADO" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource Gray500Jazer}"/>
                                  <Label Grid.Column="1" Text="TAREA" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource Gray500Jazer}"/>
                                  <Label Grid.Column="2" Text="FECHA LÍMITE" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource Gray500Jazer}"/>
@@ -347,7 +614,7 @@
                              <CollectionView Grid.Row="1" ItemsSource="{Binding Tareas}" VerticalScrollBarVisibility="Always" HeightRequest="600">
                                  <CollectionView.ItemTemplate>
                                      <DataTemplate>
-                                         <Grid ColumnDefinitions="120,*,140,100,100" Padding="20,16" BackgroundColor="White">
+                                         <Grid ColumnDefinitions="120,*,140,100,140" Padding="20,16" BackgroundColor="White">
                                              <VisualStateManager.VisualStateGroups>
                                                  <VisualStateGroup x:Name="CommonStates">
                                                      <VisualState x:Name="Normal" />
@@ -384,7 +651,23 @@
                                              
                                              <Label Grid.Column="3" Text="{Binding TiempoEstimado, StringFormat='{0}h'}" HorizontalOptions="Center" VerticalOptions="Center" TextColor="{StaticResource Gray700Jazer}"/>
                                              
-                                             <Grid Grid.Column="4" HorizontalOptions="Center">
+                                             <HorizontalStackLayout Grid.Column="4" HorizontalOptions="Center" Spacing="4">
+                                                 <!-- Botón Comentarios -->
+                                                 <Border BackgroundColor="{StaticResource White}" 
+                                                         Stroke="{StaticResource Blue400}"
+                                                         StrokeThickness="1"
+                                                         HeightRequest="30" WidthRequest="36"
+                                                         StrokeShape="RoundRectangle 6">
+                                                     <Border.GestureRecognizers>
+                                                         <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CentroControlContadorVM}}, Path=AbrirComentariosCommand}" CommandParameter="{Binding .}"/>
+                                                     </Border.GestureRecognizers>
+                                                     <Path Data="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" 
+                                                          Stroke="{StaticResource Blue500}" StrokeThickness="1.5" 
+                                                          WidthRequest="14" HeightRequest="14" Aspect="Uniform"
+                                                          HorizontalOptions="Center" VerticalOptions="Center"/>
+                                                 </Border>
+                                                 
+                                                 <!-- Botón Completar/Deshacer -->
                                                  <Button Text="Completar" 
                                                          BackgroundColor="{StaticResource White}" 
                                                          BorderColor="{StaticResource Green500}"
@@ -427,7 +710,7 @@
                                                          </DataTrigger>
                                                      </Button.Triggers>
                                                  </Button>
-                                             </Grid>
+                                             </HorizontalStackLayout>
                                          </Grid>
                                      </DataTemplate>
                                  </CollectionView.ItemTemplate>
@@ -473,11 +756,27 @@
                             <Label Text="Notificaciones Recientes" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource Gray700Jazer}"/>
                             <CollectionView ItemsSource="{Binding Notificaciones}" VerticalScrollBarVisibility="Always" HeightRequest="300">
                                 <CollectionView.EmptyView>
-                                    <Label Text="No hay notificaciones nuevas" TextColor="{StaticResource Gray400Jazer}" HorizontalOptions="Center" Margin="0,20"/>
+                                    <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="10" Padding="20">
+                                        <Path Data="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22ZM12 8V12M12 16H12.01" 
+                                              Stroke="{StaticResource Gray300Jazer}" StrokeThickness="2" WidthRequest="40" HeightRequest="40"
+                                              Aspect="Uniform" HorizontalOptions="Center"/>
+                                        <Label Text="No hay notificaciones nuevas" TextColor="{StaticResource Gray400Jazer}" HorizontalOptions="Center"/>
+                                    </VerticalStackLayout>
                                 </CollectionView.EmptyView>
                                 <CollectionView.ItemTemplate>
                                     <DataTemplate>
                                         <Border Margin="0,4" Padding="16" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" StrokeShape="RoundRectangle 8">
+                                            <Border.Triggers>
+                                                <DataTrigger TargetType="Border" Binding="{Binding Vista}" Value="False">
+                                                    <Setter Property="BackgroundColor" Value="{StaticResource Blue50}"/>
+                                                    <Setter Property="Stroke" Value="{StaticResource Blue200}"/>
+                                                </DataTrigger>
+                                            </Border.Triggers>
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer 
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CentroControlContadorVM}}, Path=MarcarAlertaVistaCommand}"
+                                                    CommandParameter="{Binding .}"/>
+                                            </Border.GestureRecognizers>
                                             <VisualStateManager.VisualStateGroups>
                                                  <VisualStateGroup x:Name="CommonStates">
                                                      <VisualState x:Name="Normal" />
@@ -488,15 +787,39 @@
                                                      </VisualState>
                                                  </VisualStateGroup>
                                              </VisualStateManager.VisualStateGroups>
-                                            <Grid ColumnDefinitions="40,*,Auto">
-                                                <Border Grid.Column="0" HeightRequest="32" WidthRequest="32" StrokeShape="RoundRectangle 16" BackgroundColor="{StaticResource Blue50}" StrokeThickness="0" VerticalOptions="Center" HorizontalOptions="Center">
-                                                <Label Text="{Binding Titulo, Converter={StaticResource StringToInitialsConverter}}" HorizontalOptions="Center" VerticalOptions="Center" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource Blue600}"/>
-                                            </Border>
+                                            <Grid ColumnDefinitions="40,*,Auto" ColumnSpacing="12">
+                                                <Border Grid.Column="0" HeightRequest="32" WidthRequest="32" StrokeShape="RoundRectangle 16" StrokeThickness="0" VerticalOptions="Center" HorizontalOptions="Center">
+                                                    <Border.Triggers>
+                                                        <DataTrigger TargetType="Border" Binding="{Binding Vista}" Value="False">
+                                                            <Setter Property="BackgroundColor" Value="{StaticResource Blue100}"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger TargetType="Border" Binding="{Binding Vista}" Value="True">
+                                                            <Setter Property="BackgroundColor" Value="{StaticResource Gray100}"/>
+                                                        </DataTrigger>
+                                                    </Border.Triggers>
+                                                    <Path Data="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22ZM12 8V12M12 16H12.01" 
+                                                          Stroke="{StaticResource Blue600}" StrokeThickness="1.5" WidthRequest="16" HeightRequest="16"
+                                                          Aspect="Uniform" HorizontalOptions="Center" VerticalOptions="Center"/>
+                                                </Border>
                                                 <VerticalStackLayout Grid.Column="1" Spacing="2">
-                                                    <Label Text="{Binding Mensaje}" TextColor="{StaticResource Gray800Jazer}" FontSize="14"/>
+                                                    <Label Text="{Binding Mensaje}" FontSize="14">
+                                                        <Label.Triggers>
+                                                            <DataTrigger TargetType="Label" Binding="{Binding Vista}" Value="False">
+                                                                <Setter Property="TextColor" Value="{StaticResource Gray900Jazer}"/>
+                                                                <Setter Property="FontAttributes" Value="Bold"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger TargetType="Label" Binding="{Binding Vista}" Value="True">
+                                                                <Setter Property="TextColor" Value="{StaticResource Gray600Jazer}"/>
+                                                                <Setter Property="FontAttributes" Value="None"/>
+                                                            </DataTrigger>
+                                                        </Label.Triggers>
+                                                    </Label>
                                                     <Label Text="{Binding FechaCreacion, StringFormat='{0:g}'}" TextColor="{StaticResource Gray500Jazer}" FontSize="12"/>
                                                 </VerticalStackLayout>
-                                                <BoxView Grid.Column="2" HeightRequest="8" WidthRequest="8" CornerRadius="4" Color="{StaticResource Blue500}" IsVisible="{Binding Vista, Converter={StaticResource InverseBoolConverter}}" VerticalOptions="Center"/>
+                                                <Border Grid.Column="2" HeightRequest="10" WidthRequest="10" 
+                                                        StrokeShape="RoundRectangle 5" BackgroundColor="{StaticResource Blue500}" StrokeThickness="0"
+                                                        IsVisible="{Binding Vista, Converter={StaticResource InverseBoolConverter}}" 
+                                                        VerticalOptions="Center"/>
                                             </Grid>
                                         </Border>
                                     </DataTemplate>
@@ -513,74 +836,272 @@
                      </DataTrigger>
                 </Grid.Triggers>
                 
-                <CollectionView Grid.Row="0" ItemsSource="{Binding Mensajes}" ItemsUpdatingScrollMode="KeepLastItemInView" VerticalScrollBarVisibility="Always">
+                <CollectionView Grid.Row="0" ItemsSource="{Binding Mensajes}" ItemsUpdatingScrollMode="KeepLastItemInView" 
+                                VerticalScrollBarVisibility="Always" Margin="12">
                     <CollectionView.EmptyView>
-                         <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="10">
-                             <Label Text="Sin mensajes" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource Gray400Jazer}" HorizontalOptions="Center"/>
-                             <Label Text="No hay mensajes aún" TextColor="{StaticResource Gray400Jazer}"/>
+                         <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="12" Padding="40">
+                             <Border BackgroundColor="{StaticResource Gray100}" StrokeShape="RoundRectangle 40" 
+                                     HeightRequest="80" WidthRequest="80" StrokeThickness="0" HorizontalOptions="Center">
+                                 <Path Data="M2 6C2 4.89543 2.89543 4 4 4H20C21.1046 4 22 4.89543 22 6V18C22 19.1046 21.1046 20 20 20H6L2 24V6Z" 
+                                       Fill="{StaticResource Gray400Jazer}" WidthRequest="32" HeightRequest="32"
+                                       Aspect="Uniform" HorizontalOptions="Center" VerticalOptions="Center"/>
+                             </Border>
+                             <Label Text="Sin mensajes" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource Gray500Jazer}" HorizontalOptions="Center"/>
+                             <Label Text="No hay mensajes aún" TextColor="{StaticResource Gray400Jazer}" HorizontalOptions="Center"/>
                          </VerticalStackLayout>
                     </CollectionView.EmptyView>
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
-                            <Grid Padding="0,4">
-                                <Border Padding="12,8" StrokeThickness="0" StrokeShape="RoundRectangle 12">
-                                     <Border.Triggers>
-                                         <DataTrigger TargetType="Border" Binding="{Binding EsMio}" Value="True">
-                                             <Setter Property="HorizontalOptions" Value="End"/>
-                                             <Setter Property="BackgroundColor" Value="{StaticResource Blue500}"/>
-                                             <Setter Property="Margin" Value="40,0,0,0"/>
-                                         </DataTrigger>
-                                         <DataTrigger TargetType="Border" Binding="{Binding EsMio}" Value="False">
-                                             <Setter Property="HorizontalOptions" Value="Start"/>
-                                             <Setter Property="BackgroundColor" Value="White"/>
-                                             <Setter Property="Margin" Value="0,0,40,0"/>
-                                         </DataTrigger>
-                                     </Border.Triggers>
-                                     
-                                     <VerticalStackLayout Spacing="2">
-                                         <Label Text="{Binding DeNombre}" FontSize="10" FontAttributes="Bold" TextColor="{StaticResource Gray500Jazer}" IsVisible="{Binding EsMio, Converter={StaticResource InverseBoolConverter}}"/>
-                                         <Label Text="{Binding Contenido}" FontSize="14">
-                                              <Label.Triggers>
-                                                 <DataTrigger TargetType="Label" Binding="{Binding EsMio}" Value="True">
-                                                     <Setter Property="TextColor" Value="White"/>
-                                                 </DataTrigger>
-                                                 <DataTrigger TargetType="Label" Binding="{Binding EsMio}" Value="False">
-                                                     <Setter Property="TextColor" Value="{StaticResource Gray800Jazer}"/>
-                                                 </DataTrigger>
-                                              </Label.Triggers>
-                                         </Label>
-                                         <Label Text="{Binding MarcaTiempo, StringFormat='{0:t}'}" FontSize="10" HorizontalOptions="End">
-                                              <Label.Triggers>
-                                                 <DataTrigger TargetType="Label" Binding="{Binding EsMio}" Value="True">
-                                                     <Setter Property="TextColor" Value="{StaticResource Blue200}"/>
-                                                 </DataTrigger>
-                                                 <DataTrigger TargetType="Label" Binding="{Binding EsMio}" Value="False">
-                                                     <Setter Property="TextColor" Value="{StaticResource Gray400Jazer}"/>
-                                                 </DataTrigger>
-                                              </Label.Triggers>
-                                         </Label>
-                                     </VerticalStackLayout>
+                            <VerticalStackLayout>
+                                <!-- Separador de fecha -->
+                                <HorizontalStackLayout Spacing="12" HorizontalOptions="Center" Margin="0,16,0,8"
+                                                       IsVisible="{Binding EsPrimerMensajeDelDia}">
+                                    <BoxView HeightRequest="1" WidthRequest="60" Color="{StaticResource Gray200Jazer}" VerticalOptions="Center"/>
+                                    <Border Padding="12,6" StrokeShape="RoundRectangle 12" BackgroundColor="{StaticResource Gray100}" StrokeThickness="0">
+                                        <Label Text="{Binding FechaAgrupacion}" FontSize="11" FontAttributes="Bold" 
+                                               TextColor="{StaticResource Gray500Jazer}"/>
+                                    </Border>
+                                    <BoxView HeightRequest="1" WidthRequest="60" Color="{StaticResource Gray200Jazer}" VerticalOptions="Center"/>
+                                </HorizontalStackLayout>
+                                
+                                <!-- Tarjeta de mensaje -->
+                                <Border Margin="4,6" Padding="14,10" StrokeShape="RoundRectangle 14" StrokeThickness="0">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding EsMio}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Blue500}"/>
+                                            <Setter Property="HorizontalOptions" Value="End"/>
+                                            <Setter Property="Margin" Value="80,6,4,6"/>
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Border" Binding="{Binding EsMio}" Value="False">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource Gray50}"/>
+                                            <Setter Property="HorizontalOptions" Value="Start"/>
+                                            <Setter Property="Margin" Value="4,6,80,6"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                        <!-- Avatar (solo si no es mio) -->
+                                        <Border Grid.Column="0" StrokeShape="RoundRectangle 18" 
+                                                HeightRequest="36" WidthRequest="36" StrokeThickness="0"
+                                                VerticalOptions="Start"
+                                                IsVisible="{Binding EsMio, Converter={StaticResource InverseBoolConverter}}">
+                                            <Border.Triggers>
+                                                <DataTrigger TargetType="Border" Binding="{Binding De}" Value="admin">
+                                                    <Setter Property="BackgroundColor" Value="{StaticResource Purple500}"/>
+                                                </DataTrigger>
+                                            </Border.Triggers>
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="BackgroundColor" Value="{StaticResource Green500}"/>
+                                                </Style>
+                                            </Border.Style>
+                                            <Label Text="{Binding DeNombre, Converter={StaticResource StringToInitialsConverter}}" 
+                                                   TextColor="White" FontSize="12" FontAttributes="Bold"
+                                                   HorizontalOptions="Center" VerticalOptions="Center"/>
+                                        </Border>
+                                        
+                                        <!-- Contenido del mensaje -->
+                                        <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                            <Label Text="{Binding DeNombre}" FontAttributes="Bold" FontSize="12"
+                                                   IsVisible="{Binding EsMio, Converter={StaticResource InverseBoolConverter}}">
+                                                <Label.Triggers>
+                                                    <DataTrigger TargetType="Label" Binding="{Binding De}" Value="admin">
+                                                        <Setter Property="TextColor" Value="{StaticResource Purple700}"/>
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+                                                <Label.Style>
+                                                    <Style TargetType="Label">
+                                                        <Setter Property="TextColor" Value="{StaticResource Gray700Jazer}"/>
+                                                    </Style>
+                                                </Label.Style>
+                                            </Label>
+                                            <Label Text="{Binding Contenido}" FontSize="14" LineBreakMode="WordWrap">
+                                                <Label.Triggers>
+                                                    <DataTrigger TargetType="Label" Binding="{Binding EsMio}" Value="True">
+                                                        <Setter Property="TextColor" Value="White"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger TargetType="Label" Binding="{Binding EsMio}" Value="False">
+                                                        <Setter Property="TextColor" Value="{StaticResource Gray700Jazer}"/>
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+                                            </Label>
+                                        </VerticalStackLayout>
+                                        
+                                        <!-- Timestamp -->
+                                        <Label Grid.Column="2" Text="{Binding MarcaTiempo, StringFormat='{0:HH:mm}'}" 
+                                               FontSize="10" VerticalOptions="End">
+                                            <Label.Triggers>
+                                                <DataTrigger TargetType="Label" Binding="{Binding EsMio}" Value="True">
+                                                    <Setter Property="TextColor" Value="{StaticResource Blue200}"/>
+                                                </DataTrigger>
+                                                <DataTrigger TargetType="Label" Binding="{Binding EsMio}" Value="False">
+                                                    <Setter Property="TextColor" Value="{StaticResource Gray400Jazer}"/>
+                                                </DataTrigger>
+                                            </Label.Triggers>
+                                        </Label>
+                                    </Grid>
                                 </Border>
-                            </Grid>
+                            </VerticalStackLayout>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>
 
-                <Border Grid.Row="1" BackgroundColor="White" Stroke="{StaticResource Gray300Jazer}" StrokeShape="RoundRectangle 24" Padding="16,4" Margin="0,0,0,10">
-                    <Grid ColumnDefinitions="*,Auto">
+                <Border Grid.Row="1" BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" StrokeShape="RoundRectangle 24" Padding="16,8" Margin="12,0,12,16">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                         <Entry Text="{Binding NuevoMensajeContenido}" Placeholder="Escribe un mensaje..." 
                                TextColor="{StaticResource Gray900Jazer}" PlaceholderColor="{StaticResource Gray400Jazer}"
                                FontSize="14" VerticalOptions="Center"/>
                         <Button Grid.Column="1" Text="Enviar" 
                                 Command="{Binding EnviarMensajeCommand}"
-                                BackgroundColor="Transparent" TextColor="{StaticResource Blue600}"
-                                FontAttributes="Bold" FontSize="14"
-                                HeightRequest="40" WidthRequest="60"/>
+                                BackgroundColor="{StaticResource Blue600}" TextColor="White"
+                                FontAttributes="Bold" FontSize="13"
+                                HeightRequest="40" Padding="20,0" CornerRadius="20"/>
                     </Grid>
                 </Border>
             </Grid>
 
 
+        </Grid>
+
+        <!-- Panel de Comentarios (Overlay) -->
+        <Grid Grid.RowSpan="4" IsVisible="{Binding MostrarPanelComentarios}" BackgroundColor="#80000000">
+            <Border Margin="100,50" BackgroundColor="White" StrokeShape="RoundRectangle 16" Stroke="{StaticResource Gray200Jazer}" Padding="0">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <!-- Header del Panel -->
+                    <Border Grid.Row="0" BackgroundColor="{StaticResource Blue50}" StrokeThickness="0" Padding="24,16">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="Comentarios de la Tarea" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource Gray900Jazer}"/>
+                                <Label Text="{Binding TareaSeleccionadaParaComentarios.Titulo}" FontSize="14" TextColor="{StaticResource Gray600Jazer}"/>
+                                
+                                <!-- Etiquetas de la tarea -->
+                                <HorizontalStackLayout Spacing="6" Margin="0,8,0,0" IsVisible="{Binding EtiquetasTareaActual.Count, Converter={StaticResource IntToBoolConverter}}">
+                                    <Path Data="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z M6 6h.008v.008H6V6Z" 
+                                          Stroke="{StaticResource Gray500Jazer}" StrokeThickness="1.5" 
+                                          WidthRequest="14" HeightRequest="14" Aspect="Uniform" VerticalOptions="Center"/>
+                                    <CollectionView ItemsSource="{Binding EtiquetasTareaActual}" HeightRequest="26">
+                                        <CollectionView.ItemsLayout>
+                                            <LinearItemsLayout Orientation="Horizontal" ItemSpacing="4"/>
+                                        </CollectionView.ItemsLayout>
+                                        <CollectionView.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Padding="6,2" StrokeShape="RoundRectangle 10" 
+                                                        BackgroundColor="{Binding ColorEtiqueta}" StrokeThickness="0">
+                                                    <HorizontalStackLayout Spacing="4">
+                                                        <Path Data="{Binding Icono, Converter={StaticResource IconNameToPathConverter}}" 
+                                                              Stroke="White" StrokeThickness="1.5"
+                                                              WidthRequest="10" HeightRequest="10" Aspect="Uniform" VerticalOptions="Center"/>
+                                                        <Label Text="{Binding Nombre}" FontSize="10" TextColor="White" VerticalOptions="Center" FontAttributes="Bold"/>
+                                                    </HorizontalStackLayout>
+                                                </Border>
+                                            </DataTemplate>
+                                        </CollectionView.ItemTemplate>
+                                    </CollectionView>
+                                </HorizontalStackLayout>
+                            </VerticalStackLayout>
+                            
+                            <Border Grid.Column="1"
+                                    BackgroundColor="Transparent"
+                                    HeightRequest="40" WidthRequest="40">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding CerrarComentariosCommand}"/>
+                                </Border.GestureRecognizers>
+                                <Path Data="M6 18 18 6M6 6l12 12" 
+                                      Stroke="{StaticResource Gray500Jazer}" StrokeThickness="2" 
+                                      WidthRequest="16" HeightRequest="16" Aspect="Uniform"
+                                      HorizontalOptions="Center" VerticalOptions="Center"/>
+                            </Border>
+                        </Grid>
+                    </Border>
+                    
+                    <!-- Lista de Comentarios -->
+                    <CollectionView Grid.Row="1" ItemsSource="{Binding ComentariosTareaActual}" 
+                                    Margin="24,16" ItemsUpdatingScrollMode="KeepLastItemInView">
+                        <CollectionView.EmptyView>
+                            <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="12">
+                                <Border BackgroundColor="{StaticResource Gray100}" StrokeShape="RoundRectangle 30" 
+                                        HeightRequest="60" WidthRequest="60" StrokeThickness="0" HorizontalOptions="Center">
+                                    <Path Data="M2 6C2 4.89543 2.89543 4 4 4H20C21.1046 4 22 4.89543 22 6V18C22 19.1046 21.1046 20 20 20H6L2 24V6Z" 
+                                          Stroke="{StaticResource Gray400Jazer}" StrokeThickness="2" WidthRequest="24" HeightRequest="24"
+                                          Aspect="Uniform" HorizontalOptions="Center" VerticalOptions="Center"/>
+                                </Border>
+                                <Label Text="No hay comentarios aún" FontSize="16" TextColor="{StaticResource Gray400Jazer}" HorizontalOptions="Center"/>
+                                <Label Text="Sé el primero en comentar" FontSize="13" TextColor="{StaticResource Gray400Jazer}" HorizontalOptions="Center"/>
+                            </VerticalStackLayout>
+                        </CollectionView.EmptyView>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,4" Padding="16,12" BackgroundColor="{StaticResource Gray50}" 
+                                        Stroke="{StaticResource Gray200Jazer}" StrokeShape="RoundRectangle 12">
+                                    <Grid ColumnDefinitions="40,*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="12">
+                                        <!-- Avatar -->
+                                        <Border Grid.RowSpan="2" HeightRequest="36" WidthRequest="36" 
+                                                StrokeShape="RoundRectangle 18" StrokeThickness="0"
+                                                BackgroundColor="{StaticResource Blue100}" VerticalOptions="Start">
+                                            <Label Text="{Binding AutorId, StringFormat='U{0}'}" 
+                                                   HorizontalOptions="Center" VerticalOptions="Center"
+                                                   FontSize="11" FontAttributes="Bold" TextColor="{StaticResource Blue600}"/>
+                                        </Border>
+                                        
+                                        <!-- Info -->
+                                        <HorizontalStackLayout Grid.Column="1" Grid.Row="0" Spacing="8">
+                                            <Label Text="{Binding AutorId, StringFormat='Usuario {0}'}" 
+                                                   FontSize="13" FontAttributes="Bold" TextColor="{StaticResource Gray900Jazer}"/>
+                                            <Border Padding="6,2" StrokeShape="RoundRectangle 8" 
+                                                    BackgroundColor="{Binding ColorTipo}" StrokeThickness="0"
+                                                    IsVisible="{Binding Tipo, Converter={StaticResource StringNotEmptyConverter}}">
+                                                <Label Text="{Binding Tipo}" FontSize="9" TextColor="White" FontAttributes="Bold"/>
+                                            </Border>
+                                        </HorizontalStackLayout>
+                                        
+                                        <!-- Contenido -->
+                                        <Label Grid.Column="1" Grid.Row="1" Text="{Binding Contenido}" 
+                                               FontSize="14" TextColor="{StaticResource Gray700Jazer}" 
+                                               LineBreakMode="WordWrap" Margin="0,4,0,0"/>
+                                        
+                                        <!-- Fecha -->
+                                        <Label Grid.Column="1" Grid.Row="2" Text="{Binding TiempoRelativo}" 
+                                               FontSize="11" TextColor="{StaticResource Gray400Jazer}" Margin="0,4,0,0"/>
+                                        
+                                        <!-- Botón eliminar (solo si es mío) -->
+                                        <Border Grid.Column="2" Grid.RowSpan="2"
+                                                BackgroundColor="Transparent"
+                                                HeightRequest="32" WidthRequest="32"
+                                                IsVisible="{Binding EsMio}">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CentroControlContadorVM}}, Path=EliminarComentarioCommand}" CommandParameter="{Binding .}"/>
+                                            </Border.GestureRecognizers>
+                                            <Path Data="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" 
+                                                  Stroke="{StaticResource Red500}" StrokeThickness="1.5" 
+                                                  WidthRequest="14" HeightRequest="14" Aspect="Uniform"
+                                                  HorizontalOptions="Center" VerticalOptions="Center"/>
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                    
+                    <!-- Input de nuevo comentario -->
+                    <Border Grid.Row="2" BackgroundColor="{StaticResource Gray50}" StrokeThickness="0" Padding="24,16">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <Border Stroke="{StaticResource Gray300Jazer}" StrokeShape="RoundRectangle 12" 
+                                    BackgroundColor="White" Padding="12,8">
+                                <Editor Text="{Binding NuevoComentarioContenido}" 
+                                        Placeholder="Escribe un comentario..." 
+                                        PlaceholderColor="{StaticResource Gray400Jazer}"
+                                        TextColor="{StaticResource Gray900Jazer}"
+                                        FontSize="14" HeightRequest="60"
+                                        AutoSize="TextChanges"/>
+                            </Border>
+                            <Button Grid.Column="1" Text="Enviar" 
+                                    BackgroundColor="{StaticResource Blue500}" TextColor="White"
+                                    FontAttributes="Bold" FontSize="14"
+                                    HeightRequest="44" Padding="24,0" CornerRadius="12"
+                                    Command="{Binding AgregarComentarioCommand}"/>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
         </Grid>
 
     </Grid>

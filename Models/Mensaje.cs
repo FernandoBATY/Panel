@@ -33,4 +33,15 @@ public class Mensaje
 
     [Ignore]
     public string ParaNombre { get; set; } = string.Empty;
+
+    // Para agrupación por fecha
+    [Ignore]
+    public string FechaAgrupacion => MarcaTiempo.Date == DateTime.Today 
+        ? "Hoy" 
+        : MarcaTiempo.Date == DateTime.Today.AddDays(-1) 
+            ? "Ayer" 
+            : MarcaTiempo.ToString("dddd, dd MMMM");
+
+    [Ignore]
+    public bool EsPrimerMensajeDelDia { get; set; }
 }

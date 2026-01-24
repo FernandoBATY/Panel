@@ -6,77 +6,158 @@
              Title="JAZER Widget"
              BackgroundColor="Transparent">
 
-    <!-- Tarjeta compacta del widget -->
+    <!-- Tarjeta compacta del widget MEJORADO -->
     <Border Stroke="#E5E7EB" 
             StrokeThickness="1"
             BackgroundColor="White"
-            WidthRequest="280"
-            HeightRequest="220"
+            WidthRequest="300"
+            HeightRequest="280"
             HorizontalOptions="Center"
-            VerticalOptions="Center">
+            VerticalOptions="Center"
+            StrokeShape="RoundRectangle 12">
         <Border.Shadow>
-            <Shadow Brush="Black" Offset="2,2" Radius="5" Opacity="0.1"/>
+            <Shadow Brush="Black" Offset="0,4" Radius="12" Opacity="0.15"/>
         </Border.Shadow>
 
-        <Grid RowDefinitions="32,*,20">
+        <Grid RowDefinitions="Auto,Auto,*,Auto">
             <!-- Encabezado con identidad y acción de expandir -->
-            <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Padding="12,0" BackgroundColor="White">
-             
-                <Label Grid.Column="0" Text="JZ" 
-                       TextColor="#1E3A8A" FontAttributes="Bold" FontSize="14" 
-                       VerticalOptions="Center"/>
-                
-                <VerticalStackLayout Grid.Column="1" Margin="8,0,0,0" VerticalOptions="Center" Spacing="0">
-                    <Label Text="{Binding NombreContador}" FontSize="12" LineBreakMode="TailTruncation" TextColor="#333"/>
-                    <HorizontalStackLayout Spacing="4">
-                        <Ellipse WidthRequest="6" HeightRequest="6" Fill="#10b981" VerticalOptions="Center"/>
-                        <Label Text="En línea" FontSize="10" TextColor="Gray"/>
-                    </HorizontalStackLayout>
-                </VerticalStackLayout>
+            <Border Grid.Row="0" BackgroundColor="#F8FAFC" StrokeThickness="0" Padding="14,10">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <!-- Logo y nombre -->
+                    <Border Grid.Column="0" HeightRequest="32" WidthRequest="32" StrokeShape="RoundRectangle 6" 
+                            BackgroundColor="#1E3A8A" StrokeThickness="0">
+                        <Label Text="JZ" TextColor="White" FontAttributes="Bold" FontSize="12" 
+                               HorizontalOptions="Center" VerticalOptions="Center"/>
+                    </Border>
+                    
+                    <VerticalStackLayout Grid.Column="1" Margin="10,0,0,0" VerticalOptions="Center" Spacing="0">
+                        <Label Text="{Binding NombreContador}" FontSize="13" FontAttributes="Bold" 
+                               LineBreakMode="TailTruncation" TextColor="#1F2937"/>
+                        <HorizontalStackLayout Spacing="4">
+                            <Ellipse WidthRequest="6" HeightRequest="6" Fill="#10b981" VerticalOptions="Center"/>
+                            <Label Text="En línea" FontSize="10" TextColor="#6B7280"/>
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
 
-                <Button Grid.Column="2" 
-                        Text="⤢" 
-                        FontSize="18"
-                        BackgroundColor="Transparent" 
-                        TextColor="Gray"
-                        Padding="0"
-                        WidthRequest="28" HeightRequest="28"
-                        Command="{Binding ExpandirCentroControlCommand}"/>
+                    <!-- Botón expandir -->
+                    <Border Grid.Column="2" BackgroundColor="#EEF2FF" StrokeShape="RoundRectangle 6" 
+                            HeightRequest="28" WidthRequest="28" StrokeThickness="0">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ExpandirCentroControlCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Path Data="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" 
+                              Stroke="#4F46E5" StrokeThickness="1.5" WidthRequest="14" HeightRequest="14"
+                              Aspect="Uniform" HorizontalOptions="Center" VerticalOptions="Center"/>
+                    </Border>
+                </Grid>
+            </Border>
+            
+            <!-- Mini estadísticas -->
+            <Grid Grid.Row="1" ColumnDefinitions="*,*,*" Padding="10,8" BackgroundColor="White">
+                <VerticalStackLayout HorizontalOptions="Center" Spacing="2">
+                    <Label Text="{Binding TareasPendientes}" FontSize="18" FontAttributes="Bold" TextColor="#F59E0B" HorizontalOptions="Center"/>
+                    <Label Text="Pendientes" FontSize="9" TextColor="#9CA3AF" HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+                <BoxView Grid.Column="0" WidthRequest="1" Color="#E5E7EB" HorizontalOptions="End" VerticalOptions="Fill" Margin="0,4"/>
+                
+                <VerticalStackLayout Grid.Column="1" HorizontalOptions="Center" Spacing="2">
+                    <Label Text="{Binding TareasCompletadasHoy}" FontSize="18" FontAttributes="Bold" TextColor="#10B981" HorizontalOptions="Center"/>
+                    <Label Text="Hoy" FontSize="9" TextColor="#9CA3AF" HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+                <BoxView Grid.Column="1" WidthRequest="1" Color="#E5E7EB" HorizontalOptions="End" VerticalOptions="Fill" Margin="0,4"/>
+                
+                <VerticalStackLayout Grid.Column="2" HorizontalOptions="Center" Spacing="2">
+                    <Label Text="{Binding TareasVencidas}" FontSize="18" FontAttributes="Bold" TextColor="#EF4444" HorizontalOptions="Center"/>
+                    <Label Text="Vencidas" FontSize="9" TextColor="#9CA3AF" HorizontalOptions="Center"/>
+                </VerticalStackLayout>
             </Grid>
 
             <!-- Lista de tareas rápidas -->
-            <CollectionView Grid.Row="1" ItemsSource="{Binding Tareas}" Margin="0,4">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*,Auto" Padding="12,4">
-                            
-                            <CheckBox Grid.Row="0" Grid.Column="0" IsChecked="{Binding Estado, Converter={StaticResource StatusToBoolConverter}}" 
-                                      VerticalOptions="Center"/>
-                            <Label Grid.Row="0" Grid.Column="1" Text="{Binding Titulo}" 
-                                   FontSize="11" VerticalOptions="Center" Margin="8,0,0,0" LineBreakMode="TailTruncation"/>
-                         
-                            <Label Grid.Row="0" Grid.Column="2" Text="⏰" FontSize="12" VerticalOptions="Center"/>
-
-                            <HorizontalStackLayout Grid.Row="1" Grid.Column="1" Spacing="8" Margin="8,0,0,0">
-                                <Label Text="{Binding FechaAsignacion, StringFormat='📅 {0:MMM dd}'}" FontSize="9" TextColor="#9CA3AF"/>
-                                <Label Text="{Binding FechaVencimiento, StringFormat='⏰ {0:MMM dd}'}" FontSize="9" TextColor="#9CA3AF"/>
-                            </HorizontalStackLayout>
-                        </Grid>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-                <CollectionView.EmptyView>
-                    <Label Text="No hay tareas pendientes" 
-                           FontSize="12" TextColor="Gray" 
-                           HorizontalOptions="Center" VerticalOptions="Center"/>
-                </CollectionView.EmptyView>
-            </CollectionView>
+            <Grid Grid.Row="2" BackgroundColor="White">
+                <!-- CollectionView para cuando hay tareas -->
+                <CollectionView ItemsSource="{Binding Tareas}" Margin="0,4"
+                                IsVisible="{Binding TieneTareas}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ColumnDefinitions="Auto,*,Auto" Padding="12,6">
+                                <!-- Checkbox visual -->
+                                <Border HeightRequest="20" WidthRequest="20" StrokeShape="RoundRectangle 4" 
+                                        Stroke="#D1D5DB" StrokeThickness="1.5" BackgroundColor="White">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:WidgetContadorVM}}, Path=CompletarTareaCommand}" CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
+                                </Border>
+                                
+                                <!-- Info de tarea -->
+                                <VerticalStackLayout Grid.Column="1" Margin="10,0,0,0" Spacing="2" VerticalOptions="Center">
+                                    <Label Text="{Binding Titulo}" FontSize="12" TextColor="#374151" LineBreakMode="TailTruncation" FontAttributes="Bold"/>
+                                    <HorizontalStackLayout Spacing="6">
+                                        <HorizontalStackLayout Spacing="3">
+                                            <Path Data="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" 
+                                                  Stroke="#9CA3AF" StrokeThickness="1" WidthRequest="10" HeightRequest="10" Aspect="Uniform"/>
+                                            <Label Text="{Binding FechaVencimiento, StringFormat='{0:dd MMM}'}" FontSize="9" TextColor="#9CA3AF"/>
+                                        </HorizontalStackLayout>
+                                        <!-- Indicador de prioridad -->
+                                        <Border Padding="4,1" StrokeShape="RoundRectangle 4" StrokeThickness="0"
+                                                IsVisible="{Binding Prioridad, Converter={StaticResource IsPrioritariaConverter}}">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="BackgroundColor" Value="#FEE2E2"/>
+                                                </Style>
+                                            </Border.Style>
+                                            <Label Text="!" FontSize="8" FontAttributes="Bold" TextColor="#DC2626"/>
+                                        </Border>
+                                    </HorizontalStackLayout>
+                                </VerticalStackLayout>
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+                
+                <!-- Vista vacía centrada (cuando no hay tareas) -->
+                <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="8"
+                                     IsVisible="{Binding NoTieneTareas}">
+                    <Border HeightRequest="52" WidthRequest="52" StrokeShape="RoundRectangle 26" 
+                            BackgroundColor="#D1FAE5" StrokeThickness="0" HorizontalOptions="Center">
+                        <Path Data="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" 
+                              Stroke="#10B981" StrokeThickness="2" WidthRequest="26" HeightRequest="26"
+                              Aspect="Uniform" HorizontalOptions="Center" VerticalOptions="Center"/>
+                    </Border>
+                    <Label Text="¡Todo listo!" FontSize="15" FontAttributes="Bold" TextColor="#059669" HorizontalOptions="Center"/>
+                    <Label Text="No tienes tareas pendientes" FontSize="12" TextColor="#6B7280" HorizontalOptions="Center"/>
+                    <Label Text="¡Sigue así! 🎉" FontSize="11" TextColor="#9CA3AF" HorizontalOptions="Center" Margin="0,4,0,0"/>
+                </VerticalStackLayout>
+            </Grid>
 
             <!-- Aviso de nuevos mensajes -->
-            <Grid Grid.Row="2" BackgroundColor="#DBEAFE" IsVisible="{Binding MensajesNuevos, Converter={StaticResource IntToBoolConverter}}">
-                <Label Text="{Binding MensajesNuevos, StringFormat='🔔 {0} mensaje(s) nuevo(s)'}" 
-                       TextColor="#1E40AF" FontSize="10" 
-                       HorizontalOptions="Center" VerticalOptions="Center"/>
-            </Grid>
+            <Border Grid.Row="3" BackgroundColor="#DBEAFE" StrokeThickness="0" Padding="8,6"
+                    IsVisible="{Binding MensajesNuevos, Converter={StaticResource IntToBoolConverter}}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ExpandirCentroControlCommand}"/>
+                </Border.GestureRecognizers>
+                <HorizontalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="6">
+                    <Border HeightRequest="20" WidthRequest="20" StrokeShape="RoundRectangle 10" BackgroundColor="#3B82F6" StrokeThickness="0">
+                        <Path Data="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
+                              Stroke="White" StrokeThickness="1.5" WidthRequest="10" HeightRequest="10" Aspect="Uniform"
+                              HorizontalOptions="Center" VerticalOptions="Center"/>
+                    </Border>
+                    <Label Text="{Binding MensajesNuevos, StringFormat='{0} mensaje(s) nuevo(s)'}" 
+                           TextColor="#1E40AF" FontSize="11" FontAttributes="Bold"/>
+                    <Path Data="m8.25 4.5 7.5 7.5-7.5 7.5" Stroke="#1E40AF" StrokeThickness="1.5" 
+                          WidthRequest="8" HeightRequest="8" Aspect="Uniform"/>
+                </HorizontalStackLayout>
+            </Border>
+            
+            <!-- Footer cuando no hay mensajes -->
+            <Border Grid.Row="3" BackgroundColor="#F9FAFB" StrokeThickness="0" Padding="8,6"
+                    IsVisible="{Binding MensajesNuevos, Converter={StaticResource IntToBoolConverter}, ConverterParameter=inverse}">
+                <HorizontalStackLayout HorizontalOptions="Center" Spacing="4">
+                    <Path Data="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" 
+                          Stroke="#9CA3AF" StrokeThickness="1" WidthRequest="10" HeightRequest="10" Aspect="Uniform"/>
+                    <Label Text="{Binding UltimaActualizacion, StringFormat='Actualizado: {0:HH:mm}'}" 
+                           FontSize="9" TextColor="#9CA3AF"/>
+                </HorizontalStackLayout>
+            </Border>
         </Grid>
     </Border>
 

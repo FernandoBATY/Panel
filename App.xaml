@@ -28,6 +28,8 @@
                 <converters:StringToInitialsConverter x:Key="StringToInitialsConverter"/>
                 <converters:BoolToStringConverter x:Key="BoolToStringConverter"/>
                 <converters:FileToImageSourceConverter x:Key="FileToImageSourceConverter"/>
+                <converters:IsNotNullConverter x:Key="IsNotNullConverter"/>
+                <converters:IconNameToPathConverter x:Key="IconNameToPathConverter"/>
             </ResourceDictionary>
         </ResourceDictionary>
     </Application.Resources>
