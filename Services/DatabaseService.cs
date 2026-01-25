@@ -196,7 +196,7 @@ public class DatabaseService
     public async Task<int> SaveAlertaAsync(Alerta alerta, bool skipSync = false)
     {
         await Init();
-        var result = await _database!.InsertAsync(alerta);
+        var result = await _database!.InsertOrReplaceAsync(alerta);
         
         if (!skipSync && _syncService != null)
         {
@@ -457,7 +457,7 @@ public class DatabaseService
     public async Task<int> SaveMensajeAsync(Mensaje mensaje, bool skipSync = false)
     {
         await Init();
-        var result = await _database!.InsertAsync(mensaje);
+        var result = await _database!.InsertOrReplaceAsync(mensaje);
         
         if (!skipSync && _syncService != null)
         {
@@ -797,10 +797,16 @@ public class DatabaseService
     {
         await Init();
         
+        // Verificar si ya existe en la base de datos local
+        var existing = await _database!.Table<Etiqueta>()
+            .Where(e => e.Id == etiqueta.Id)
+            .FirstOrDefaultAsync();
+        
         int result;
-        if (etiqueta.Id == 0)
+        if (existing == null)
         {
-            etiqueta.FechaCreacion = DateTime.Now;
+            if (etiqueta.FechaCreacion == default)
+                etiqueta.FechaCreacion = DateTime.Now;
             result = await _database!.InsertAsync(etiqueta);
         }
         else
@@ -811,7 +817,7 @@ public class DatabaseService
         if (!skipSync && _syncService != null)
         {
             await _syncService.OnLocalChange(
-                etiqueta.Id == 0 ? SyncOperation.Insert : SyncOperation.Update, 
+                existing == null ? SyncOperation.Insert : SyncOperation.Update, 
                 etiqueta, 
                 "Etiqueta");
         }

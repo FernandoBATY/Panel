@@ -8,6 +8,9 @@ public class SyncService
     // Servicios dependientes
     private readonly DatabaseService _databaseService;
     private readonly NetworkService _networkService;
+    
+    // Flag para indicar si estamos recibiendo una sincronización completa
+    private bool _isReceivingFullSync = false;
 
     // Evento para notificar cambios de datos
     public event EventHandler<string>? DataChanged; 
@@ -139,6 +142,13 @@ public class SyncService
 
             Console.WriteLine($"[SYNC] Mensaje recibido de {message.Sender?.Username}: {message.Operation} {message.EntityType}");
 
+            // Detectar inicio de sincronización completa (primer User que llega del Admin)
+            if (message.Sender?.Role == "Admin" && message.Operation == SyncOperation.Insert && message.EntityType == "User" && !_isReceivingFullSync)
+            {
+                _isReceivingFullSync = true;
+                Console.WriteLine("[SYNC] Iniciando recepción de FullSync...");
+            }
+
             switch (message.Operation)
             {
                 case SyncOperation.Insert:
@@ -155,7 +165,18 @@ public class SyncService
                     break;
             }
 
-            DataChanged?.Invoke(this, message.EntityType);
+            // Solo notificar cambios si NO es un mensaje de FullSync individual
+            // Los mensajes de FullSync (Done) dispararán la recarga completa
+            if (message.EntityType == "Done")
+            {
+                _isReceivingFullSync = false;
+                Console.WriteLine("[SYNC] FullSync completado, notificando cambios...");
+                DataChanged?.Invoke(this, "FullSync");
+            }
+            else if (!_isReceivingFullSync)
+            {
+                DataChanged?.Invoke(this, message.EntityType);
+            }
         }
         catch (Exception ex)
         {
@@ -214,12 +235,9 @@ public class SyncService
                 var tarea = JsonSerializer.Deserialize<Tarea>(message.EntityJson);
                 if (tarea != null)
                 {
-                    var existing = await _databaseService.GetTareasAsync();
-                    if (!existing.Any(t => t.Id == tarea.Id))
-                    {
-                        await _databaseService.SaveTareaAsync(tarea, skipSync: true);
-                        Console.WriteLine($"[SYNC] Tarea insertada: {tarea.Titulo}");
-                    }
+                    // InsertOrReplaceAsync evita duplicados por PrimaryKey
+                    await _databaseService.SaveTareaAsync(tarea, skipSync: true);
+                    Console.WriteLine($"[SYNC] Tarea sincronizada: {tarea.Titulo}");
                 }
                 break;
 
@@ -227,12 +245,9 @@ public class SyncService
                 var msg = JsonSerializer.Deserialize<Mensaje>(message.EntityJson);
                 if (msg != null)
                 {
-                    var existing = await _databaseService.GetMensajesAsync();
-                    if (!existing.Any(m => m.Id == msg.Id))
-                    {
-                        await _databaseService.SaveMensajeAsync(msg, skipSync: true);
-                        Console.WriteLine($"[SYNC] Mensaje insertado de {msg.De}");
-                    }
+                    // InsertOrReplaceAsync evita duplicados por PrimaryKey
+                    await _databaseService.SaveMensajeAsync(msg, skipSync: true);
+                    Console.WriteLine($"[SYNC] Mensaje sincronizado de {msg.De}");
                 }
                 break;
 
@@ -240,12 +255,9 @@ public class SyncService
                 var plantilla = JsonSerializer.Deserialize<PlantillaTarea>(message.EntityJson);
                 if (plantilla != null)
                 {
-                    var existingPlantilla = await _databaseService.GetPlantillaByIdAsync(plantilla.Id);
-                    if (existingPlantilla == null)
-                    {
-                        await _databaseService.SavePlantillaAsync(plantilla, skipSync: true);
-                        Console.WriteLine($"[SYNC] Plantilla insertada: {plantilla.Nombre}");
-                    }
+                    // SavePlantillaAsync ya maneja InsertOrUpdate
+                    await _databaseService.SavePlantillaAsync(plantilla, skipSync: true);
+                    Console.WriteLine($"[SYNC] Plantilla sincronizada: {plantilla.Nombre}");
                 }
                 break;
 
@@ -253,12 +265,9 @@ public class SyncService
                 var comentario = JsonSerializer.Deserialize<Comentario>(message.EntityJson);
                 if (comentario != null)
                 {
-                    var existingComentarios = await _databaseService.GetComentariosPorTareaAsync(comentario.TareaId);
-                    if (!existingComentarios.Any(c => c.Id == comentario.Id))
-                    {
-                        await _databaseService.SaveComentarioAsync(comentario, skipSync: true);
-                        Console.WriteLine($"[SYNC] Comentario insertado en tarea {comentario.TareaId}");
-                    }
+                    // SaveComentarioAsync ya verifica si existe
+                    await _databaseService.SaveComentarioAsync(comentario, skipSync: true);
+                    Console.WriteLine($"[SYNC] Comentario sincronizado en tarea {comentario.TareaId}");
                 }
                 break;
 
@@ -266,12 +275,9 @@ public class SyncService
                 var etiqueta = JsonSerializer.Deserialize<Etiqueta>(message.EntityJson);
                 if (etiqueta != null)
                 {
-                    var existingEtiqueta = await _databaseService.GetEtiquetaByIdAsync(etiqueta.Id);
-                    if (existingEtiqueta == null)
-                    {
-                        await _databaseService.SaveEtiquetaAsync(etiqueta, skipSync: true);
-                        Console.WriteLine($"[SYNC] Etiqueta insertada: {etiqueta.Nombre}");
-                    }
+                    // SaveEtiquetaAsync ya maneja InsertOrUpdate
+                    await _databaseService.SaveEtiquetaAsync(etiqueta, skipSync: true);
+                    Console.WriteLine($"[SYNC] Etiqueta sincronizada: {etiqueta.Nombre}");
                 }
                 break;
 

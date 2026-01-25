@@ -839,6 +839,7 @@ public partial class CentroControlContadorVM : ObservableObject
             if (connected)
             {
                 IsConnected = true;
+                Conectado = true;
                 ServerInfo = $"✓ Conectado a {ServerIpManual}";
             }
             else
@@ -866,6 +867,7 @@ public partial class CentroControlContadorVM : ObservableObject
     {
         _networkService.Disconnect();
         IsConnected = false;
+        Conectado = false;
         SessionService.ClearSession();
         Application.Current!.MainPage = Application.Current.Handler!.MauiContext!.Services.GetRequiredService<Views.LoginPage>();
         

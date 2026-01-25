@@ -82,10 +82,6 @@
                                 VerticalOptions="Center"
                                 TextColor="{StaticResource Gray800Jazer}"
                                 BackgroundColor="{StaticResource Gray100Jazer}"/>
-                         <Button Text="Copiar" Command="{Binding CopiarIPCommand}"
-                                 BackgroundColor="Transparent" TextColor="{StaticResource Blue600}"
-                                 HeightRequest="30" Padding="8,0" FontSize="11"
-                                 VerticalOptions="Center"/>
                          <Button Text="Conectar" 
                                  Command="{Binding ConectarAlServidorCommand}"
                                  BackgroundColor="{StaticResource Blue600}"
