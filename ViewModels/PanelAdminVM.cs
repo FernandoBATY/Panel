@@ -458,13 +458,71 @@ public partial class PanelAdminVM : ObservableObject
     [RelayCommand]
     public async Task ResetData()
     {
-        bool confirm = await Application.Current!.Windows[0].Page!.DisplayAlert("Confirmar", "¿Borrar todas las tareas y mensajes? Esto es irreversible.", "Sí, Borrar", "Cancelar");
+        bool confirm = await Application.Current!.Windows[0].Page!.DisplayAlert(
+            "Confirmar", 
+            "¿Borrar toda la base de datos?\n\nSe generará un backup automático antes de borrar.\n\nEsta acción afectará a todos los usuarios conectados.", 
+            "Sí, Borrar", 
+            "Cancelar");
         if (!confirm) return;
 
         IsBusy = true;
-        await _databaseService.ResetDatabaseAsync();
-        await CargarDatos(); 
-        IsBusy = false;
+        
+        try
+        {
+            // 1. Generar backup automático antes de borrar
+            Console.WriteLine("[ADMIN] Generando backup antes de resetear base de datos...");
+            var backupPath = await _databaseService.GenerarBackupCompletoAsync();
+            
+            // Descargar el backup automáticamente
+            var result = await FileSaver.Default.SaveAsync(
+                Path.GetFileName(backupPath),
+                File.OpenRead(backupPath),
+                CancellationToken.None);
+            
+            if (result.IsSuccessful)
+            {
+                Console.WriteLine($"[ADMIN] Backup guardado en: {result.FilePath}");
+            }
+            
+            // 2. Enviar comando de reset a todos los clientes conectados
+            if (_networkService != null && IsServerRunning)
+            {
+                var resetMessage = new SyncMessage
+                {
+                    Operation = SyncOperation.Delete,
+                    EntityType = "ResetDatabase",
+                    Sender = SessionService.CurrentIdentity,
+                    Timestamp = DateTime.UtcNow
+                };
+                
+                await _networkService.BroadcastMessageAsync(resetMessage);
+                Console.WriteLine("[ADMIN] Comando de reset enviado a todos los clientes");
+                
+                // Esperar un momento para que los clientes procesen
+                await Task.Delay(500);
+            }
+            
+            // 3. Resetear base de datos local
+            await _databaseService.ResetDatabaseAsync();
+            await CargarDatos();
+            
+            await Application.Current!.Windows[0].Page!.DisplayAlert(
+                "Éxito", 
+                $"Base de datos reseteada.\n\nBackup guardado en:\n{result.FilePath}", 
+                "OK");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ADMIN] Error en ResetData: {ex.Message}");
+            await Application.Current!.Windows[0].Page!.DisplayAlert(
+                "Error", 
+                $"Error al resetear base de datos: {ex.Message}", 
+                "OK");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     [RelayCommand]
@@ -731,22 +789,118 @@ public partial class PanelAdminVM : ObservableObject
 
             if (result == null) return;
 
+            // Verificar tamaño del archivo original
+            using (var sourceStream = await result.OpenReadAsync())
+            {
+                long fileSizeInBytes = sourceStream.Length;
+                double fileSizeInMB = fileSizeInBytes / (1024.0 * 1024.0);
+                
+                if (fileSizeInMB > 10)
+                {
+                    await Application.Current!.MainPage!.DisplayAlert(
+                        "Imagen muy grande", 
+                        $"La imagen seleccionada pesa {fileSizeInMB:F2} MB.\n\nPor favor selecciona una imagen menor a 10 MB.",
+                        "OK"
+                    );
+                    return;
+                }
+                
+                if (fileSizeInMB > 2)
+                {
+                    Console.WriteLine($"[FOTO] Imagen de {fileSizeInMB:F2} MB será comprimida");
+                }
+            }
+
+            // Guardar y comprimir imagen
             var destFolder = Path.Combine(FileSystem.AppDataDirectory, "fotos");
             Directory.CreateDirectory(destFolder);
-
             var destPath = Path.Combine(destFolder, $"{user.Id}.jpg");
-            using var source = await result.OpenReadAsync();
-            using var dest = File.Create(destPath);
-            await source.CopyToAsync(dest);
+            
+            await CompressAndSaveImageAsync(result, destPath);
 
+            // Actualizar usuario localmente (skipSync para evitar enviar mensaje "User" duplicado)
             user.FotoPerfil = destPath;
-            await _databaseService.SaveUserAsync(user);
+            await _databaseService.SaveUserAsync(user, skipSync: true);
+            
+            // Leer imagen comprimida como Base64
+            byte[] imageBytes = await File.ReadAllBytesAsync(destPath);
+            double finalSizeInMB = imageBytes.Length / (1024.0 * 1024.0);
+            Console.WriteLine($"[FOTO] Tamaño final para transmisión: {finalSizeInMB:F2} MB");
+            
+            string base64Image = Convert.ToBase64String(imageBytes);
+
+            // Broadcast la foto a todos los clientes conectados
+            if (_networkService != null && IsServerRunning)
+            {
+                var photoMessage = new SyncMessage
+                {
+                    Operation = SyncOperation.Update,
+                    EntityType = "ProfilePhoto",
+                    UserId = user.Id,
+                    FileData = base64Image,
+                    FileName = $"{user.Id}.jpg",
+                    Sender = SessionService.CurrentIdentity
+                };
+
+                await _networkService.BroadcastMessageAsync(photoMessage);
+                Console.WriteLine($"[ADMIN] Foto de {user.Username} enviada a todos los clientes");
+            }
+            
             await CargarDatos();
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error selecting photo: {ex.Message}");
         }
+    }
+
+    // Método helper para comprimir y redimensionar imágenes
+    private async Task CompressAndSaveImageAsync(FileResult photo, string destPath)
+    {
+        const int maxWidth = 512;
+        const int maxHeight = 512;
+        const int quality = 85;
+
+        using var sourceStream = await photo.OpenReadAsync();
+        
+#if WINDOWS
+        // En Windows usamos System.Drawing
+        using var originalImage = System.Drawing.Image.FromStream(sourceStream);
+        
+        // Calcular nuevas dimensiones manteniendo aspecto
+        int newWidth = originalImage.Width;
+        int newHeight = originalImage.Height;
+        
+        if (newWidth > maxWidth || newHeight > maxHeight)
+        {
+            double ratioX = (double)maxWidth / newWidth;
+            double ratioY = (double)maxHeight / newHeight;
+            double ratio = Math.Min(ratioX, ratioY);
+            
+            newWidth = (int)(newWidth * ratio);
+            newHeight = (int)(newHeight * ratio);
+        }
+        
+        // Crear imagen redimensionada
+        using var resizedImage = new System.Drawing.Bitmap(newWidth, newHeight);
+        using var graphics = System.Drawing.Graphics.FromImage(resizedImage);
+        
+        graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+        graphics.DrawImage(originalImage, 0, 0, newWidth, newHeight);
+        
+        // Guardar con compresión JPEG
+        var jpegEncoder = System.Drawing.Imaging.ImageCodecInfo.GetImageEncoders()
+            .First(c => c.FormatID == System.Drawing.Imaging.ImageFormat.Jpeg.Guid);
+        var encoderParams = new System.Drawing.Imaging.EncoderParameters(1);
+        encoderParams.Param[0] = new System.Drawing.Imaging.EncoderParameter(
+            System.Drawing.Imaging.Encoder.Quality, (long)quality);
+        
+        resizedImage.Save(destPath, jpegEncoder, encoderParams);
+#else
+        // En otras plataformas, guardar sin comprimir por ahora
+        using var destStream = File.Create(destPath);
+        await sourceStream.CopyToAsync(destStream);
+#endif
     }
 
     private void LimpiarFormularioUsuario()

@@ -413,6 +413,73 @@ public class SyncService
     {
         switch (message.EntityType)
         {
+            case "ResetDatabase":
+                // El Admin ordenó resetear toda la base de datos
+                if (!SessionService.IsAdmin())
+                {
+                    Console.WriteLine("[SYNC] Recibida orden de reset de base de datos del servidor");
+                    try
+                    {
+                        await _databaseService.ResetDatabaseAsync();
+                        Console.WriteLine("[SYNC] Base de datos local reseteada exitosamente");
+                        
+                        // Notificar cambio masivo para recargar toda la UI
+                        DataChanged?.Invoke(this, "FullSync");
+                        
+                        // Mostrar notificación al usuario
+                        await MainThread.InvokeOnMainThreadAsync(async () =>
+                        {
+                            if (Application.Current?.MainPage != null)
+                            {
+                                await Application.Current.MainPage.DisplayAlert(
+                                    "Base de Datos Reseteada",
+                                    "El administrador ha reseteado la base de datos del sistema.\n\nTodos los datos han sido eliminados.",
+                                    "Entendido");
+                            }
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[SYNC] Error reseteando base de datos: {ex.Message}");
+                    }
+                }
+                break;
+                
+            case "ProfilePhoto":
+                // Recibir y guardar foto de perfil
+                if (!string.IsNullOrEmpty(message.FileData) && message.UserId > 0)
+                {
+                    try
+                    {
+                        // Convertir de Base64 a bytes
+                        byte[] imageBytes = Convert.FromBase64String(message.FileData);
+                        
+                        // Guardar en carpeta local
+                        var destFolder = Path.Combine(FileSystem.AppDataDirectory, "fotos");
+                        Directory.CreateDirectory(destFolder);
+                        
+                        var destPath = Path.Combine(destFolder, message.FileName ?? $"{message.UserId}.jpg");
+                        await File.WriteAllBytesAsync(destPath, imageBytes);
+                        
+                        // Actualizar usuario en base de datos
+                        var user = await _databaseService.GetUserByIdAsync(message.UserId);
+                        if (user != null)
+                        {
+                            user.FotoPerfil = destPath;
+                            await _databaseService.SaveUserAsync(user, skipSync: true);
+                            Console.WriteLine($"[SYNC] Foto de perfil actualizada para {user.Username}");
+                            
+                            // Notificar cambio para actualizar UI en tiempo real
+                            DataChanged?.Invoke(this, "User");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[SYNC] Error guardando foto: {ex.Message}");
+                    }
+                }
+                break;
+
             case "Tarea":
                 var tarea = JsonSerializer.Deserialize<Tarea>(message.EntityJson);
                 if (tarea != null)

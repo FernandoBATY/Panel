@@ -951,6 +951,19 @@ public partial class CentroControlContadorVM : ObservableObject
             {
                 await CargarTodosLosDatos();
             }
+            else if (entityType == "User")
+            {
+                // Actualizar foto de perfil del usuario actual
+                if (_currentUser != null)
+                {
+                    var updatedUser = await _databaseService.GetUserByIdAsync(_currentUser.Id);
+                    if (updatedUser != null)
+                    {
+                        CurrentUser = updatedUser;
+                        Console.WriteLine($"[CONTADOR] Foto de perfil actualizada en UI");
+                    }
+                }
+            }
             else if (entityType == "Mensaje") 
             {
                 await CargarMensajes();
