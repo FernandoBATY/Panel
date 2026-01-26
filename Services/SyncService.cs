@@ -15,6 +15,10 @@ public class SyncService
     // Control de mensajes procesados recientemente para evitar duplicados
     private readonly HashSet<string> _processedMessages = new();
     private DateTime _lastCleanup = DateTime.UtcNow;
+    
+    // Cola de operaciones pendientes cuando se trabaja offline
+    private readonly List<SyncMessage> _pendingOperations = new();
+    private bool _isConnected = false;
 
     // Evento para notificar cambios de datos
     public event EventHandler<string>? DataChanged; 
@@ -121,16 +125,86 @@ public class SyncService
             Timestamp = DateTime.UtcNow
         };
 
-        if (SessionService.IsAdmin())
+        try
         {
-            await _networkService.BroadcastMessageAsync(message);
+            if (SessionService.IsAdmin())
+            {
+                await _networkService.BroadcastMessageAsync(message);
+                Console.WriteLine($"[SYNC] Cambio local enviado: {operation} {entityType}");
+            }
+            else
+            {
+                await _networkService.SendMessageAsync(message);
+                Console.WriteLine($"[SYNC] Cambio local enviado: {operation} {entityType}");
+            }
         }
-        else
+        catch (Exception ex)
         {
-            await _networkService.SendMessageAsync(message);
+            // Si falla el envío (probablemente sin conexión), guardar en cola pendiente
+            Console.WriteLine($"[SYNC] Sin conexión, encolando operación: {operation} {entityType}");
+            lock (_pendingOperations)
+            {
+                _pendingOperations.Add(message);
+            }
         }
-
-        Console.WriteLine($"[SYNC] Cambio local enviado: {operation} {entityType}");
+    }
+    
+    // Procesar operaciones pendientes al reconectar
+    public async Task ProcessPendingOperations()
+    {
+        List<SyncMessage> toProcess;
+        
+        lock (_pendingOperations)
+        {
+            if (_pendingOperations.Count == 0)
+            {
+                Console.WriteLine("[SYNC] No hay operaciones pendientes");
+                return;
+            }
+            
+            toProcess = new List<SyncMessage>(_pendingOperations);
+            _pendingOperations.Clear();
+        }
+        
+        Console.WriteLine($"[SYNC] Procesando {toProcess.Count} operaciones pendientes...");
+        
+        foreach (var message in toProcess)
+        {
+            try
+            {
+                if (SessionService.IsAdmin())
+                {
+                    await _networkService.BroadcastMessageAsync(message);
+                }
+                else
+                {
+                    await _networkService.SendMessageAsync(message);
+                }
+                
+                Console.WriteLine($"[SYNC] Operación pendiente sincronizada: {message.Operation} {message.EntityType}");
+                await Task.Delay(50); // Pequeña pausa entre operaciones
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[SYNC] Error procesando operación pendiente: {ex.Message}");
+                // Volver a encolar si falla
+                lock (_pendingOperations)
+                {
+                    _pendingOperations.Add(message);
+                }
+            }
+        }
+        
+        Console.WriteLine("[SYNC] Operaciones pendientes procesadas");
+    }
+    
+    // Obtener el número de operaciones pendientes
+    public int GetPendingOperationsCount()
+    {
+        lock (_pendingOperations)
+        {
+            return _pendingOperations.Count;
+        }
     }
 
     #endregion

@@ -1070,4 +1070,50 @@ public class DatabaseService
     }
 
     #endregion
+
+    #region Backup Completo
+
+    /// <summary>
+    /// Genera un archivo JSON con todos los datos de todas las tablas
+    /// </summary>
+    public async Task<string> GenerarBackupCompletoAsync()
+    {
+        await Init();
+
+        var backup = new
+        {
+            FechaBackup = DateTime.Now,
+            Version = "1.0",
+            Usuarios = await _database!.Table<User>().ToListAsync(),
+            Tareas = await _database.Table<Tarea>().ToListAsync(),
+            Mensajes = await _database.Table<Mensaje>().ToListAsync(),
+            Alertas = await _database.Table<Alerta>().ToListAsync(),
+            PlantillasTareas = await _database.Table<PlantillaTarea>().ToListAsync(),
+            Comentarios = await _database.Table<Comentario>().ToListAsync(),
+            Etiquetas = await _database.Table<Etiqueta>().ToListAsync(),
+            TareasEtiquetas = await _database.Table<TareaEtiqueta>().ToListAsync(),
+            NotasRapidas = await _database.Table<NotaRapida>().ToListAsync()
+        };
+
+        var json = System.Text.Json.JsonSerializer.Serialize(backup, new System.Text.Json.JsonSerializerOptions
+        {
+            WriteIndented = true,
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        });
+
+        var fileName = $"Backup_Panel_{DateTime.Now:yyyyMMdd_HHmmss}.json";
+        var filePath = Path.Combine(FileSystem.AppDataDirectory, fileName);
+        
+        await File.WriteAllTextAsync(filePath, json);
+
+        Console.WriteLine($"[BACKUP] Generado: {fileName}");
+        Console.WriteLine($"[BACKUP] Usuarios: {backup.Usuarios.Count}");
+        Console.WriteLine($"[BACKUP] Tareas: {backup.Tareas.Count}");
+        Console.WriteLine($"[BACKUP] Mensajes: {backup.Mensajes.Count}");
+        Console.WriteLine($"[BACKUP] Alertas: {backup.Alertas.Count}");
+
+        return filePath;
+    }
+
+    #endregion
 }

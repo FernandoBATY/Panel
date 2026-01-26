@@ -106,15 +106,51 @@ public class NetworkService
 
                     if (message.Operation == SyncOperation.Hello && connectedClient == null)
                     {
-                        var existingClient = _connectedClients
+                        // Verificar si el usuario ya está conectado desde otra máquina
+                        var existingUserClient = _connectedClients
+                            .FirstOrDefault(c => c.Identity.UserId == message.Sender!.UserId 
+                                              && c.Identity.Role != "Guest");
+                        
+                        if (existingUserClient != null)
+                        {
+                            Console.WriteLine($"[SERVER] RECHAZADO: Usuario {message.Sender!.Username} ya conectado desde {existingUserClient.Identity.MachineName}");
+                            
+                            // Enviar mensaje de rechazo al cliente
+                            var rejectMsg = new SyncMessage
+                            {
+                                Operation = SyncOperation.Delete, // Usamos Delete como señal de rechazo
+                                EntityType = "SessionRejected",
+                                Sender = new NodeIdentity 
+                                { 
+                                    Username = "Server",
+                                    MachineName = existingUserClient.Identity.MachineName 
+                                }
+                            };
+                            
+                            try
+                            {
+                                var rejectJson = JsonSerializer.Serialize(rejectMsg);
+                                var rejectData = Encoding.UTF8.GetBytes(rejectJson + "\n");
+                                await stream.WriteAsync(rejectData, 0, rejectData.Length);
+                                await stream.FlushAsync();
+                            }
+                            catch { }
+                            
+                            // Cerrar la conexión rechazada
+                            client.Close();
+                            return; // Salir del HandleClientAsync
+                        }
+                        
+                        // Si es Guest, permitir reemplazar conexión existente de la misma máquina
+                        var existingGuestClient = _connectedClients
                             .FirstOrDefault(c => c.Identity.MachineName == message.Sender!.MachineName 
                                               && c.Identity.Role == "Guest");
                         
-                        if (existingClient != null)
+                        if (existingGuestClient != null)
                         {
-                            Console.WriteLine($"[SERVER] Reemplazando conexión existente de {existingClient.Identity.MachineName}");
-                            _connectedClients.Remove(existingClient);
-                            try { existingClient.Client.Close(); } catch { }
+                            Console.WriteLine($"[SERVER] Reemplazando conexión Guest existente de {existingGuestClient.Identity.MachineName}");
+                            _connectedClients.Remove(existingGuestClient);
+                            try { existingGuestClient.Client.Close(); } catch { }
                         }
                         
                         connectedClient = new ConnectedClient
@@ -318,6 +354,28 @@ public class NetworkService
                         var message = JsonSerializer.Deserialize<SyncMessage>(json);
                         if (message != null)
                         {
+                            // Detectar rechazo de sesión
+                            if (message.EntityType == "SessionRejected")
+                            {
+                                Console.WriteLine($"[CLIENT] Sesión rechazada - Usuario ya conectado desde {message.Sender?.MachineName}");
+                                
+                                // Notificar al usuario en el hilo principal
+                                MainThread.BeginInvokeOnMainThread(async () =>
+                                {
+                                    await Application.Current!.MainPage!.DisplayAlert(
+                                        "Sesión Duplicada",
+                                        $"Este usuario ya está conectado desde otra computadora: {message.Sender?.MachineName}\n\nNo se permite el mismo usuario en dos máquinas simultáneamente.",
+                                        "OK"
+                                    );
+                                    
+                                    // Limpiar sesión y cerrar aplicación
+                                    SessionService.ClearSession();
+                                    Disconnect();
+                                });
+                                
+                                break;
+                            }
+                            
                             Console.WriteLine($"[CLIENT] Mensaje recibido: {message.EntityType}");
                             MessageReceived?.Invoke(this, message);
                         }

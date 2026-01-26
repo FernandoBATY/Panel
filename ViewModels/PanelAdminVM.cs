@@ -301,13 +301,28 @@ public partial class PanelAdminVM : ObservableObject
         var tareas = await _databaseService.GetTareasAsync();
         var todosUsuarios = await _databaseService.GetAllUsersAsync();
 
+        // Crear un diccionario para mapear IDs a nombres
+        var userMap = todosUsuarios.ToDictionary(u => u.Id, u => u.Name);
+
         MainThread.BeginInvokeOnMainThread(() => 
         {
             Contadores.Clear();
             foreach (var c in contadores) Contadores.Add(c);
 
             Tareas.Clear();
-            foreach (var t in tareas) Tareas.Add(t);
+            foreach (var t in tareas)
+            {
+                // Asignar el nombre del usuario a la tarea
+                if (userMap.TryGetValue(t.AsignadoAId, out var nombreUsuario))
+                {
+                    t.AsignadoANombre = nombreUsuario;
+                }
+                else
+                {
+                    t.AsignadoANombre = $"Usuario #{t.AsignadoAId}";
+                }
+                Tareas.Add(t);
+            }
 
             TodosLosUsuarios.Clear();
             foreach (var u in todosUsuarios) TodosLosUsuarios.Add(u);
@@ -479,15 +494,22 @@ public partial class PanelAdminVM : ObservableObject
 #if WINDOWS
         try
         {
+            IsBusy = true;
+            
+            // Generar el backup JSON con todos los datos
+            var backupPath = await _databaseService.GenerarBackupCompletoAsync();
+            
+            // Usar FileSavePicker para que el usuario elija dónde guardarlo
             var savePicker = new Windows.Storage.Pickers.FileSavePicker();
             savePicker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary;
-            savePicker.FileTypeChoices.Add("SQLite Database", new List<string>() { ".db3" });
+            savePicker.FileTypeChoices.Add("JSON Backup", new List<string>() { ".json" });
             savePicker.SuggestedFileName = $"Jazer_Backup_{DateTime.Now:yyyyMMdd_HHmmss}";
 
             var window = Application.Current?.Windows.FirstOrDefault()?.Handler?.PlatformView as Microsoft.UI.Xaml.Window;
             if (window == null)
             {
                 await Application.Current!.MainPage!.DisplayAlert("Error", "No se pudo acceder a la ventana actual.", "OK");
+                IsBusy = false;
                 return;
             }
 
@@ -497,22 +519,33 @@ public partial class PanelAdminVM : ObservableObject
             var file = await savePicker.PickSaveFileAsync();
             if (file != null)
             {
-                IsBusy = true;
-               
-                string path = file.Path;
-
-              
+                // Copiar el archivo generado a la ubicación elegida
+                File.Copy(backupPath, file.Path, true);
                 
-                try 
-                {
-                    if (File.Exists(path)) File.Delete(path);
-                } 
-                catch {  }
-
-                await _databaseService.BackupDatabaseAsync(path);
+                // Leer el backup para mostrar estadísticas
+                var backupContent = await File.ReadAllTextAsync(backupPath);
+                var backupData = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(backupContent);
+                
+                var usuarios = backupData.GetProperty("Usuarios").GetArrayLength();
+                var tareas = backupData.GetProperty("Tareas").GetArrayLength();
+                var mensajes = backupData.GetProperty("Mensajes").GetArrayLength();
+                var alertas = backupData.GetProperty("Alertas").GetArrayLength();
                 
                 IsBusy = false;
-                await Application.Current!.MainPage!.DisplayAlert("Backup Completo", $"Base de datos guardada en:\n{path}", "OK");
+                await Application.Current!.MainPage!.DisplayAlert(
+                    "Backup Completo", 
+                    $"Base de datos guardada en:\n{file.Path}\n\n" +
+                    $"📊 Estadísticas del Backup:\n" +
+                    $"• Usuarios: {usuarios}\n" +
+                    $"• Tareas: {tareas}\n" +
+                    $"• Mensajes: {mensajes}\n" +
+                    $"• Alertas: {alertas}", 
+                    "OK"
+                );
+            }
+            else
+            {
+                IsBusy = false;
             }
         }
         catch (Exception ex)
@@ -566,8 +599,45 @@ public partial class PanelAdminVM : ObservableObject
     [RelayCommand]
     public async Task GuardarUsuario()
     {
+        // Validación de campos obligatorios
         if (string.IsNullOrWhiteSpace(NuevoUsuarioNombre) || string.IsNullOrWhiteSpace(NuevoUsuarioUsername))
+        {
+            await Application.Current!.Windows[0].Page!.DisplayAlert("Error", "El nombre y el usuario son obligatorios", "OK");
             return;
+        }
+        
+        // Validación de longitud de username (mínimo 3, máximo 15)
+        if (NuevoUsuarioUsername.Length < 3 || NuevoUsuarioUsername.Length > 15)
+        {
+            await Application.Current!.Windows[0].Page!.DisplayAlert("Error", "El usuario debe tener entre 3 y 15 caracteres", "OK");
+            return;
+        }
+        
+        // Validación de contraseña para nuevos usuarios
+        if (!IsEditMode)
+        {
+            if (string.IsNullOrWhiteSpace(NuevoUsuarioPassword))
+            {
+                await Application.Current!.Windows[0].Page!.DisplayAlert("Error", "La contraseña es obligatoria para nuevos usuarios", "OK");
+                return;
+            }
+            
+            if (NuevoUsuarioPassword.Length < 6 || NuevoUsuarioPassword.Length > 20)
+            {
+                await Application.Current!.Windows[0].Page!.DisplayAlert("Error", "La contraseña debe tener entre 6 y 20 caracteres", "OK");
+                return;
+            }
+        }
+        
+        // Validación de contraseña al editar (solo si se cambia)
+        if (IsEditMode && !string.IsNullOrWhiteSpace(NuevoUsuarioPassword))
+        {
+            if (NuevoUsuarioPassword.Length < 6 || NuevoUsuarioPassword.Length > 20)
+            {
+                await Application.Current!.Windows[0].Page!.DisplayAlert("Error", "La contraseña debe tener entre 6 y 20 caracteres", "OK");
+                return;
+            }
+        }
 
         User user;
         if (IsEditMode && UsuarioEditando != null)
@@ -596,6 +666,9 @@ public partial class PanelAdminVM : ObservableObject
         await _databaseService.SaveUserAsync(user);
         LimpiarFormularioUsuario();
         await CargarDatos();
+        
+        await Application.Current!.Windows[0].Page!.DisplayAlert("Éxito", 
+            IsEditMode ? "Usuario actualizado correctamente" : "Usuario creado correctamente", "OK");
     }
 
     [RelayCommand]
@@ -620,8 +693,28 @@ public partial class PanelAdminVM : ObservableObject
     public async Task EliminarUsuario(User user)
     {
         if (user == null) return;
+        
+        // Prevenir eliminación del usuario Admin
+        if (user.Role == "Admin" || user.Username.ToLower() == "admin")
+        {
+            await Application.Current!.Windows[0].Page!.DisplayAlert("Error", 
+                "No se puede eliminar el usuario Administrador", "OK");
+            return;
+        }
+        
+        // Confirmación antes de eliminar
+        bool confirm = await Application.Current!.Windows[0].Page!.DisplayAlert(
+            "Confirmar", 
+            $"¿Estás seguro de eliminar al usuario '{user.Name}' ({user.Username})?", 
+            "Eliminar", "Cancelar");
+            
+        if (!confirm) return;
+        
         await _databaseService.DeleteUserAsync(user);
         await CargarDatos();
+        
+        await Application.Current!.Windows[0].Page!.DisplayAlert("Éxito", 
+            "Usuario eliminado correctamente", "OK");
     }
 
     [RelayCommand]

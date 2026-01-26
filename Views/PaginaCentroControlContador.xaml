@@ -72,6 +72,17 @@
                             <Label Text="Conectado al servidor" FontSize="13" TextColor="{StaticResource Green800}"/>
                         </HorizontalStackLayout>
                      </Border>
+                     
+                     <!-- Indicador de operaciones pendientes -->
+                     <Border IsVisible="{Binding TieneOperacionesPendientes}"
+                            BackgroundColor="{StaticResource Orange100}" StrokeThickness="0" StrokeShape="RoundRectangle 16"
+                            Padding="12,6">
+                        <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                            <Path Data="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" 
+                                  Stroke="{StaticResource Orange700}" StrokeThickness="2" WidthRequest="16" HeightRequest="16" Aspect="Uniform" VerticalOptions="Center"/>
+                            <Label Text="{Binding OperacionesPendientes, StringFormat='{0} sin sincronizar'}" FontSize="12" TextColor="{StaticResource Orange800}"/>
+                        </HorizontalStackLayout>
+                     </Border>
 
                      <HorizontalStackLayout IsVisible="{Binding Conectado, Converter={StaticResource InverseBoolConverter}}" Spacing="6">
                          <Entry Placeholder="IP Servidor (Ej: 192.168.1.5)" 

@@ -126,11 +126,11 @@
                             BackgroundColor="Transparent" TextColor="{StaticResource Gray700Jazer}"
                             BorderColor="{StaticResource Gray300Jazer}" BorderWidth="1"
                             HeightRequest="36" FontSize="13" Padding="12,0" CornerRadius="6"/>
-                    <Button Text="Backup" 
+                    <Button Text="Backup Completo" 
                             Command="{Binding DescargarBackupCommand}"
                             BackgroundColor="{StaticResource Blue600}" TextColor="White"
                             HeightRequest="36" FontSize="12" Padding="12,0" CornerRadius="6"
-                            ToolTipProperties.Text="Descargar copia de seguridad"/>
+                            ToolTipProperties.Text="Descargar backup completo de todas las tablas en JSON"/>
                     <Border BackgroundColor="{StaticResource Red400}"
                             HeightRequest="36" WidthRequest="40" StrokeThickness="0" StrokeShape="RoundRectangle 6"
                             ToolTipProperties.Text="Reset BD">
@@ -489,7 +489,7 @@
                                                     
                                                     <VerticalStackLayout Grid.Column="1" Margin="8,0" Spacing="2">
                                                         <Label Text="{Binding Titulo}" FontAttributes="Bold" TextColor="{StaticResource Gray900Jazer}" LineBreakMode="TailTruncation" MaxLines="1"/>
-                                                        <Label Text="{Binding AsignadoAId, StringFormat='Asignado a: #{0}'}" FontSize="11" TextColor="{StaticResource Gray500Jazer}"/>
+                                                        <Label Text="{Binding AsignadoANombre, StringFormat='Asignado a: {0}'}" FontSize="11" TextColor="{StaticResource Gray500Jazer}"/>
                                                         <Label Text="{Binding FechaVencimiento, StringFormat='Vence: {0:d}'}" FontSize="11" TextColor="{StaticResource Red400}"/>
                                                     </VerticalStackLayout>
                                                     
@@ -1313,13 +1313,33 @@
     
                                 <VerticalStackLayout Spacing="4">
                                     <Label Text="Usuario (Login)" FontSize="12" TextColor="{StaticResource Gray600Jazer}"/>
-                                    <Entry Text="{Binding NuevoUsuarioUsername}" Placeholder="Ej: maria" BackgroundColor="{StaticResource Gray50}" TextColor="Black"/>
+                                    <Entry Text="{Binding NuevoUsuarioUsername}" Placeholder="Ej: maria" 
+                                           BackgroundColor="{StaticResource Gray50}" TextColor="Black"
+                                           MaxLength="15"/>
+                                    <Label Text="Mínimo 3, máximo 15 caracteres" FontSize="10" TextColor="{StaticResource Gray500Jazer}" Margin="4,0,0,0"/>
                                 </VerticalStackLayout>
     
                                 <VerticalStackLayout Spacing="4">
                                     <Label Text="Contraseña" FontSize="12" TextColor="{StaticResource Gray600Jazer}"/>
-                                    <Entry Text="{Binding NuevoUsuarioPassword}" Placeholder="Nueva contraseña" IsPassword="True" BackgroundColor="{StaticResource Gray50}" TextColor="Black"/>
+                                    <Entry Text="{Binding NuevoUsuarioPassword}" Placeholder="Nueva contraseña" 
+                                           IsPassword="True" BackgroundColor="{StaticResource Gray50}" TextColor="Black"
+                                           MaxLength="20"/>
+                                    <Label Text="Mínimo 6, máximo 20 caracteres" FontSize="10" TextColor="{StaticResource Gray500Jazer}" Margin="4,0,0,0"/>
+                                    <Label Text="Dejar vacío para mantener la contraseña actual" FontSize="10" TextColor="{StaticResource Blue500}" Margin="4,2,0,0" FontAttributes="Italic"
+                                           IsVisible="{Binding IsEditMode}"/>
                                 </VerticalStackLayout>
+                                
+                                <!-- Nota informativa para usuario Admin -->
+                                <Border BackgroundColor="{StaticResource Blue50}" Padding="12" StrokeThickness="0" StrokeShape="RoundRectangle 8"
+                                        IsVisible="{Binding UsuarioEditando.Role, Converter={StaticResource EqualConverter}, ConverterParameter=Admin}">
+                                    <HorizontalStackLayout Spacing="8">
+                                        <Path Data="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" 
+                                              Stroke="{StaticResource Blue600}" StrokeThickness="1.5" 
+                                              WidthRequest="16" HeightRequest="16" Aspect="Uniform" VerticalOptions="Center"/>
+                                        <Label Text="Este es un usuario administrador. No puede ser eliminado, pero puedes cambiar su contraseña." 
+                                               FontSize="11" TextColor="{StaticResource Blue700}" VerticalOptions="Center" LineBreakMode="WordWrap"/>
+                                    </HorizontalStackLayout>
+                                </Border>
     
                                 <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
                                     <VerticalStackLayout Spacing="4">
@@ -1405,6 +1425,12 @@
                                                             <Border BackgroundColor="{StaticResource Red50}"
                                                                     HeightRequest="32" WidthRequest="32" StrokeThickness="0" StrokeShape="RoundRectangle 6"
                                                                     ToolTipProperties.Text="Eliminar">
+                                                                <!-- Ocultar bot\u00f3n de eliminar para usuarios Admin -->
+                                                                <Border.Triggers>
+                                                                    <DataTrigger TargetType="Border" Binding="{Binding Role}" Value="Admin">
+                                                                        <Setter Property="IsVisible" Value="False"/>
+                                                                    </DataTrigger>
+                                                                </Border.Triggers>
                                                                 <Border.GestureRecognizers>
                                                                     <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EliminarUsuarioCommand}" CommandParameter="{Binding .}"/>
                                                                 </Border.GestureRecognizers>

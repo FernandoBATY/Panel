@@ -39,5 +39,9 @@ public class Tarea
 
     // Asignación
     [Indexed]
-    public int AsignadoAId { get; set; } 
+    public int AsignadoAId { get; set; }
+    
+    // Propiedad calculada para mostrar el nombre del usuario asignado (no se guarda en BD)
+    [Ignore]
+    public string AsignadoANombre { get; set; } = string.Empty;
 }

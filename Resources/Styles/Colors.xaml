@@ -103,6 +103,8 @@
     <Color x:Key="Orange500">#F59E0B</Color>
     <Color x:Key="Orange600">#D97706</Color>
     <Color x:Key="Orange700">#C2410C</Color>
+    <Color x:Key="Orange800">#9A3412</Color>
+    <Color x:Key="Orange900">#7C2D12</Color>
 
     <Color x:Key="Purple50">#F3E8FF</Color>
     <Color x:Key="Purple100">#E9D5FF</Color>

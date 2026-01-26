@@ -132,6 +132,8 @@ public partial class CentroControlContadorVM : ObservableObject
     [ObservableProperty] private bool _isConnected;
     [ObservableProperty] private string _serverInfo = "No conectado";
     [ObservableProperty] private string _serverIpManual = "";
+    [ObservableProperty] private int _operacionesPendientes = 0;
+    [ObservableProperty] private bool _tieneOperacionesPendientes = false;
 
     public CentroControlContadorVM(DatabaseService databaseService, NetworkService networkService, SyncService syncService)
     {
@@ -811,7 +813,10 @@ public partial class CentroControlContadorVM : ObservableObject
             
             TareasPendientes.Remove(tarea);
             
-             await CargarTodosLosDatos();
+            await CargarTodosLosDatos();
+            
+            // Actualizar contador de operaciones pendientes
+            ActualizarOperacionesPendientes();
         }
     }
 
@@ -824,7 +829,16 @@ public partial class CentroControlContadorVM : ObservableObject
             tarea.FechaCompletado = null;
             await _databaseService.UpdateTareaAsync(tarea);
             await CargarTodosLosDatos();
+            
+            // Actualizar contador de operaciones pendientes
+            ActualizarOperacionesPendientes();
         }
+    }
+    
+    private void ActualizarOperacionesPendientes()
+    {
+        OperacionesPendientes = _syncService.GetPendingOperationsCount();
+        TieneOperacionesPendientes = OperacionesPendientes > 0;
     }
 
     [RelayCommand]
@@ -861,7 +875,34 @@ public partial class CentroControlContadorVM : ObservableObject
             {
                 IsConnected = true;
                 Conectado = true;
-                ServerInfo = $"✓ Conectado a {ServerIpManual}";
+                
+                var pendingBefore = _syncService.GetPendingOperationsCount();
+                
+                if (pendingBefore > 0)
+                {
+                    ServerInfo = $"✓ Conectado - Sincronizando {pendingBefore} cambios...";
+                    
+                    // Procesar operaciones pendientes que se hicieron offline
+                    await Task.Delay(1000); // Esperar a que se complete el handshake
+                    await _syncService.ProcessPendingOperations();
+                    
+                    var pendingAfter = _syncService.GetPendingOperationsCount();
+                    
+                    if (pendingAfter == 0)
+                    {
+                        ServerInfo = $"✓ Conectado - {pendingBefore} cambios sincronizados";
+                    }
+                    else
+                    {
+                        ServerInfo = $"✓ Conectado - {pendingAfter} cambios pendientes";
+                    }
+                }
+                else
+                {
+                    ServerInfo = $"✓ Conectado a {ServerIpManual}";
+                }
+                
+                ActualizarOperacionesPendientes();
             }
             else
             {
