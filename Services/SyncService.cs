@@ -11,6 +11,10 @@ public class SyncService
     
     // Flag para indicar si estamos recibiendo una sincronización completa
     private bool _isReceivingFullSync = false;
+    
+    // Control de mensajes procesados recientemente para evitar duplicados
+    private readonly HashSet<string> _processedMessages = new();
+    private DateTime _lastCleanup = DateTime.UtcNow;
 
     // Evento para notificar cambios de datos
     public event EventHandler<string>? DataChanged; 
@@ -140,6 +144,26 @@ public class SyncService
             if (message.Sender?.NodeId == SessionService.CurrentIdentity?.NodeId)
                 return;
 
+            // Limpiar mensajes procesados antiguos cada 5 minutos
+            if ((DateTime.UtcNow - _lastCleanup).TotalMinutes > 5)
+            {
+                _processedMessages.Clear();
+                _lastCleanup = DateTime.UtcNow;
+            }
+
+            // Crear un identificador único para este mensaje
+            var messageId = $"{message.EntityType}_{message.Operation}_{message.EntityJson?.GetHashCode()}_{message.Timestamp:yyyyMMddHHmmss}";
+            
+            // Si ya procesamos este mensaje, ignorarlo
+            if (_processedMessages.Contains(messageId))
+            {
+                Console.WriteLine($"[SYNC] Mensaje duplicado ignorado: {messageId}");
+                return;
+            }
+            
+            // Marcar mensaje como procesado
+            _processedMessages.Add(messageId);
+
             Console.WriteLine($"[SYNC] Mensaje recibido de {message.Sender?.Username}: {message.Operation} {message.EntityType}");
 
             // Detectar inicio de sincronización completa (primer User que llega del Admin)
@@ -235,9 +259,19 @@ public class SyncService
                 var tarea = JsonSerializer.Deserialize<Tarea>(message.EntityJson);
                 if (tarea != null)
                 {
-                    // InsertOrReplaceAsync evita duplicados por PrimaryKey
-                    await _databaseService.SaveTareaAsync(tarea, skipSync: true);
-                    Console.WriteLine($"[SYNC] Tarea sincronizada: {tarea.Titulo}");
+                    // Verificar si ya existe la tarea antes de insertar
+                    var tareasExistentes = await _databaseService.GetTareasAsync();
+                    var tareaExistente = tareasExistentes.FirstOrDefault(t => t.Id == tarea.Id);
+                    
+                    if (tareaExistente == null)
+                    {
+                        await _databaseService.SaveTareaAsync(tarea, skipSync: true);
+                        Console.WriteLine($"[SYNC] Tarea sincronizada: {tarea.Titulo}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[SYNC] Tarea {tarea.Titulo} ya existe, omitiendo inserción");
+                    }
                 }
                 break;
 

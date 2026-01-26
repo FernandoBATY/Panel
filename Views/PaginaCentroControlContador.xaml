@@ -277,7 +277,7 @@
                          <!-- COLUMNA IZQUIERDA: Mi Día + Progreso Semanal -->
                          <VerticalStackLayout Grid.Column="0" Spacing="16">
                              
-                             <!-- MI DÍA - Tareas Urgentes -->
+                             <!-- MI DÍA - Tareas Pendientes -->
                              <Border BackgroundColor="White" Stroke="{StaticResource Gray200Jazer}" StrokeShape="RoundRectangle 12" Padding="20">
                                  <VerticalStackLayout Spacing="12">
                                      <HorizontalStackLayout Spacing="8">
@@ -285,18 +285,18 @@
                                                Stroke="{StaticResource Orange500}" StrokeThickness="2" WidthRequest="22" HeightRequest="22" Aspect="Uniform"/>
                                          <Label Text="Mi Día" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource Gray900Jazer}"/>
                                          <Border Padding="6,2" StrokeShape="RoundRectangle 10" BackgroundColor="{StaticResource Orange100}" StrokeThickness="0">
-                                             <Label Text="{Binding TareasDelDia.Count, StringFormat='{0} urgentes'}" FontSize="11" TextColor="{StaticResource Orange700}" FontAttributes="Bold"/>
+                                             <Label Text="{Binding TareasDelDia.Count, StringFormat='{0} pendientes'}" FontSize="11" TextColor="{StaticResource Orange700}" FontAttributes="Bold"/>
                                          </Border>
                                      </HorizontalStackLayout>
                                      
-                                     <!-- Lista de tareas urgentes -->
+                                     <!-- Lista de tareas pendientes -->
                                      <CollectionView ItemsSource="{Binding TareasDelDia}" HeightRequest="160">
                                          <CollectionView.EmptyView>
                                              <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="8" Padding="20">
                                                  <Path Data="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" 
                                                        Stroke="{StaticResource Green500}" StrokeThickness="2" WidthRequest="40" HeightRequest="40" Aspect="Uniform" HorizontalOptions="Center"/>
                                                  <Label Text="¡Todo al día!" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource Green600}" HorizontalOptions="Center"/>
-                                                 <Label Text="No tienes tareas urgentes pendientes" FontSize="12" TextColor="{StaticResource Gray500Jazer}" HorizontalOptions="Center"/>
+                                                 <Label Text="No tienes tareas pendientes" FontSize="12" TextColor="{StaticResource Gray500Jazer}" HorizontalOptions="Center"/>
                                              </VerticalStackLayout>
                                          </CollectionView.EmptyView>
                                          <CollectionView.ItemTemplate>

@@ -150,19 +150,19 @@ public partial class CentroControlContadorVM : ObservableObject
 
         MainThread.BeginInvokeOnMainThread(async () => 
         {
+            // Solo mostrar notificaciones, no recargar datos aquí (OnSyncDataChanged lo hará)
             if (message.EntityType == "Tarea" && message.Operation == SyncOperation.Insert)
             {
-                 MostrarNotificacionWindows("Nueva Actividad", "Se han actualizado las tareas/alertas.");
+                 MostrarNotificacionWindows("Nueva Actividad", "Se ha asignado una nueva tarea.");
             }
             else if (message.EntityType == "Mensaje" && message.Operation == SyncOperation.Insert)
             {
-                 await CargarMensajes(); 
-                 if (Mensajes.Any(m => !m.Leido && m.Para == _currentUser?.Id.ToString() && (DateTime.Now - m.MarcaTiempo).TotalSeconds < 10))
+                 // Solo mostrar notificación, la recarga se hará en OnSyncDataChanged
+                 var mensajesTemp = await _databaseService.GetMensajesPorUsuarioAsync(_currentUser?.Id ?? 0);
+                 var mensajeNuevo = mensajesTemp.FirstOrDefault(m => !m.Leido && m.Para == _currentUser?.Id.ToString() && (DateTime.Now - m.MarcaTiempo).TotalSeconds < 10);
+                 if (mensajeNuevo != null)
                  {
-                     var msg = Mensajes.First(m => !m.Leido && m.Para == _currentUser?.Id.ToString());
-                     MostrarNotificacionWindows($"Mensaje de {msg.DeNombre}", msg.Contenido);
-                     
-                     await CargarAlertas();
+                     MostrarNotificacionWindows($"Mensaje de {mensajeNuevo.De}", mensajeNuevo.Contenido);
                  }
             }
         });
@@ -235,16 +235,25 @@ public partial class CentroControlContadorVM : ObservableObject
     {
         var tareas = await _databaseService.GetTareasPorUsuarioAsync(_currentUser!.Id);
         
+        // Deduplicar por ID antes de agregar a la colección
+        var tareasUnicas = tareas.GroupBy(t => t.Id).Select(g => g.First()).ToList();
+        
         _allTareas.Clear();
-        _allTareas.AddRange(tareas);
+        _allTareas.AddRange(tareasUnicas);
 
         ActualizarListaTareas();
 
-        TareasPendientes.Clear();
-        foreach(var t in _allTareas.Where(t => t.Estado != "completada"))
+        var pendientes = _allTareas.Where(t => t.Estado != "completada").ToList();
+        
+        // Ejecutar en MainThread para evitar condiciones de carrera
+        await MainThread.InvokeOnMainThreadAsync(() =>
         {
-            TareasPendientes.Add(t);
-        }
+            TareasPendientes.Clear();
+            foreach(var t in pendientes)
+            {
+                TareasPendientes.Add(t);
+            }
+        });
     }
 
     private async Task CargarAlertas()
@@ -424,26 +433,25 @@ public partial class CentroControlContadorVM : ObservableObject
     private void CargarTareasDelDia()
     {
         var hoy = DateTime.Today;
-        var manana = hoy.AddDays(1);
         
-        // Tareas urgentes: vencen hoy, mañana, o ya vencidas + prioritarias
-        var tareasUrgentes = _allTareas
+        // Mostrar TODAS las tareas pendientes (no solo urgentes)
+        var todasPendientes = _allTareas
             .Where(t => t.Estado != "completada")
-            .Where(t => 
-                t.FechaVencimiento.Date <= manana ||
-                t.Prioridad == "alta" || t.Prioridad == "urgente")
             .OrderBy(t => t.FechaVencimiento)
-            .ThenByDescending(t => t.Prioridad == "alta" || t.Prioridad == "urgente")
+            .ThenByDescending(t => t.Prioridad == "alta" || t.Prioridad == "urgente" || t.Prioridad == "Prioritaria")
             .Take(5)
             .ToList();
         
-        TareasDelDia.Clear();
-        foreach (var t in tareasUrgentes)
+        // Ejecutar en MainThread para evitar condiciones de carrera
+        MainThread.BeginInvokeOnMainThread(() =>
         {
-            TareasDelDia.Add(t);
-        }
-        
-        HayTareasDelDia = TareasDelDia.Any();
+            TareasDelDia.Clear();
+            foreach (var t in todasPendientes)
+            {
+                TareasDelDia.Add(t);
+            }
+            HayTareasDelDia = TareasDelDia.Any();
+        });
     }
     
     private async void CargarHistorialActividad()
@@ -529,11 +537,15 @@ public partial class CentroControlContadorVM : ObservableObject
             p.AlturaBarra = Math.Max(4, p.AlturaBarra); // Mínimo visible
         }
         
-        ProgresoSemanal.Clear();
-        foreach (var p in progreso)
+        // Ejecutar en MainThread para evitar condiciones de carrera
+        MainThread.BeginInvokeOnMainThread(() =>
         {
-            ProgresoSemanal.Add(p);
-        }
+            ProgresoSemanal.Clear();
+            foreach (var p in progreso)
+            {
+                ProgresoSemanal.Add(p);
+            }
+        });
     }
     
     private string ObtenerDiaSemanaCorto(DayOfWeek dia)
@@ -745,7 +757,6 @@ public partial class CentroControlContadorVM : ObservableObject
 
     private void ActualizarListaTareas()
     {
-        Tareas.Clear();
         IEnumerable<Tarea> filtered = _allTareas;
 
         switch (FiltroActual)
@@ -762,7 +773,17 @@ public partial class CentroControlContadorVM : ObservableObject
                 break;
         }
 
-        foreach (var t in filtered) Tareas.Add(t);
+        var lista = filtered.ToList();
+        
+        // Ejecutar en MainThread para evitar condiciones de carrera
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            Tareas.Clear();
+            foreach (var t in lista)
+            {
+                Tareas.Add(t);
+            }
+        });
     }
 
     [RelayCommand]
@@ -879,16 +900,37 @@ public partial class CentroControlContadorVM : ObservableObject
     
     private async void OnSyncDataChanged(object? sender, string entityType)
     {
-        if (entityType == "Mensaje") await CargarMensajes();
-        else if (entityType == "Comentario" && TareaSeleccionadaParaComentarios != null) 
-            await CargarComentariosDeTarea();
-        else if (entityType == "Etiqueta" || entityType == "TareaEtiqueta")
+        Console.WriteLine($"[CONTADOR] OnSyncDataChanged: {entityType}");
+        
+        // Ejecutar en MainThread para evitar condiciones de carrera
+        await MainThread.InvokeOnMainThreadAsync(async () =>
         {
-            await CargarEtiquetas();
-            if (TareaSeleccionadaParaComentarios != null)
-                await CargarEtiquetasDeTarea();
-        }
-        else await CargarTodosLosDatos();
+            // Solo recargar todo cuando se completa el FullSync
+            if (entityType == "FullSync")
+            {
+                await CargarTodosLosDatos();
+            }
+            else if (entityType == "Mensaje") 
+            {
+                await CargarMensajes();
+            }
+            else if (entityType == "Comentario" && TareaSeleccionadaParaComentarios != null) 
+            {
+                await CargarComentariosDeTarea();
+            }
+            else if (entityType == "Etiqueta" || entityType == "TareaEtiqueta")
+            {
+                await CargarEtiquetas();
+                if (TareaSeleccionadaParaComentarios != null)
+                    await CargarEtiquetasDeTarea();
+            }
+            else if (entityType == "Tarea")
+            {
+                // Solo recargar tareas cuando es una tarea individual
+                await CargarTareas();
+                CalcularEstadisticas();
+            }
+        });
     }
 
     private void StartTimer()
