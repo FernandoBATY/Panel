@@ -271,19 +271,32 @@ public partial class CentroControlContadorVM : ObservableObject
             else Notificaciones.Add(a);
         }
 
+        // Cargar mensajes no leídos y agregarlos a notificaciones
         var mensajes = await _databaseService.GetMensajesPorUsuarioAsync(_currentUser!.Id);
-        foreach(var m in mensajes.Where(x => !x.Leido && x.Para == _currentUser.Id.ToString()))
+        var mensajesNoLeidos = mensajes.Where(x => !x.Leido && x.Para == _currentUser.Id.ToString()).ToList();
+        
+        foreach(var m in mensajesNoLeidos)
         {
-            Notificaciones.Add(new Alerta { 
-                Titulo = $"Mensaje de {m.De}",  
-                Mensaje = m.Contenido, 
-                Tipo = "MENSAJE", 
-                FechaCreacion = m.MarcaTiempo,
-                Vista = false
-            });
+            // Evitar duplicados: verificar que no existe ya una notificación con el mismo contenido y fecha
+            bool yaExiste = Notificaciones.Any(n => 
+                n.Tipo == "MENSAJE" && 
+                n.Mensaje == m.Contenido && 
+                Math.Abs((n.FechaCreacion - m.MarcaTiempo).TotalSeconds) < 1);
+            
+            if (!yaExiste)
+            {
+                Notificaciones.Add(new Alerta { 
+                    Titulo = $"Mensaje de {m.De}",  
+                    Mensaje = m.Contenido, 
+                    Tipo = "MENSAJE", 
+                    FechaCreacion = m.MarcaTiempo,
+                    Vista = false
+                });
+            }
         }
         
-        var sorted = new ObservableCollection<Alerta>(Notificaciones.OrderByDescending(n => n.FechaCreacion));
+        // Ordenar notificaciones por fecha
+        var sorted = Notificaciones.OrderByDescending(n => n.FechaCreacion).ToList();
         Notificaciones.Clear();
         foreach(var n in sorted) Notificaciones.Add(n);
 

@@ -1,8 +1,10 @@
 using SQLite;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace Panel.Models;
 
-public class Etiqueta
+public class Etiqueta : INotifyPropertyChanged
 {
     // Identificación
     [PrimaryKey, AutoIncrement]
@@ -44,6 +46,27 @@ public class Etiqueta
     [Ignore]
     public string NombreCompleto => $"{Icono} {Nombre}";
 
+    // Propiedad con notificación de cambios para la UI
+    private bool _estaSeleccionada;
     [Ignore]
-    public bool EstaSeleccionada { get; set; }
+    public bool EstaSeleccionada 
+    { 
+        get => _estaSeleccionada;
+        set
+        {
+            if (_estaSeleccionada != value)
+            {
+                _estaSeleccionada = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    // INotifyPropertyChanged implementation
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
 }

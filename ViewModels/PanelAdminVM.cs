@@ -473,16 +473,8 @@ public partial class PanelAdminVM : ObservableObject
             Console.WriteLine("[ADMIN] Generando backup antes de resetear base de datos...");
             var backupPath = await _databaseService.GenerarBackupCompletoAsync();
             
-            // Descargar el backup automáticamente
-            var result = await FileSaver.Default.SaveAsync(
-                Path.GetFileName(backupPath),
-                File.OpenRead(backupPath),
-                CancellationToken.None);
-            
-            if (result.IsSuccessful)
-            {
-                Console.WriteLine($"[ADMIN] Backup guardado en: {result.FilePath}");
-            }
+            // El backup se ha guardado en la carpeta de la aplicación
+            Console.WriteLine($"[ADMIN] Backup guardado en: {backupPath}");
             
             // 2. Enviar comando de reset a todos los clientes conectados
             if (_networkService != null && IsServerRunning)
@@ -508,7 +500,7 @@ public partial class PanelAdminVM : ObservableObject
             
             await Application.Current!.Windows[0].Page!.DisplayAlert(
                 "Éxito", 
-                $"Base de datos reseteada.\n\nBackup guardado en:\n{result.FilePath}", 
+                $"Base de datos reseteada.\n\nBackup guardado en:\n{backupPath}", 
                 "OK");
         }
         catch (Exception ex)
