@@ -446,6 +446,26 @@ public partial class PanelAdminVM : ObservableObject
     }
 
     [RelayCommand]
+    public async Task EliminarTarea(Tarea tarea)
+    {
+        if (tarea == null) return;
+
+        bool confirm = await Application.Current!.Windows[0].Page!.DisplayAlert(
+            "Confirmar",
+            $"¿Eliminar la tarea '{tarea.Titulo}'?\n\nEsta acción no se puede deshacer.",
+            "Sí, Eliminar",
+            "Cancelar");
+
+        if (!confirm) return;
+
+        await _databaseService.DeleteTareaAsync(tarea.Id);
+        Tareas.Remove(tarea);
+        await CargarDatos();
+        
+        await Application.Current!.Windows[0].Page!.DisplayAlert("Éxito", "Tarea eliminada correctamente", "OK");
+    }
+
+    [RelayCommand]
     public async Task CopiarIP()
     {
         if (!string.IsNullOrWhiteSpace(ServerIP) && ServerIP != "No detectada")
@@ -995,6 +1015,16 @@ public partial class PanelAdminVM : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(PlantillaNombre)) return;
 
+        // Validar que se haya seleccionado un contador
+        if (PlantillaAsignadoPorDefecto == null)
+        {
+            await Application.Current!.Windows[0].Page!.DisplayAlert(
+                "Campo Requerido",
+                "Debes seleccionar un contador para asignar la plantilla.",
+                "OK");
+            return;
+        }
+
         var plantilla = IsEditandoPlantilla && PlantillaSeleccionada != null
             ? PlantillaSeleccionada
             : new PlantillaTarea();
@@ -1008,7 +1038,7 @@ public partial class PanelAdminVM : ObservableObject
         plantilla.DiaEjecucion = PlantillaDiaEjecucion;
         plantilla.DiasAnticipacion = PlantillaDiasAnticipacion;
         plantilla.Checklist = PlantillaChecklist;
-        plantilla.AsignadoPorDefectoId = PlantillaAsignadoPorDefecto?.Id ?? 0;
+        plantilla.AsignadoPorDefectoId = PlantillaAsignadoPorDefecto.Id;
         plantilla.CreadorId = UsuarioLogueado?.Id ?? 0;
 
         await _databaseService.SavePlantillaAsync(plantilla);

@@ -183,6 +183,22 @@ public class DatabaseService
         return result;
     }
 
+    public async Task<int> DeleteTareaAsync(string tareaId, bool skipSync = false)
+    {
+        await Init();
+        var tarea = await _database!.Table<Tarea>().Where(t => t.Id == tareaId).FirstOrDefaultAsync();
+        if (tarea == null) return 0;
+        
+        var result = await _database!.DeleteAsync(tarea);
+        
+        if (!skipSync && _syncService != null)
+        {
+            await _syncService.OnLocalChange(SyncOperation.Delete, tarea, "Tarea");
+        }
+        
+        return result;
+    }
+
     // Gestión de alertas
     public async Task<List<Alerta>> GetAlertasPorUsuarioAsync(int userId)
     {
